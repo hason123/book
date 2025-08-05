@@ -7,6 +7,7 @@ import com.example.book.service.impl.UserServiceImpl;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
@@ -26,6 +27,7 @@ public class UserController {
         this.passwordEncoder = passwordEncoder;
     }
     //GetAll
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     @GetMapping("/user")
     public ResponseEntity<List<User>> getAllUsers() {
         List<User> users = userService.getAllUsers();
@@ -35,11 +37,18 @@ public class UserController {
         return ResponseEntity.ok(users); // HTTP 200 + JSON list
     }
     //GetUserID
+
+    //cach nay ko duoc do dung OAuth2
+    //@PreAuthorize("hasAnyRole('ADMIN', 'USER') and #id == authentication.principal.id")
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     @GetMapping("/user/{id}")
     public ResponseEntity<?> getUserById(@PathVariable Long id) {
         User user = userService.getUserById(id);
         if (user == null) {
             return ResponseEntity.status(404).body("User not found");
+        }
+        if(!userService.isCurrentUser(id)){
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access denied");
         }
         return ResponseEntity.ok(user);
     }

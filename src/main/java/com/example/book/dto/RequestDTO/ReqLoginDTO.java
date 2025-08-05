@@ -18,6 +18,8 @@ public class ReqLoginDTO {
     public static class UserLogin {
         private Long id;
         private String username;
+        private String role;
     }
+
 
 }

@@ -15,6 +15,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.Authentication;
@@ -64,6 +65,7 @@ public class AuthController {
         ReqLoginDTO.UserLogin UserLogin = new ReqLoginDTO.UserLogin();
         UserLogin.setId(currentUserDB.getUserId());
         UserLogin.setUsername(currentUserDB.getUserName());
+        UserLogin.setRole(String.valueOf(currentUserDB.getRole().getRoleName()));
         requestDTO.setUser(UserLogin);
 
         // Tạo access token và refresh token
@@ -105,12 +107,13 @@ public class AuthController {
         User currentUserDB = this.userServiceImpl.handleGetUserByUserNameAndRefreshToken(userName, refreshToken);
 
         if(currentUserDB == null) {
-            throw new  UnauthorizedException("No refresh token in cookie");
+            throw new UnauthorizedException("No refresh token in cookie");
         }
 
         ReqLoginDTO.UserLogin userLogin = new ReqLoginDTO.UserLogin(
                 currentUserDB.getUserId(),
-                currentUserDB.getUserName()
+                currentUserDB.getUserName(),
+                currentUserDB.getRole().getRoleName().name()
         );
 
         reqLoginDTO.setUser(userLogin);
@@ -158,6 +161,7 @@ public class AuthController {
                 .body("User" + userName + "logged out");
     }
 
+    @PreAuthorize("isAnonymous()")
     @PostMapping("/register")
     public ResponseEntity<UserDTO> register(@RequestBody User user) {
         UserDTO userCreated = userServiceImpl.createUser(user);

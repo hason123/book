@@ -7,10 +7,13 @@ import com.example.book.entity.User;
 import com.example.book.repository.RoleRepository;
 import com.example.book.repository.UserRepository;
 import com.example.book.service.UserService;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -28,7 +31,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDTO createUser(User user) {
-        Role role = roleRepository.findByRoleName(RoleType.ROLE_USER)
+        Role role = roleRepository.findByRoleName(RoleType.USER)
                 .orElseThrow(() -> new RuntimeException("Default role not found"));
         user.setRole(role);
         user.setPassword(passwordEncoder.encode(user.getPassword()));
@@ -36,6 +39,16 @@ public class UserServiceImpl implements UserService {
         return convertUserToDTO(user);
     }
 
+    public boolean isCurrentUser(Long userId) {
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+        if (principal instanceof Jwt jwt) {
+            String currentUserName = jwt.getClaim("sub"); // hoặc "sub", "id", "uid"... tùy JWT
+            Long currentUserId = userRepository.findByUserName(currentUserName).getUserId();
+            return currentUserId.equals(userId);
+        }
+        return false;
+    }
 
     @Override
     public User getUserById(Long id) {

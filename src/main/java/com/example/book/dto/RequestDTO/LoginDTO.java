@@ -9,7 +9,8 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class LoginDTO {
-    public String username;
-    public String password;
+    private String username;
+    private String password;
+    private String role;
 
 }

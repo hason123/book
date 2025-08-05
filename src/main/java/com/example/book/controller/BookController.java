@@ -10,6 +10,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.relational.core.sql.In;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -42,7 +43,7 @@ public class BookController {
 
         return ResponseEntity.ok(bookList);
     }
-
+    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
     @GetMapping("/book/{id}")
     public ResponseEntity<BookResponseDTO> getBookById(@PathVariable("id") long id) {
         Optional<Book> book = bookService.getBookById(id);

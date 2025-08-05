@@ -2,6 +2,7 @@ package com.example.book.utils;
 
 
 import com.example.book.dto.RequestDTO.ReqLoginDTO;
+import com.example.book.entity.Role;
 import com.nimbusds.jose.util.Base64;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -44,11 +45,14 @@ public class SecurityUtil {
         Instant now = Instant.now();
         Instant validity = now.plus(accessTokenExpiration, ChronoUnit.SECONDS);
 
+        String role = reqLoginDTO.getUser().getRole();
+
         JwtClaimsSet claims = JwtClaimsSet.builder()
                 .issuedAt(now)
                 .expiresAt(validity)
                 .subject(userName)
                 .claim("user", reqLoginDTO.getUser())
+                .claim("role", role)
                 .build();
 
         JwsHeader jwsHeader = JwsHeader.with(JWT_ALGORITHM).build();

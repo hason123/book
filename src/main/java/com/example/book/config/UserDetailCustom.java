@@ -29,10 +29,16 @@ public class UserDetailCustom  implements UserDetailsService{
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         User user = userService.handleGetUserByUserName(username);
-        return new org.springframework.security.core.userdetails.User(
+
+        String roleName = user.getRole().getRoleName().toString();
+
+        SimpleGrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + roleName);
+
+        return new CustomUser(
+                user.getUserId(), // assuming it's UUID
                 user.getUserName(),
                 user.getPassword(),
-                Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER"))
+                List.of(authority)
         );
     }
 }
