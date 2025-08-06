@@ -17,17 +17,11 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-public class Comment {
+public class Comment extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long commentId;
     private String commentDetail;
-
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "UTC")
-    private Instant createdAt;
-
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "UTC")
-    private Instant updatedAt;
 
     @ManyToOne
     @JoinColumn(name = "user_comment_id")
@@ -37,16 +31,5 @@ public class Comment {
     @JoinColumn(name = "post_comment_id")
     private Post post;
 
-    @PrePersist
-    public void handleOnCreate() {
-        createdAt = Instant.now();
-    }
 
-    @PreUpdate
-    public void handleOnUpdate() {
-        if(updatedAt == null) {
-            updatedAt = createdAt;
-        }
-        updatedAt = Instant.now();
-    }
 }

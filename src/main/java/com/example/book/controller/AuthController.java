@@ -3,14 +3,12 @@ package com.example.book.controller;
 
 import com.example.book.dto.RequestDTO.LoginDTO;
 import com.example.book.dto.RequestDTO.ReqLoginDTO;
-import com.example.book.dto.ResponseDTO.User.UserDTO;
+import com.example.book.dto.ResponseDTO.User.UserInfoDTO;
 import com.example.book.entity.User;
 import com.example.book.exception.UnauthorizedException;
-import com.example.book.service.UserService;
 import com.example.book.service.impl.UserServiceImpl;
 import com.example.book.utils.SecurityUtil;
 import jakarta.validation.Valid;
-import org.apache.tomcat.jni.Library;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
@@ -19,14 +17,9 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.UnsupportedEncodingException;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -102,14 +95,12 @@ public class AuthController {
         if(userName.equals("none")) {
             throw new UnauthorizedException("No refresh token in cookie");
         }
-
         ReqLoginDTO reqLoginDTO = new ReqLoginDTO();
         User currentUserDB = this.userServiceImpl.handleGetUserByUserNameAndRefreshToken(userName, refreshToken);
 
         if(currentUserDB == null) {
             throw new UnauthorizedException("No refresh token in cookie");
         }
-
         ReqLoginDTO.UserLogin userLogin = new ReqLoginDTO.UserLogin(
                 currentUserDB.getUserId(),
                 currentUserDB.getUserName(),
@@ -163,8 +154,8 @@ public class AuthController {
 
     @PreAuthorize("isAnonymous()")
     @PostMapping("/register")
-    public ResponseEntity<UserDTO> register(@RequestBody User user) {
-        UserDTO userCreated = userServiceImpl.createUser(user);
+    public ResponseEntity<UserInfoDTO> register(@RequestBody User user) {
+        UserInfoDTO userCreated = userServiceImpl.createUser(user);
         return ResponseEntity.ok(userCreated);
     }
 

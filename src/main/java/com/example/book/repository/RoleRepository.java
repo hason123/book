@@ -9,5 +9,5 @@ import org.springframework.data.repository.CrudRepository;
 import java.util.Optional;
 
 public interface RoleRepository extends JpaRepository<Role,Long> {
-    Optional<Role> findByRoleName(RoleType roleName);
+    Role findByRoleName(RoleType roleName);
 }

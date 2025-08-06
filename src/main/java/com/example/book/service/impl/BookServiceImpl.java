@@ -1,5 +1,6 @@
 package com.example.book.service.impl;
 
+import com.example.book.dto.RequestDTO.SearchBookRequest;
 import com.example.book.dto.ResponseDTO.BookResponseDTO;
 import com.example.book.dto.ResponseDTO.PageDTO;
 import com.example.book.entity.Book;
@@ -7,6 +8,7 @@ import com.example.book.entity.Category;
 import com.example.book.repository.BookRepository;
 import com.example.book.repository.CategoryRepository;
 import com.example.book.service.BookService;
+import com.example.book.service.CategoryService;
 import com.example.book.specification.BookSpecification;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.data.domain.Page;
@@ -24,12 +26,13 @@ public class BookServiceImpl implements BookService {
 
     private final BookRepository bookRepository;
     private final CategoryRepository categoryRepository;
+    private final CategoryService categoryService;
 
-    public BookServiceImpl(BookRepository bookRepository, CategoryRepository categoryRepository) {
+    public BookServiceImpl(BookRepository bookRepository, CategoryRepository categoryRepository, CategoryService categoryService) {
         this.bookRepository = bookRepository;
         this.categoryRepository = categoryRepository;
+        this.categoryService = categoryService;
     }
-
 
     @Override
     public BookResponseDTO addBook(Book book) {
@@ -92,7 +95,6 @@ public class BookServiceImpl implements BookService {
         }catch (EntityNotFoundException e){
             return null;
         }
-
     }
 
     @Override
@@ -107,13 +109,20 @@ public class BookServiceImpl implements BookService {
     }
 
     @Override
-    public PageDTO<BookResponseDTO> searchBooks(String bookName, String author, Long id,
-                                                String language, String printType,
-                                                Integer minQuantity, Integer maxQuantity,
-                                                Integer minPage, Integer maxPage,
-                                                Pageable pageable) {
+    public PageDTO<BookResponseDTO> searchBooks(SearchBookRequest request, Pageable pageable) {
+        String bookName = request.getBookName();
+        String author = request.getAuthor();
+        Long bookId = request.getBookId();
+        String language = request.getLanguage();
+        String printType = request.getPrintType();
+        String publisher = request.getPublisher();
+        Integer minQuantity = request.getMinQuantity();
+        Integer maxQuantity = request.getMaxQuantity();
+        Integer minPageCount = request.getMinPageCount();
+        Integer maxPageCount = request.getMaxPageCount();
+        List<String> categories = request.getCategories();
 
-        Specification<Book> spec = (root, query, cb) -> cb.conjunction(); // always true
+        Specification<Book> spec = (root, query, cb) -> cb.conjunction();
 
         if (StringUtils.hasText(bookName)) {
             spec = spec.and(BookSpecification.likeName(bookName));
@@ -121,8 +130,8 @@ public class BookServiceImpl implements BookService {
         if (StringUtils.hasText(author)) {
             spec = spec.and(BookSpecification.likeAuthor(author));
         }
-        if (id != null) {
-            spec = spec.and(BookSpecification.hasId(id));
+        if (bookId != null) {
+            spec = spec.and(BookSpecification.hasId(bookId));
         }
         if (StringUtils.hasText(language)) {
             spec = spec.and(BookSpecification.likeLanguage(language));
@@ -130,32 +139,35 @@ public class BookServiceImpl implements BookService {
         if (StringUtils.hasText(printType)) {
             spec = spec.and(BookSpecification.likePrintType(printType));
         }
+        if (StringUtils.hasText(publisher)) {
+            spec = spec.and(BookSpecification.likePublisher(publisher));
+        }
+        if (minPageCount != null) {
+            spec = spec.and(BookSpecification.moreThanPageCount(minPageCount));
+        }
+        if (maxPageCount != null) {
+            spec = spec.and(BookSpecification.lessThanPageCount(maxPageCount));
+        }
         if (minQuantity != null) {
-            spec = spec.and(BookSpecification.moreThanPageCount(minQuantity));
-        }
-        if (maxQuantity != null) {
-            spec = spec.and(BookSpecification.lessThanPageCount(maxQuantity));
-        }
-        if (minPage != null) {
             spec = spec.and(BookSpecification.moreThanEqualQuantity(minQuantity));
         }
-        if (maxPage != null) {
+        if (maxQuantity != null) {
             spec = spec.and(BookSpecification.lessThanEqualQuantity(maxQuantity));
+        }
+        if (categories != null && !categories.isEmpty()) {
+            spec = spec.and(BookSpecification.hasBookWithCategories(categories));
         }
 
         Page<Book> bookPage = bookRepository.findAll(spec, pageable);
-        Page<BookResponseDTO> bookResponseDTO = bookPage.map(book -> convertBookToDTO(book));
-        PageDTO<BookResponseDTO> pageDTO = new PageDTO<>(
+        Page<BookResponseDTO> bookResponseDTO = bookPage.map(this::convertBookToDTO);
+
+        return new PageDTO<>(
                 bookResponseDTO.getNumber() + 1,
                 bookResponseDTO.getNumberOfElements(),
                 bookResponseDTO.getTotalPages(),
                 bookResponseDTO.getContent()
         );
-        return pageDTO;
-
     }
-
-
 
     @Override
     public PageDTO<BookResponseDTO> getBookPage(Pageable pageable) {
@@ -169,8 +181,6 @@ public class BookServiceImpl implements BookService {
                 );
         return pageDTO;
     }
-
-
 
     public BookResponseDTO convertBookToDTO(Book book) {
         BookResponseDTO bookDTO = new BookResponseDTO();
@@ -194,8 +204,4 @@ public class BookServiceImpl implements BookService {
         bookDTO.setCategories(categoryDTOs);
         return bookDTO;
     }
-
-
-
-
 }

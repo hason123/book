@@ -1,8 +1,6 @@
 package com.example.book.dto.ResponseDTO.Comment;
 
 
-import com.example.book.dto.ResponseDTO.Post.PostResponseDTO;
-import com.example.book.dto.ResponseDTO.Post.PostUpdateResponseDTO;
 import com.example.book.dto.ResponseDTO.UserCommentPostDTO;
 import lombok.*;
 
@@ -18,10 +16,7 @@ public class CommentResponseDTO {
     private String commentDetail;
     private Instant createdAt;
     private Instant updatedAt;
-
-
     private UserCommentPostDTO userComment;
-
     private PostDTO post;
 
     @Getter
@@ -31,7 +26,6 @@ public class CommentResponseDTO {
     public static class PostDTO {
         private Long postId;
         private String postTitle;
-
         private UserCommentPostDTO userPost;
     }
 

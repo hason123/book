@@ -1,11 +1,9 @@
 package com.example.book.service.impl;
 
-import com.example.book.dto.ResponseDTO.Comment.CommentCreateResponseDTO;
+import com.example.book.dto.ResponseDTO.Comment.CommentDTO;
 import com.example.book.dto.ResponseDTO.Comment.CommentResponseDTO;
-import com.example.book.dto.ResponseDTO.Comment.CommentUpdateResponseDTO;
 import com.example.book.dto.ResponseDTO.UserCommentPostDTO;
 import com.example.book.entity.Comment;
-import com.example.book.entity.Post;
 import com.example.book.repository.CommentRepository;
 import com.example.book.repository.PostRepository;
 import com.example.book.repository.UserRepository;
@@ -32,17 +30,17 @@ public class CommentServiceImpl implements CommentService {
     }
 
     @Override
-    public CommentCreateResponseDTO addComment(Comment comment) {
+    public CommentDTO addComment(Comment comment) {
         if(!userRepository.existsById(comment.getUser().getUserId()) ||
                 !postRepository.existsById(comment.getPost().getPostId())) {
             throw new IllegalStateException("User or Post doesn't exist");
         }
         commentRepository.save(comment);
-        return convertCommentCreateDTO(comment);
+        return convertCommentDTO(comment);
     }
 
     @Override
-    public CommentUpdateResponseDTO updateComment(Long id, Comment comment) {
+    public CommentDTO updateComment(Long id, Comment comment) {
         Optional<Comment> optionalComment = commentRepository.findById(id);
         if (optionalComment.isPresent()) {
             Comment updatedComment = optionalComment.get();
@@ -83,8 +81,8 @@ public class CommentServiceImpl implements CommentService {
         commentRepository.deleteById(id);
     }
 
-    public CommentCreateResponseDTO convertCommentCreateDTO(Comment comment){
-        CommentCreateResponseDTO commentCreate = new CommentCreateResponseDTO();
+    public CommentDTO convertCommentDTO(Comment comment){
+        CommentDTO commentCreate = new CommentDTO();
         commentCreate.setCommentDetail(comment.getCommentDetail());
         commentCreate.setCommentId(comment.getCommentId());
         commentCreate.setCreatedAt(comment.getCreatedAt());
@@ -95,8 +93,8 @@ public class CommentServiceImpl implements CommentService {
         return commentCreate;
     }
 
-    public CommentUpdateResponseDTO convertCommentUpdateDTO(Comment comment){
-        CommentUpdateResponseDTO commentUpdate = new CommentUpdateResponseDTO();
+    public CommentDTO convertCommentUpdateDTO(Comment comment){
+        CommentDTO commentUpdate = new CommentDTO();
         commentUpdate.setCommentDetail(comment.getCommentDetail());
         commentUpdate.setCommentId(comment.getCommentId());
         commentUpdate.setUpdatedAt(comment.getUpdatedAt());

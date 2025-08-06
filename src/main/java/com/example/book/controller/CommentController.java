@@ -2,19 +2,16 @@ package com.example.book.controller;
 
 
 import com.example.book.dto.ResponseDTO.Comment.CommentResponseDTO;
-import com.example.book.dto.ResponseDTO.Comment.CommentCreateResponseDTO;
-import com.example.book.dto.ResponseDTO.Comment.CommentUpdateResponseDTO;
+import com.example.book.dto.ResponseDTO.Comment.CommentDTO;
 
 
 import com.example.book.entity.Comment;
-import com.example.book.service.CommentService;
 import com.example.book.service.impl.CommentServiceImpl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/v1/library")
@@ -44,14 +41,14 @@ public class CommentController {
     }
 
     @PostMapping("/comment/create")
-    public ResponseEntity<CommentCreateResponseDTO> createPost(@RequestBody Comment comment){
-        CommentCreateResponseDTO commentCreated = commentServiceImpl.addComment(comment);
+    public ResponseEntity<CommentDTO> createPost(@RequestBody Comment comment){
+        CommentDTO commentCreated = commentServiceImpl.addComment(comment);
         return new ResponseEntity<>(commentCreated, HttpStatus.CREATED);
     }
 
     @PutMapping("/comment/update/{id}")
-    public ResponseEntity<CommentUpdateResponseDTO> updatePost(@PathVariable long id, @RequestBody Comment comment){
-        CommentUpdateResponseDTO commentUpdated = commentServiceImpl.updateComment(id, comment);
+    public ResponseEntity<CommentDTO> updatePost(@PathVariable long id, @RequestBody Comment comment){
+        CommentDTO commentUpdated = commentServiceImpl.updateComment(id, comment);
         if(commentUpdated == null){
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }

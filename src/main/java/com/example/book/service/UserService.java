@@ -1,19 +1,21 @@
 package com.example.book.service;
 
-import com.example.book.dto.ResponseDTO.User.UserDTO;
+import com.example.book.dto.RequestDTO.UserRoleUpdateDTO;
+import com.example.book.dto.ResponseDTO.User.UserInfoDTO;
 import com.example.book.entity.User;
-import org.springframework.stereotype.Service;
+import com.example.book.exception.NullValueException;
 
 import java.util.List;
 
 public interface UserService {
 
 
-    UserDTO createUser(User user);
-    User getUserById(Long id);
-    void deleteUserById(Long id);
-    User updateUser(Long id, User user);
+    UserInfoDTO createUser(User user);
+    Object getUserById(Long id) throws NullValueException;
+    void deleteUserById(Long id) throws NullValueException;
+    UserInfoDTO updateUser(Long id, User user) throws NullValueException;
 
     List<User> getAllUsers();
 
+    void updateRole(UserRoleUpdateDTO userRole);
 }

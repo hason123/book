@@ -6,6 +6,7 @@ import lombok.*;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 
 @Setter
@@ -13,20 +14,13 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-public class Post {
+public class Post extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long postId;
     private String title;
     private String content;
 
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "UTC")
-    private Instant createdAt;
-
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "UTC")
-    private Instant updatedAt;
-
-    //phai anh xa sang user
     @ManyToOne
     @JoinColumn(name = "user_post_id")
     private User user;
@@ -34,15 +28,21 @@ public class Post {
     @OneToMany( orphanRemoval = true,mappedBy = "post")
     private List<Comment> comments;
 
-    @PrePersist
-    public void handleOnCreate() {
-        createdAt = Instant.now();
+    @OneToMany(orphanRemoval = true, mappedBy = "post")
+    private List<PostReaction> postReactions;
+
+    private int likesCount;
+    private int dislikesCount;
+    //Override get set method
+    public void setLikesCount(int likesCount) {
+        this.likesCount = Math.max(likesCount, 0);
     }
 
-    @PreUpdate
-    public void handleOnUpdate() {
-        updatedAt = Instant.now();
+    public void setDislikesCount(int dislikesCount) {
+        this.dislikesCount = Math.max(dislikesCount, 0);
     }
+
+
 
 
 

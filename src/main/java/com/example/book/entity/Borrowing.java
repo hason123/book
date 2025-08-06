@@ -21,14 +21,10 @@ public class Borrowing {
     private Long id;
 
     @JsonFormat(pattern = "yyyy-MM-dd")
-    private Date borrowDate;
+    private LocalDate borrowDate;
 
-//@PrePersist
-   // public void handleOnCreate() {
-   //     borrowDate = LocalDate.now();
-  //  }
     @JsonFormat(pattern = "yyyy-MM-dd")
-    private Date returnDate;
+    private LocalDate returnDate;
 
     @ManyToOne
     @JoinColumn(name = "borrowing_user_id")

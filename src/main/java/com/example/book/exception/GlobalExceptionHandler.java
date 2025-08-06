@@ -2,13 +2,33 @@ package com.example.book.exception;
 
 
 import com.example.book.dto.ResponseDTO.ApiResponse;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(value = MethodArgumentNotValidException.class)
+    public ResponseEntity<ApiResponse<Object>> MethodArgumentNotValidException(MethodArgumentNotValidException e) {
+        ApiResponse<Object> res = new ApiResponse<>();
+        res.setCode(HttpStatus.BAD_REQUEST.value());
+        res.setMessage(e.getMessage());
+        res.setData("MethodArgumentNotValidException");
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
+    }
+
+    @ExceptionHandler(value = DataIntegrityViolationException.class)
+    public ResponseEntity<ApiResponse<Object>> DataIntegrityViolationException(DataIntegrityViolationException e) {
+        ApiResponse<Object> res = new ApiResponse<>();
+        res.setCode(HttpStatus.BAD_REQUEST.value());
+        res.setMessage(e.getMessage());
+        res.setData("DataIntegrityViolationException");
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
+    }
 
     @ExceptionHandler(value = IdInvalidException.class)
     public ResponseEntity<ApiResponse<Object>> idInvalidException(IdInvalidException e) {

@@ -1,5 +1,6 @@
 package com.example.book.controller;
 
+import com.example.book.dto.RequestDTO.SearchBookRequest;
 import com.example.book.dto.ResponseDTO.BookResponseDTO;
 import com.example.book.dto.ResponseDTO.PageDTO;
 import com.example.book.entity.Book;
@@ -58,19 +59,11 @@ public class BookController {
 
     @GetMapping("/book/search")
     public ResponseEntity<PageDTO<BookResponseDTO>> searchBook(
-            @RequestParam(value = "bookName", required = false) String bookName,
-            @RequestParam(value = "author", required = false) String author,
-            @RequestParam(value = "ID", required = false) Long id,
-            @RequestParam(value = "language", required = false) String language,
-            @RequestParam(value = "printType", required = false) String printType,
-            @RequestParam(value = "minQuantity", required = false) Integer minQuantity,
-            @RequestParam(value = "maxQuantity", required = false) Integer maxQuantity,
-            @RequestParam(value = "minPage", required = false) Integer minPage,
-            @RequestParam(value = "maxPage", required = false) Integer maxPage,
+            SearchBookRequest searchBookRequest,
             @RequestParam(value = "pageNumber", defaultValue = "1", required = false) Integer pageNumber,
             @RequestParam(value = "pageSize", defaultValue = "3", required = false) Integer pageSize) {
         Pageable pageable = PageRequest.of(pageNumber - 1, pageSize);
-        PageDTO<BookResponseDTO> bookSearch = bookService.searchBooks(bookName, author, id, language, printType, minQuantity, maxQuantity, minPage, maxPage, pageable);
+        PageDTO<BookResponseDTO> bookSearch = bookService.searchBooks(searchBookRequest, pageable);
         return ResponseEntity.ok(bookSearch);
     }
 

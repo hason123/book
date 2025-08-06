@@ -1,13 +1,9 @@
 package com.example.book.controller;
 
 
-import com.example.book.dto.ResponseDTO.Post.PostCreateResponseDTO;
-import com.example.book.dto.ResponseDTO.Post.PostListResponseDTO;
-import com.example.book.dto.ResponseDTO.Post.PostResponseDTO;
-import com.example.book.dto.ResponseDTO.Post.PostUpdateResponseDTO;
+import com.example.book.dto.ResponseDTO.Post.PostListDTO;
+import com.example.book.dto.ResponseDTO.Post.PostDTO;
 import com.example.book.entity.Post;
-import com.example.book.repository.PostRepository;
-import com.example.book.service.PostService;
 import com.example.book.service.impl.PostServiceImpl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -30,8 +26,8 @@ public class PostController {
     }
 
     @GetMapping("/posts")
-    public ResponseEntity<List<PostListResponseDTO>> getAllPosts() {
-        List<PostListResponseDTO> posts = postServiceImpl.getAllPosts();
+    public ResponseEntity<List<PostListDTO>> getAllPosts() {
+        List<PostListDTO> posts = postServiceImpl.getAllPosts();
         if(posts.isEmpty()) {
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         }
@@ -39,24 +35,24 @@ public class PostController {
     }
 
     @GetMapping("/post/{id}")
-    public ResponseEntity<PostResponseDTO> getPostById(@PathVariable long id) {
+    public ResponseEntity<PostDTO> getPostById(@PathVariable long id) {
         Optional<Post> post = postServiceImpl.getPost(id);
         if(post.isPresent()) {
-            PostResponseDTO postDTO = postServiceImpl.convertPostResponseToDTO(post.get());
+            PostDTO postDTO = postServiceImpl.convertPostResponseToDTO(post.get());
             return new ResponseEntity<>(postDTO, HttpStatus.OK);
         }
         return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
 
     @PostMapping("/post/create")
-    public ResponseEntity<PostCreateResponseDTO> createPost(@RequestBody Post post){
-        PostCreateResponseDTO postCreate = postServiceImpl.convertPostCreateToDTO(post);
+    public ResponseEntity<PostDTO> createPost(@RequestBody Post post){
+        PostDTO postCreate = postServiceImpl.convertPostCreateToDTO(post);
         return new ResponseEntity<>(postCreate, HttpStatus.CREATED);
     }
 
     @PutMapping("/post/update/{id}")
-    public ResponseEntity<PostUpdateResponseDTO> updatePost(@PathVariable long id, @RequestBody Post post){
-        PostUpdateResponseDTO postUpdate = postServiceImpl.updatePost(id, post);
+    public ResponseEntity<PostDTO> updatePost(@PathVariable long id, @RequestBody Post post){
+        PostDTO postUpdate = postServiceImpl.updatePost(id, post);
         if(postUpdate == null){
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }

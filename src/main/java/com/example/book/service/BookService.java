@@ -1,5 +1,6 @@
 package com.example.book.service;
 
+import com.example.book.dto.RequestDTO.SearchBookRequest;
 import com.example.book.dto.ResponseDTO.BookResponseDTO;
 import com.example.book.dto.ResponseDTO.PageDTO;
 import com.example.book.entity.Book;
@@ -12,8 +13,11 @@ public interface BookService {
 
 
     BookResponseDTO addBook(Book book);
+
     Optional<Book> getBookById(Long id);
+
     void deleteBookById(Long id);
+
     BookResponseDTO updateBook(Long id, Book book);
 
     List<BookResponseDTO> getAllBooks();
@@ -22,9 +26,7 @@ public interface BookService {
 
     PageDTO<BookResponseDTO> getBookPage(Pageable pageable);
 
-    PageDTO<BookResponseDTO> searchBooks (String bookName, String author, Long id,
-                                          String language, String printType,
-                                          Integer minQuantity, Integer maxQuantity,
-                                          Integer minPage, Integer maxPage,
-                                          Pageable pageable);
+    PageDTO<BookResponseDTO> searchBooks(SearchBookRequest searchBookRequest,
+                                         Pageable pageable);
+
 }

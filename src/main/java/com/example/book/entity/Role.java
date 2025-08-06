@@ -15,20 +15,13 @@ import java.util.List;
 @NoArgsConstructor
 @Entity
 @Table(name="role")
-public class Role {
+public class Role extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long roleID;
-
     @Enumerated(EnumType.STRING) //luu data vao DB dang String
     private RoleType roleName;
-
     private String roleDesc;
-/*
-    @OneToMany(mappedBy = "role")
-    private List<User> users;
-
- */
     @ManyToMany
     @JoinTable(
             name = "role_permission",
@@ -36,7 +29,6 @@ public class Role {
             inverseJoinColumns = @JoinColumn(name = "permission_id")
     )
     private List<Permission> permissions;
-
     @OneToMany(mappedBy = "role")
     private List<User> users;
 
