@@ -1,9 +1,9 @@
 package com.example.book.controller;
 
 
-import com.example.book.dto.RequestDTO.LoginDTO;
-import com.example.book.dto.RequestDTO.ReqLoginDTO;
-import com.example.book.dto.ResponseDTO.User.UserInfoDTO;
+import com.example.book.dto.RequestDTO.LoginRequestDTO;
+import com.example.book.dto.ResponseDTO.LoginResponseDTO;
+import com.example.book.dto.RequestDTO.UserRequestDTO;
 import com.example.book.entity.User;
 import com.example.book.exception.UnauthorizedException;
 import com.example.book.service.impl.UserServiceImpl;
@@ -19,7 +19,6 @@ import org.springframework.security.config.annotation.authentication.builders.Au
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.Optional;
 
 @RestController
@@ -44,18 +43,18 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@Valid @RequestBody LoginDTO loginDTO) {
+    public ResponseEntity<?> login(@Valid @RequestBody LoginRequestDTO loginRequest) {
         //Nạp input gồm username/password vào Security
         UsernamePasswordAuthenticationToken authenticationToken
-                = new UsernamePasswordAuthenticationToken(loginDTO.getUsername(), loginDTO.getPassword());
+                = new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword());
         //xác thực người dùng => cần viết hàm loadUserByUsername
         Authentication authentication =
                 authenticationManagerBuilder.getObject().authenticate(authenticationToken);
 
-        ReqLoginDTO requestDTO = new ReqLoginDTO();
+        LoginResponseDTO requestDTO = new LoginResponseDTO();
 
-        User currentUserDB = userServiceImpl.handleGetUserByUserName(loginDTO.getUsername());
-        ReqLoginDTO.UserLogin UserLogin = new ReqLoginDTO.UserLogin();
+        User currentUserDB = userServiceImpl.handleGetUserByUserName(loginRequest.getUsername());
+        LoginResponseDTO.UserLogin UserLogin = new LoginResponseDTO.UserLogin();
         UserLogin.setId(currentUserDB.getUserId());
         UserLogin.setUsername(currentUserDB.getUserName());
         UserLogin.setRole(String.valueOf(currentUserDB.getRole().getRoleName()));
@@ -66,9 +65,9 @@ public class AuthController {
         // Set access token vào đối tượng ResLoginDTO để trả về cho người dùng
         requestDTO.setAccessToken(accesss_Token);
         //create refresh token
-        String refresh_token = securityUtil.createRefreshToken(loginDTO.getUsername(), requestDTO);
+        String refresh_token = securityUtil.createRefreshToken(loginRequest.getUsername(), requestDTO);
         //update user
-        userServiceImpl.updateUserToken(refresh_token, loginDTO.getUsername());
+        userServiceImpl.updateUserToken(refresh_token, loginRequest.getUsername());
         //create cookie
         ResponseCookie springCookie = ResponseCookie.from("refresh_token", refresh_token)
                 .httpOnly(true)
@@ -85,7 +84,7 @@ public class AuthController {
 
    
     @GetMapping("/refresh")
-    public ResponseEntity<ReqLoginDTO> refreshToken(
+    public ResponseEntity<LoginResponseDTO> refreshToken(
             @CookieValue(name = "refresh_token", defaultValue = "none") String refreshToken) throws UnauthorizedException
              {
         Jwt decodeToken = securityUtil.checkValidRefreshToken(refreshToken);
@@ -95,24 +94,24 @@ public class AuthController {
         if(userName.equals("none")) {
             throw new UnauthorizedException("No refresh token in cookie");
         }
-        ReqLoginDTO reqLoginDTO = new ReqLoginDTO();
+        LoginResponseDTO loginResponseDTO = new LoginResponseDTO();
         User currentUserDB = this.userServiceImpl.handleGetUserByUserNameAndRefreshToken(userName, refreshToken);
 
         if(currentUserDB == null) {
             throw new UnauthorizedException("No refresh token in cookie");
         }
-        ReqLoginDTO.UserLogin userLogin = new ReqLoginDTO.UserLogin(
+        LoginResponseDTO.UserLogin userLogin = new LoginResponseDTO.UserLogin(
                 currentUserDB.getUserId(),
                 currentUserDB.getUserName(),
                 currentUserDB.getRole().getRoleName().name()
         );
 
-        reqLoginDTO.setUser(userLogin);
+        loginResponseDTO.setUser(userLogin);
                  // Tạo access token và refresh token
-        String accesss_Token = this.securityUtil.createAccessToken(userName, reqLoginDTO);
+        String accesss_Token = this.securityUtil.createAccessToken(userName, loginResponseDTO);
         // Set access token vào đối tượng ReqLoginDTO để trả về cho người dùng
-        reqLoginDTO.setAccessToken(accesss_Token);
-        String new_refresh_token = this.securityUtil.createRefreshToken(userName, reqLoginDTO);
+        loginResponseDTO.setAccessToken(accesss_Token);
+        String new_refresh_token = this.securityUtil.createRefreshToken(userName, loginResponseDTO);
         // Cập nhật refresh token vào database
         this.userServiceImpl.updateUserToken(new_refresh_token, refreshToken);
 
@@ -125,7 +124,7 @@ public class AuthController {
                 .path("/")
                 .build();
 
-        return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, resCookies.toString()).body(reqLoginDTO);
+        return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, resCookies.toString()).body(loginResponseDTO);
     }
 
     @PostMapping("/logout")
@@ -154,8 +153,8 @@ public class AuthController {
 
     @PreAuthorize("isAnonymous()")
     @PostMapping("/register")
-    public ResponseEntity<UserInfoDTO> register(@RequestBody User user) {
-        UserInfoDTO userCreated = userServiceImpl.createUser(user);
+    public ResponseEntity<UserRequestDTO> register(@Valid @RequestBody UserRequestDTO user) {
+        UserRequestDTO userCreated = userServiceImpl.createUser(user);
         return ResponseEntity.ok(userCreated);
     }
 

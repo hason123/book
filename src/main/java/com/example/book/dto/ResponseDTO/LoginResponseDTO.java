@@ -1,14 +1,12 @@
-package com.example.book.dto.RequestDTO;
+package com.example.book.dto.ResponseDTO;
 
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import lombok.*;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class ReqLoginDTO {
+public class LoginResponseDTO {
     private String accessToken;
     private UserLogin user;
     @Getter

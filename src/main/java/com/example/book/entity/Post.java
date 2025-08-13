@@ -8,7 +8,6 @@ import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
-
 @Setter
 @Getter
 @AllArgsConstructor
@@ -20,20 +19,18 @@ public class Post extends BaseEntity {
     private Long postId;
     private String title;
     private String content;
-
     @ManyToOne
     @JoinColumn(name = "user_post_id")
     private User user;
-
-    @OneToMany( orphanRemoval = true,mappedBy = "post")
+    @OneToMany(mappedBy = "post")
     private List<Comment> comments;
-
-    @OneToMany(orphanRemoval = true, mappedBy = "post")
+    @OneToMany(mappedBy = "post")
     private List<PostReaction> postReactions;
-
+    @Column(nullable = false, columnDefinition = "mediumint default 0")
     private int likesCount;
+    @Column(nullable = false, columnDefinition = "mediumint default 0")
     private int dislikesCount;
-    //Override get set method
+
     public void setLikesCount(int likesCount) {
         this.likesCount = Math.max(likesCount, 0);
     }

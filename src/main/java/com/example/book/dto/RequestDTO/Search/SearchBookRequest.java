@@ -1,4 +1,4 @@
-package com.example.book.dto.RequestDTO;
+package com.example.book.dto.RequestDTO.Search;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

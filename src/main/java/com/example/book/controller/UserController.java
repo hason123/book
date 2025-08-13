@@ -1,74 +1,85 @@
 package com.example.book.controller;
 
-import com.example.book.dto.ResponseDTO.User.UserInfoDTO;
+import com.example.book.dto.RequestDTO.UserRequestDTO;
+import com.example.book.dto.RequestDTO.UserRoleUpdateDTO;
 
+import com.example.book.dto.ResponseDTO.PageResponseDTO;
+import com.example.book.dto.ResponseDTO.User.UserViewDTO;
 import com.example.book.entity.User;
 import com.example.book.exception.NullValueException;
+import com.example.book.exception.ResourceNotFoundException;
+import com.example.book.exception.UnauthorizedException;
 import com.example.book.service.impl.UserServiceImpl;
 
 
+import jakarta.validation.Valid;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 @RestController
 @RequestMapping("/api/v1/library")
 public class UserController {
 
     private final UserServiceImpl userService;
-    private final PasswordEncoder passwordEncoder;
+    private final UserServiceImpl userServiceImpl;
 
-    public UserController(UserServiceImpl userService, PasswordEncoder passwordEncoder) {
+    public UserController(UserServiceImpl userService, PasswordEncoder passwordEncoder, UserServiceImpl userServiceImpl) {
         this.userService = userService;
-        this.passwordEncoder = passwordEncoder;
+        this.userServiceImpl = userServiceImpl;
     }
     //GetAll
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @PreAuthorize("isAuthenticated()")
     @GetMapping("/user")
-    public ResponseEntity<List<User>> getAllUsers() {
-        List<User> users = userService.getAllUsers();
-        if (users.isEmpty()) {
-            return ResponseEntity.noContent().build(); // HTTP 204
-        }
-        return ResponseEntity.ok(users); // HTTP 200 + JSON list
+    public ResponseEntity<PageResponseDTO<UserViewDTO>> getAllUsers(
+            @RequestParam(value = "pageNumber", defaultValue = "1", required = false) Integer pageNumber,
+            @RequestParam(value = "pageSize", defaultValue = "3", required = false) Integer pageSize
+    ) {
+        Pageable pageable = PageRequest.of(pageNumber, pageSize);
+        PageResponseDTO<UserViewDTO> userPage = userService.getAllUsers(pageable);
+        return ResponseEntity.ok(userPage); // HTTP 200 + JSON list
     }
-    //GetUserID
 
-    //cach nay ko duoc do dung OAuth2
+    //cach nay ko duoc do dung OAuth2, xu ly trong service
     //@PreAuthorize("hasAnyRole('ADMIN', 'USER') and #id == authentication.principal.id")
-    @PreAuthorize("hasAnyRole('ADMIN', 'USER')")
+    @PreAuthorize("isAuthenticated()")
     @GetMapping("/user/{id}")
     public ResponseEntity<?> getUserById(@PathVariable Long id) throws NullValueException {
         User user = (User) userService.getUserById(id);
         return ResponseEntity.ok(user);
     }
     //DeleteUser
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/user/delete/{id}")
     public ResponseEntity<String> deleteUser(@PathVariable Long id) throws NullValueException {
         userService.deleteUserById(id);
         return ResponseEntity.ok("Delete successful");
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/user/create")
-    public ResponseEntity<UserInfoDTO> createUser(@RequestBody User user) {
-        UserInfoDTO userAdded = userService.createUser(user);
-        //return ResponseEntity.ok(userAdded);
-        return ResponseEntity.ok().body(userAdded);
+    public ResponseEntity<UserRequestDTO> createUser(@Valid @RequestBody UserRequestDTO user) {
+        UserRequestDTO userAdded = userService.createUser(user);
+        return ResponseEntity.status(HttpStatus.CREATED).body(userAdded);
     }
 
+    @PreAuthorize("isAuthenticated()")
     @PutMapping("/user/update/{id}")
-    public ResponseEntity<UserInfoDTO> updateUser(@PathVariable Long id,
-                                           @RequestBody User user) throws NullValueException {
-        UserInfoDTO updatedUser = userService.updateUser(id, user);
-        if (updatedUser == null) {
-            return ResponseEntity.notFound().build();
-        }
+    public ResponseEntity<UserRequestDTO> updateUser( @PathVariable Long id,
+                                                   @Valid @RequestBody UserRequestDTO user) throws NullValueException, UnauthorizedException {
+        UserRequestDTO updatedUser = userService.updateUser(id, user);
         return ResponseEntity.ok(updatedUser);
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping("/user/updateRole")
+    public ResponseEntity<?> updateRole(@Valid @RequestBody UserRoleUpdateDTO userRole) throws ResourceNotFoundException {
+        userServiceImpl.updateRole(userRole);
+        return ResponseEntity.status(HttpStatus.OK).build();
+    }
 
 }

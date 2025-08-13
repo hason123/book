@@ -1,8 +1,7 @@
 package com.example.book.dto.ResponseDTO.Post;
 
-
-import com.example.book.dto.ResponseDTO.UserCommentPostDTO;
 import lombok.*;
+import java.time.LocalDate;
 
 @Getter
 @Setter
@@ -10,11 +9,11 @@ import lombok.*;
 @AllArgsConstructor
 public class PostListDTO {
     private Long id;
+    private String userPost;
     private String title;
-    private UserCommentPostDTO userPost;
-    private int commentCount;
     private int likesCount;
     private int dislikesCount;
-
-
+    private int commentCount;
+    private LocalDate createdAt;
+    private LocalDate updatedAt;
 }

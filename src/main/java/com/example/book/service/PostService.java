@@ -1,27 +1,27 @@
 package com.example.book.service;
 
-import com.example.book.dto.ResponseDTO.Post.PostDTO;
+import com.example.book.dto.RequestDTO.PostRequestDTO;
+import com.example.book.dto.RequestDTO.Search.SearchPostRequest;
+import com.example.book.dto.ResponseDTO.PageResponseDTO;
 import com.example.book.dto.ResponseDTO.Post.PostListDTO;
-import com.example.book.entity.Post;
-
-import java.util.List;
-import java.util.Optional;
+import com.example.book.dto.ResponseDTO.Post.PostResponseDTO;
+import com.example.book.exception.UnauthorizedException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 
 public interface PostService {
 
-    PostDTO addPost(Post post);
+    PostResponseDTO addPost(PostRequestDTO request);
 
-    PostDTO updatePost(Long id, Post post);
+    PostResponseDTO getPost(Long id);
 
-    Optional<Post> getPost(Long id);
+    PageResponseDTO<PostListDTO> getAllPosts(Pageable pageable);
 
-    List<PostListDTO> getAllPosts();
+    PageResponseDTO<PostListDTO> searchPost(Pageable pageable, SearchPostRequest request);
+
+    PostResponseDTO updatePost(Long id, PostRequestDTO post) throws UnauthorizedException;
 
     void deletePost(Long id);
-
-
-
-
 
 }

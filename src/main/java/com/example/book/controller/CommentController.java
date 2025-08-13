@@ -2,13 +2,11 @@ package com.example.book.controller;
 
 
 import com.example.book.dto.ResponseDTO.Comment.CommentResponseDTO;
-import com.example.book.dto.ResponseDTO.Comment.CommentDTO;
-
-
 import com.example.book.entity.Comment;
 import com.example.book.service.impl.CommentServiceImpl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -22,6 +20,7 @@ public class CommentController {
         this.commentServiceImpl = commentServiceImpl;
     }
 
+    @PreAuthorize("isAuthenticated()")
     @GetMapping("/comments")
     public ResponseEntity<List<CommentResponseDTO>> getAllComments() {
         List<CommentResponseDTO> comments = commentServiceImpl.getComments();
@@ -31,8 +30,9 @@ public class CommentController {
         return new ResponseEntity<>(comments, HttpStatus.OK);
     }
 
+    @PreAuthorize("isAuthenticated()")
     @GetMapping("/comment/{id}")
-    public ResponseEntity<CommentResponseDTO> getPostById(@PathVariable long id) {
+    public ResponseEntity<CommentResponseDTO> getCommentById(@PathVariable long id) {
         CommentResponseDTO comment = commentServiceImpl.getComment(id);
         if(comment == null) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -40,27 +40,29 @@ public class CommentController {
         return new ResponseEntity<>(comment, HttpStatus.OK);
     }
 
+    @PreAuthorize("isAuthenticated()")
     @PostMapping("/comment/create")
-    public ResponseEntity<CommentDTO> createPost(@RequestBody Comment comment){
-        CommentDTO commentCreated = commentServiceImpl.addComment(comment);
+    public ResponseEntity<CommentResponseDTO> createComment(@RequestBody Comment comment){
+        CommentResponseDTO commentCreated = commentServiceImpl.addComment(comment);
         return new ResponseEntity<>(commentCreated, HttpStatus.CREATED);
     }
 
+    @PreAuthorize("isAuthenticated()")
     @PutMapping("/comment/update/{id}")
-    public ResponseEntity<CommentDTO> updatePost(@PathVariable long id, @RequestBody Comment comment){
-        CommentDTO commentUpdated = commentServiceImpl.updateComment(id, comment);
+    public ResponseEntity<CommentResponseDTO> updateComemnt(@PathVariable long id, @RequestBody Comment comment){
+        CommentResponseDTO commentUpdated = commentServiceImpl.updateComment(id, comment);
         if(commentUpdated == null){
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
         return new ResponseEntity<>(commentUpdated, HttpStatus.OK);
     }
-
+    @PreAuthorize("isAuthenticated()")
     @DeleteMapping("/comment/delete/{id}")
     public ResponseEntity<String> deleteComment(@PathVariable long id){
         commentServiceImpl.deleteComment(id);
-        return ResponseEntity.status(200).body("Delete successful");
-
+        return ResponseEntity.ok().body("Delete successful");
     }
+
 }
 
 

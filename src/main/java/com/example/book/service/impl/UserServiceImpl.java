@@ -1,31 +1,29 @@
 package com.example.book.service.impl;
 
 import com.example.book.constant.RoleType;
+import com.example.book.dto.RequestDTO.Search.SearchUserRequest;
+import com.example.book.dto.RequestDTO.UserRequestDTO;
 import com.example.book.dto.RequestDTO.UserRoleUpdateDTO;
-import com.example.book.dto.ResponseDTO.BorrowingResponseDTO;
-import com.example.book.dto.ResponseDTO.Comment.CommentUserDTO;
-import com.example.book.dto.ResponseDTO.Post.PostDTO;
-import com.example.book.dto.ResponseDTO.Post.PostUserDTO;
+import com.example.book.dto.ResponseDTO.PageResponseDTO;
 import com.example.book.dto.ResponseDTO.User.UserDetailDTO;
-import com.example.book.dto.ResponseDTO.User.UserInfoDTO;
 import com.example.book.dto.ResponseDTO.User.UserViewDTO;
 import com.example.book.entity.*;
 import com.example.book.exception.NullValueException;
+import com.example.book.exception.ResourceNotFoundException;
+import com.example.book.exception.UnauthorizedException;
 import com.example.book.repository.RoleRepository;
 import com.example.book.repository.UserRepository;
 import com.example.book.service.UserService;
+import com.example.book.specification.UserSpecification;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
-
-import static java.util.stream.Collectors.toList;
+import org.springframework.util.StringUtils;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -40,65 +38,122 @@ public class UserServiceImpl implements UserService {
         this.roleRepository = roleRepository;
     }
 
-    //CURRENTUSER
+    //CURRENT USER
     @Override
     public Object getUserById(Long id) throws NullValueException {
         User user = userRepository.findById(id).orElse(null);
         if (user == null) {
             throw new NullValueException("User not found");
         }
-        if(getCurrentUser().getUserId().equals(user.getUserId())) {
+        if( isCurrentUser(id) || user.getRole().getRoleName().equals(RoleType.ADMIN)) {
             return convertUserDetailToDTO(user);
         }
         else return convertUserViewToDTO(user);
     }
+
     //ADMIN OR USER
     @Override
-    public List<User> getAllUsers() {
-        return userRepository.findAll();
+    public PageResponseDTO<UserViewDTO> getAllUsers(Pageable pageable){
+        Page<User> userPage = userRepository.findAll(pageable);
+        Page<UserViewDTO> userResponsePage = userPage.map(this::convertUserViewToDTO);
+        PageResponseDTO<UserViewDTO> pageDTO = new PageResponseDTO<>(
+                userResponsePage.getNumber() + 1,
+                userResponsePage.getNumberOfElements(),
+                userResponsePage.getTotalPages(),
+                userResponsePage.getContent()
+        );
+        return pageDTO;
     }
     //ADMIN
     @Override
-    public void deleteUserById(Long id) throws NullValueException{
+    public void deleteUserById(Long id) throws NullValueException {
         if (!userRepository.existsById(id)) {
             throw new NullValueException("User not found");
         }
         userRepository.deleteById(id);
     }
 
+    //ADMIN (thuc ra day la chuc nang register nhung ma admin co the tao nguoi dung khac :))))
     @Override
-    public UserInfoDTO createUser(User user) {
-        Role role = roleRepository.findByRoleName(RoleType.USER);
-        user.setRole(role);
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
+    public UserRequestDTO createUser(UserRequestDTO userRequest){
+        User user = new User();
+        if(userRepository.existsByUserName(userRequest.getUserName())){
+            throw new DataIntegrityViolationException("Username already exists");
+        }
+        user.setUserName(userRequest.getUserName());
+        user.setPassword(passwordEncoder.encode(userRequest.getPassword()));
+        user.setRole(roleRepository.findByRoleName(RoleType.USER));
+        user.setBirthday(userRequest.getBirthday());
+        user.setAddress(userRequest.getAddress());
+        user.setPhoneNumber(userRequest.getPhoneNumber());
+        user.setIdentityNumber(userRequest.getIdentityNumber());
         userRepository.save(user);
         return convertUserInfoToDTO(user);
     }
-
+    //
     @Override
-    public UserInfoDTO updateUser(Long id, User user) throws NullValueException{
-        User updatedUser = userRepository.findById(id).orElse(null); //tra ve 1 proxy
-        updatedUser.setUserName(user.getUserName());
-        //updatedUser.setPassword(user.getPassword());
-        updatedUser.setBirthday(user.getBirthday());
-        updatedUser.setIdentityNumber(user.getIdentityNumber());
-        updatedUser.setAddress(user.getAddress());
-        updatedUser.setBirthday(user.getBirthday());
-        updatedUser.setPhoneNumber(user.getPhoneNumber());
+    public UserRequestDTO updateUser(Long id, UserRequestDTO userRequest) throws NullValueException, UnauthorizedException{
+        User updatedUser = userRepository.findById(id).orElse(null);
+        if(!isCurrentUser(id) ){
+            throw new UnauthorizedException("Access Denied!");
+        }
+        if(updatedUser == null){
+            throw new NullValueException("User not found!");
+        }
+        updatedUser.setUserName(userRequest.getUserName());
+        updatedUser.setPassword(passwordEncoder.encode(userRequest.getPassword()));
+        updatedUser.setRole(roleRepository.findByRoleName(RoleType.USER));
+        updatedUser.setBirthday(userRequest.getBirthday());
+        updatedUser.setAddress(userRequest.getAddress());
+        updatedUser.setPhoneNumber(userRequest.getPhoneNumber());
+        updatedUser.setIdentityNumber(userRequest.getIdentityNumber());
         userRepository.save(updatedUser);
         return convertUserInfoToDTO(updatedUser);
     }
 
-    //UPDATE ROLE OF ONE OR MORE PEOPLE
+    //ADMIN UPDATE ROLE OF ONE OR MORE PEOPLE
     @Override
-    public void updateRole(UserRoleUpdateDTO userRole) {
+    public void updateRole(UserRoleUpdateDTO userRole){
         Role roleUpdated = roleRepository.findByRoleName(RoleType.valueOf(userRole.getRoleName()));
         userRole.getUserNames().stream()
-                .map(userRepository::findByUserName)
+                .map(userName -> {
+                    User user = userRepository.findByUserName(userName);
+                    if (user == null) {
+                        throw new ResourceNotFoundException("User not found: " + userName);
+                    }
+                    return user;
+                })
                 .forEach(user -> {
                     user.setRole(roleUpdated);
                     userRepository.save(user);
                 });
+    }
+
+    @Override
+    public PageResponseDTO<UserViewDTO> searchUser(SearchUserRequest request, Pageable pageable){
+        Specification<User> spec = (root, query, cb) -> cb.conjunction();
+        String userName = request.getUserName();
+        Long userId = request.getUserId();
+        String roleName = request.getRoleName();
+
+        if(StringUtils.hasText(userName)){
+            spec = spec.and(UserSpecification.likeUserName(userName));
+        }
+        if(StringUtils.hasText(roleName)){
+            spec = spec.and(UserSpecification.hasRole(roleName));
+        }
+        if(userId != null){
+            spec = spec.and(UserSpecification.hasUserID(userId));
+        }
+        Page<User> userPage =  userRepository.findAll(spec, pageable);
+        Page<UserViewDTO> userViewDTOPage = userPage.map(this::convertUserViewToDTO);
+        return new PageResponseDTO<>(
+                userViewDTOPage.getNumber() + 1,
+                userViewDTOPage.getNumberOfElements(),
+                userViewDTOPage.getTotalPages(),
+                userViewDTOPage.getContent()
+        );
+
     }
 
     public boolean isCurrentUser(Long userId) {
@@ -136,8 +191,8 @@ public class UserServiceImpl implements UserService {
         }
     }
 
-    public UserInfoDTO convertUserInfoToDTO(User user){
-        UserInfoDTO userDTO = new UserInfoDTO();
+    public UserRequestDTO convertUserInfoToDTO(User user){
+        UserRequestDTO userDTO = new UserRequestDTO();
         userDTO.setUserName(user.getUserName());
         userDTO.setBirthday(user.getBirthday());
         userDTO.setIdentityNumber(user.getIdentityNumber());
@@ -146,34 +201,28 @@ public class UserServiceImpl implements UserService {
         userDTO.setFullName(user.getFullName());
         userDTO.setUserId(user.getUserId());
         userDTO.setPassword("HIDDEN");
-        userDTO.setRoleName(user.getRole().toString());
+        userDTO.setRoleName(user.getRole().getRoleName().toString());
         return userDTO;
     }
 
     public UserDetailDTO convertUserDetailToDTO(User user){
         UserDetailDTO userDetailDTO = new UserDetailDTO();
-        userDetailDTO.setUserInfoDTO(convertUserInfoToDTO(user));
-        List<PostUserDTO> posts = user.getPosts().stream()
-                .map(this::convertPost)
-                .toList();
-        userDetailDTO.setPosts(posts);
-        List<CommentUserDTO> comments = user.getComments().stream()
-                .map(this::convertComment)
-                .toList();
-        userDetailDTO.setComments(comments);
-        List<UserDetailDTO.BorrowingDTO> borrowings = new ArrayList<>();
-        for(Borrowing borrowing : user.getBorrowing()){
-            UserDetailDTO.BorrowingDTO borrowingDTO = new UserDetailDTO.BorrowingDTO();
-            borrowingDTO.setBorrowingDate(borrowing.getBorrowDate());
-            borrowingDTO.setBorrowingId(borrowing.getId());
-            borrowingDTO.setReturnDate(borrowing.getReturnDate());
-            BorrowingResponseDTO.BookDTO bookDTO = new BorrowingResponseDTO.BookDTO();
-            bookDTO.setBookId(borrowing.getBook().getBookId());
-            bookDTO.setBookName(borrowing.getBook().getBookName());
-            borrowingDTO.setBooks(bookDTO);
-            borrowings.add(borrowingDTO);
+        userDetailDTO.setUserRequestDTO(convertUserInfoToDTO(user));
+        if (user.getPosts() != null) {
+            for (Post post : user.getPosts()) {
+                userDetailDTO.getPostIDs().add(post.getPostId());
+            }
         }
-        userDetailDTO.setBorrowings(borrowings);
+        if (user.getComments() != null) {
+            for (Comment comment : user.getComments()) {
+                userDetailDTO.getCommentIDs().add(comment.getCommentId());
+            }
+        }
+        if (user.getBorrowing() != null) {
+            for (Borrowing borrowing : user.getBorrowing()) {
+                userDetailDTO.getBorrowingIDs().add(borrowing.getId());
+            }
+        }
         return userDetailDTO;
     }
 
@@ -183,17 +232,19 @@ public class UserServiceImpl implements UserService {
         userViewDTO.setBirthday(user.getBirthday());
         userViewDTO.setUserId(user.getUserId());
         userViewDTO.setRoleName(user.getRole().getRoleName().toString());
-        List<PostUserDTO> posts = user.getPosts().stream()
-                .map(this::convertPost)
-                .toList();
-        userViewDTO.setPosts(posts);
-        List<CommentUserDTO> comments = user.getComments().stream()
-                .map(this::convertComment)
-                .toList();
-        userViewDTO.setComments(comments);
+        if (user.getPosts() != null) {
+            for (Post post : user.getPosts()) {
+                userViewDTO.getPostIDs().add(post.getPostId());
+            }
+        }
+        if (user.getComments() != null) {
+            for (Comment comment : user.getComments()) {
+                userViewDTO.getCommentIDs().add(comment.getCommentId());
+            }
+        }
         return userViewDTO;
     }
-
+/*
     private PostUserDTO convertPost(Post post) {
         PostUserDTO dto = new PostUserDTO();
         dto.setId(post.getPostId());
@@ -210,15 +261,10 @@ public class UserServiceImpl implements UserService {
         dto.setCommentId(comment.getCommentId());
         dto.setCreatedAt(comment.getCreatedDate());
         dto.setUpdatedAt(comment.getLastModifiedDate());
-        dto.setContent(comment.getCommentDetail());
+        dto.setCommentDetail(comment.getCommentDetail());
+        PostCommentDTO postCommentDTO = new PostCommentDTO();
+        postCommentDTO.setUserPost(comment.getPost().getUser().getUserName());
         return dto;
     }
-
-
-
-
-
-
-
-
+ */
 }

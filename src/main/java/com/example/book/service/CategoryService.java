@@ -1,15 +1,19 @@
 package com.example.book.service;
 
 import com.example.book.dto.ResponseDTO.CategoryResponseDTO;
-import com.example.book.entity.Category;
+import com.example.book.dto.ResponseDTO.PageResponseDTO;
+import org.springframework.data.domain.Pageable;
 
-import java.util.List;
-import java.util.Optional;
 
 public interface CategoryService {
-    Optional<Category> getCategory(Long id);
-    CategoryResponseDTO addCategory(Category category);
-    CategoryResponseDTO updateCategory(Long id, Category category);
+
+    CategoryResponseDTO getCategory(Long id);
+
+    CategoryResponseDTO addCategory(CategoryResponseDTO category);
+
+    CategoryResponseDTO updateCategory(Long id, CategoryResponseDTO request);
+
     void deleteCategory(Long id);
-    List<CategoryResponseDTO> getAllCategories();
+
+    PageResponseDTO<CategoryResponseDTO> getAllCategories(Pageable pageable);
 }

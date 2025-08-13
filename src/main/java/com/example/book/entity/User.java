@@ -5,15 +5,10 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
 
 import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.*;
-import org.aspectj.bridge.IMessage;
-import org.springframework.format.annotation.DateTimeFormat;
-
-import java.time.Instant;
+import org.hibernate.annotations.SQLRestriction;
 import java.time.LocalDate;
-import java.util.Date;
 import java.util.List;
 
 @Setter
@@ -21,6 +16,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
+@SQLRestriction(value = "is_deleted = false") //mac dinh chi lay nhung ban gi ko bi soft delete
 @Table(name="user")
 public class User extends BaseEntity {
     @Id
@@ -35,9 +31,11 @@ public class User extends BaseEntity {
     @Column(unique = true)
     private String fullName;
     @NotEmpty
-    @Column(unique = true, length = 10)
+    @Column(unique = true)
+    @Size(min = 10, max = 10, message = "Phone number must be exactly 10 digits")
     private String phoneNumber;
-    @Column(unique = true, length = 12)
+    @Column(unique = true)
+    @Size(min = 12, max = 12, message = "Social Security must be exactly 12 digits")
     private String identityNumber;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private LocalDate birthday;

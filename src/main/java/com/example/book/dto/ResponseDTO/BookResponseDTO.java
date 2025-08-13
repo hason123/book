@@ -2,6 +2,7 @@ package com.example.book.dto.ResponseDTO;
 
 
 
+import com.example.book.entity.Category;
 import lombok.*;
 import java.util.List;
 
@@ -15,12 +16,11 @@ public class BookResponseDTO {
     private String bookName;
     private String author;
     private String publisher;
-    private int pageCount;
+    private Integer pageCount;
     private String printType;
     private String language;
-    private int quantity;
+    private Integer quantity;
     private String bookDesc;
-
     private List<CategoryDTO> categories;
 
     @Getter
@@ -31,6 +31,8 @@ public class BookResponseDTO {
         private Long categoryId;
         private String categoryName;
     }
+
+
 
 
 

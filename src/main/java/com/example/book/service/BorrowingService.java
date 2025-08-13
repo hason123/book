@@ -1,25 +1,25 @@
 package com.example.book.service;
 
 
-import com.example.book.dto.ResponseDTO.BookResponseDTO;
+import com.example.book.dto.RequestDTO.BorrowingRequestDTO;
 import com.example.book.dto.ResponseDTO.BorrowingResponseDTO;
-import com.example.book.dto.ResponseDTO.PageDTO;
-import com.example.book.entity.Borrowing;
+import com.example.book.dto.ResponseDTO.PageResponseDTO;
 import org.springframework.data.domain.Pageable;
 
-import java.util.List;
-import java.util.Optional;
-
 public interface BorrowingService {
-    BorrowingResponseDTO addBorrowing(Borrowing borrowing);
-    Optional<Borrowing> getBorrowingById(Long id);
+
+    BorrowingResponseDTO addBorrowing(BorrowingRequestDTO request);
+
+    BorrowingResponseDTO getBorrowingById(Long id);
+
     void deleteBookById(Long id);
 
-    BorrowingResponseDTO updateBook(Long id, Borrowing borrowing);
+    //don't know if this thing even works
+    BorrowingResponseDTO updateBook(Long id, BorrowingRequestDTO request);
 
-    PageDTO<BorrowingResponseDTO> getBorrowingPage(Pageable pageable);
+    PageResponseDTO<BorrowingResponseDTO> getBorrowingPage(Pageable pageable);
 
-    List<BorrowingResponseDTO> getAllBorrowings();
+
 
     //boolean borrowBooks(Borrowing borrowing);
 }

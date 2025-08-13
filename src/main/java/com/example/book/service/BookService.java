@@ -1,32 +1,31 @@
 package com.example.book.service;
 
-import com.example.book.dto.RequestDTO.SearchBookRequest;
+import com.example.book.dto.RequestDTO.BookRequestDTO;
+import com.example.book.dto.RequestDTO.Search.SearchBookRequest;
 import com.example.book.dto.ResponseDTO.BookResponseDTO;
-import com.example.book.dto.ResponseDTO.PageDTO;
-import com.example.book.entity.Book;
+import com.example.book.dto.ResponseDTO.PageResponseDTO;
 import org.springframework.data.domain.Pageable;
 
 import java.util.List;
-import java.util.Optional;
 
 public interface BookService {
 
 
-    BookResponseDTO addBook(Book book);
+    BookResponseDTO addBook(BookRequestDTO request);
 
-    Optional<Book> getBookById(Long id);
+    BookResponseDTO getBookById(Long id);
 
     void deleteBookById(Long id);
 
-    BookResponseDTO updateBook(Long id, Book book);
+    BookResponseDTO updateBook(Long id, BookRequestDTO request);
 
     List<BookResponseDTO> getAllBooks();
 
     //List<BookResponseDTO> getAllBooksPage(Pageable pageable);
 
-    PageDTO<BookResponseDTO> getBookPage(Pageable pageable);
+    PageResponseDTO<BookResponseDTO> getBookPage(Pageable pageable);
 
-    PageDTO<BookResponseDTO> searchBooks(SearchBookRequest searchBookRequest,
-                                         Pageable pageable);
+    PageResponseDTO<BookResponseDTO> searchBooks(SearchBookRequest searchBookRequest,
+                                                 Pageable pageable);
 
 }

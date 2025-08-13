@@ -11,7 +11,7 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class PageDTO<T> {
+public class PageResponseDTO<T> {
     private int currentPage;
     private int totalPage;
     private long totalElements;

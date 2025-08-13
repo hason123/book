@@ -36,4 +36,9 @@ public abstract class BaseEntity {
     @LastModifiedDate
     @Column(name = "last_modified_date")
     private LocalDate lastModifiedDate;
+
+    @Column(name = "is_deleted", nullable = false, columnDefinition = "TINYINT(1) DEFAULT 0")
+    private boolean is_deleted = false;
+
+   // private boolean is_active;
 }

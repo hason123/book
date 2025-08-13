@@ -1,100 +1,98 @@
 package com.example.book.service.impl;
 
-import com.example.book.dto.RequestDTO.SearchBookRequest;
+import com.example.book.dto.RequestDTO.BookRequestDTO;
+import com.example.book.dto.RequestDTO.Search.SearchBookRequest;
 import com.example.book.dto.ResponseDTO.BookResponseDTO;
-import com.example.book.dto.ResponseDTO.PageDTO;
+import com.example.book.dto.ResponseDTO.PageResponseDTO;
 import com.example.book.entity.Book;
 import com.example.book.entity.Category;
+import com.example.book.exception.ResourceNotFoundException;
 import com.example.book.repository.BookRepository;
 import com.example.book.repository.CategoryRepository;
 import com.example.book.service.BookService;
-import com.example.book.service.CategoryService;
 import com.example.book.specification.BookSpecification;
-import jakarta.persistence.EntityNotFoundException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.data.relational.core.sql.In;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
-
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+
 @Service
 public class BookServiceImpl implements BookService {
 
     private final BookRepository bookRepository;
     private final CategoryRepository categoryRepository;
-    private final CategoryService categoryService;
 
-    public BookServiceImpl(BookRepository bookRepository, CategoryRepository categoryRepository, CategoryService categoryService) {
+    public BookServiceImpl(BookRepository bookRepository, CategoryRepository categoryRepository) {
         this.bookRepository = bookRepository;
         this.categoryRepository = categoryRepository;
-        this.categoryService = categoryService;
     }
 
     @Override
-    public BookResponseDTO addBook(Book book) {
-        if(book.getCategories() != null) {
-           List<Category> categories = new ArrayList<>();
-           for(Category category : book.getCategories()) {
-               Optional<Category> categoryAdded = categoryRepository.findById(category.getCategoryId());
-               if(categoryAdded.isPresent()) {
-                   categories.add(categoryAdded.get());
-               }
-               else{
-                   throw new EntityNotFoundException(
-                           "Category with ID " + category.getCategoryId() + " not found"
-                   );
-               }
-           }
-           book.setCategories(categories);
+    public BookResponseDTO addBook(BookRequestDTO request) {
+        Book book = new Book();
+        book.setAuthor(request.getAuthor());
+        book.setBookDesc(request.getBookDesc());
+        book.setBookName(request.getBookName());
+        book.setPageCount(request.getPageCount());
+        book.setPublisher(request.getPublisher());
+        book.setQuantity(request.getQuantity());
+        if (request.getCategoryIDs() != null) {
+            List<Category> categories = request.getCategoryIDs().stream()
+                    .map(categoryID -> categoryRepository.findById(categoryID)
+                            .orElseThrow(() ->
+                                    new ResourceNotFoundException("Category with ID " + categoryID + " not found")))
+                    .toList();
+            book.setCategories(categories);
         }
         bookRepository.save(book);
         return convertBookToDTO(book);
     }
 
     @Override
-    public Optional<Book> getBookById(Long id) {
-       return bookRepository.findById(id);
+    public BookResponseDTO getBookById(Long id) {
+        Book book = bookRepository.findById(id).orElse(null);
+        if(book == null){
+            throw new ResourceNotFoundException("Book with ID " + id + " not found");
+        }
+        return convertBookToDTO(book);
     }
 
     @Override
     public void deleteBookById(Long id) {
+        if(!bookRepository.existsById(id)){
+            throw new ResourceNotFoundException("Book with ID " + id + " not found");
+        }
         bookRepository.deleteById(id);
     }
 
     @Override
-    public BookResponseDTO updateBook(Long id, Book book) {
-        try{
-            Book updatedBook = bookRepository.getReferenceById(id);
-            updatedBook.setAuthor(book.getAuthor());
-            updatedBook.setBookDesc(book.getBookDesc());
-            updatedBook.setBookName(book.getBookName());
-            updatedBook.setPageCount(book.getPageCount());
-            updatedBook.setPublisher(book.getPublisher());
-            updatedBook.setQuantity(book.getQuantity());
-            if(updatedBook.getCategories() != null) {
-                List<Category> categories = new ArrayList<>();
-                for(Category category : updatedBook.getCategories()) {
-                    Optional<Category> categoryAdded = categoryRepository.findById(category.getCategoryId());
-                    if(categoryAdded.isPresent()) {
-                        categories.add(categoryAdded.get());
-                    }
-                    else{
-                        throw new EntityNotFoundException(
-                                "Category with ID " + category.getCategoryId() + " not found"
-                        );
-                    }
-                }
-                updatedBook.setCategories(categories);
-            }
-            bookRepository.save(updatedBook);
-            return convertBookToDTO(updatedBook);
-        }catch (EntityNotFoundException e){
-            return null;
+    public BookResponseDTO updateBook(Long id, BookRequestDTO request) {
+        Book updatedBook = bookRepository.findById(id).orElse(null);
+        if(updatedBook == null){
+            throw new ResourceNotFoundException("Book with ID " + id + " not found");
         }
+        updatedBook.setAuthor(request.getAuthor());
+        updatedBook.setBookDesc(request.getBookDesc());
+        updatedBook.setBookName(request.getBookName());
+        updatedBook.setPageCount(request.getPageCount());
+        updatedBook.setPublisher(request.getPublisher());
+        updatedBook.setQuantity(request.getQuantity());
+        if (request.getCategoryIDs() != null) {
+            List<Category> categories = request.getCategoryIDs().stream()
+                    .map(categoryID -> categoryRepository.findById(categoryID)
+                            .orElseThrow(() ->
+                                    new ResourceNotFoundException("Category with ID " + categoryID + " not found")))
+                    .toList();
+            updatedBook.setCategories(categories);
+        }
+        bookRepository.save(updatedBook);
+        return convertBookToDTO(updatedBook);
     }
 
     @Override
@@ -109,7 +107,7 @@ public class BookServiceImpl implements BookService {
     }
 
     @Override
-    public PageDTO<BookResponseDTO> searchBooks(SearchBookRequest request, Pageable pageable) {
+    public PageResponseDTO<BookResponseDTO> searchBooks(SearchBookRequest request, Pageable pageable) {
         String bookName = request.getBookName();
         String author = request.getAuthor();
         Long bookId = request.getBookId();
@@ -161,7 +159,7 @@ public class BookServiceImpl implements BookService {
         Page<Book> bookPage = bookRepository.findAll(spec, pageable);
         Page<BookResponseDTO> bookResponseDTO = bookPage.map(this::convertBookToDTO);
 
-        return new PageDTO<>(
+        return new PageResponseDTO<>(
                 bookResponseDTO.getNumber() + 1,
                 bookResponseDTO.getNumberOfElements(),
                 bookResponseDTO.getTotalPages(),
@@ -170,10 +168,10 @@ public class BookServiceImpl implements BookService {
     }
 
     @Override
-    public PageDTO<BookResponseDTO> getBookPage(Pageable pageable) {
+    public PageResponseDTO<BookResponseDTO> getBookPage(Pageable pageable) {
         Page<Book> bookPage = bookRepository.findAll(pageable);
         Page<BookResponseDTO> bookResponseDTO = bookPage.map(book -> convertBookToDTO(book));
-        PageDTO<BookResponseDTO> pageDTO = new PageDTO<>(
+        PageResponseDTO<BookResponseDTO> pageDTO = new PageResponseDTO<>(
                 bookResponseDTO.getNumber() + 1,
                 bookResponseDTO.getNumberOfElements(),
                 bookResponseDTO.getTotalPages(),
@@ -191,8 +189,10 @@ public class BookServiceImpl implements BookService {
         bookDTO.setPageCount(book.getPageCount());
         bookDTO.setPublisher(book.getPublisher());
         bookDTO.setQuantity(book.getQuantity());
-
-        List<BookResponseDTO.CategoryDTO> categoryDTOs = new ArrayList<>();
+        bookDTO.setPrintType(book.getPrintType());
+        bookDTO.setLanguage(book.getLanguage());
+        bookDTO.setBookDesc(book.getBookDesc());
+       /* List<BookResponseDTO.CategoryDTO> categoryDTOs = new ArrayList<>();
         if (book.getCategories() != null) {
             for (Category category : book.getCategories()) {
                 BookResponseDTO.CategoryDTO dto = new BookResponseDTO.CategoryDTO();
@@ -201,7 +201,25 @@ public class BookServiceImpl implements BookService {
                 categoryDTOs.add(dto);
             }
         }
+        List<BookResponseDTO.CategoryDTO> categoryDTOs =
+        Optional.ofNullable(book.getCategories())
+            .orElseGet(Collections::emptyList)
+            .stream()
+            .filter(Objects::nonNull)
+            .filter(c -> categoryRepository.existsById(c.getCategoryId())) // validate against DB
+            .map(c -> new BookResponseDTO.CategoryDTO(
+                    c.getCategoryId(),
+                    c.getCategoryName()))
+            .collect(Collectors.toList());
+        */
+        List<BookResponseDTO.CategoryDTO> categoryDTOs =
+                Optional.ofNullable(book.getCategories())
+                        .orElseGet(Collections::emptyList)
+                        .stream()
+                        .map(c -> new BookResponseDTO.CategoryDTO(c.getCategoryId(), c.getCategoryName()))
+                        .collect(Collectors.toList());
         bookDTO.setCategories(categoryDTOs);
         return bookDTO;
     }
+
 }

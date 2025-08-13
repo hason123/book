@@ -1,11 +1,9 @@
 package com.example.book.dto.ResponseDTO.Comment;
 
 
-import com.example.book.dto.ResponseDTO.UserCommentPostDTO;
 import lombok.*;
-
-import java.time.Instant;
-
+import java.time.LocalDate;
+import java.util.List;
 
 @Getter
 @Setter
@@ -14,21 +12,10 @@ import java.time.Instant;
 public class CommentResponseDTO {
     private Long commentId;
     private String commentDetail;
-    private Instant createdAt;
-    private Instant updatedAt;
-    private UserCommentPostDTO userComment;
-    private PostDTO post;
-
-    @Getter
-    @Setter
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class PostDTO {
-        private Long postId;
-        private String postTitle;
-        private UserCommentPostDTO userPost;
-    }
-
-
-
+    private LocalDate createdAt;
+    private LocalDate updatedAt;
+    private String userComment;
+    private Long parentId;
+    private List<CommentResponseDTO> replies;
 }
+

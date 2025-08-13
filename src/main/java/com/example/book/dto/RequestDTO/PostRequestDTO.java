@@ -1,18 +1,15 @@
-package com.example.book.dto.ResponseDTO;
+package com.example.book.dto.RequestDTO;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-
-public class UserCommentPostDTO {
-    private Long userId;
-    private String userName;
-
+public class PostRequestDTO {
+    private String title;
+    private String content;
 }

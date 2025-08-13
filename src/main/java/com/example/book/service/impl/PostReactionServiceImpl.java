@@ -3,6 +3,7 @@ package com.example.book.service.impl;
 import com.example.book.constant.ReactionType;
 import com.example.book.entity.Post;
 import com.example.book.entity.PostReaction;
+import com.example.book.exception.ResourceNotFoundException;
 import com.example.book.repository.PostReactionRepository;
 import com.example.book.repository.PostRepository;
 import com.example.book.repository.UserRepository;
@@ -24,9 +25,9 @@ public class PostReactionServiceImpl {
 
     public void likePost(Long postId) {
         Long currentUserID = userServiceImpl.getCurrentUser().getUserId();
-        if (postReactionRepository.findByUserIdAndPostId(postId, currentUserID) != null) {
-            Post post = postRepository.findById(postId).get();
-            PostReaction postReacted = postReactionRepository.findByUserIdAndPostId(postId, currentUserID);
+        if (postReactionRepository.findByUser_UserIdAndPost_PostId(currentUserID, postId) != null) {
+            Post post = postRepository.findById(postId).orElseThrow(() -> new ResourceNotFoundException("Post does not exist!"));
+            PostReaction postReacted = postReactionRepository.findByUser_UserIdAndPost_PostId(currentUserID, postId);
             if (postReacted.getReactionType().equals(ReactionType.LIKE)) {
                 postReactionRepository.delete(postReacted);
                 post.setLikesCount(post.getLikesCount() - 1);
@@ -41,21 +42,21 @@ public class PostReactionServiceImpl {
             }
         } else {
             PostReaction postReaction = new PostReaction();
-            Post post = postRepository.findById(postId).get();
+            Post post = postRepository.findById(postId).orElseThrow(() -> new ResourceNotFoundException("Post does not exist!"));
             post.setLikesCount(post.getLikesCount() + 1);
             postRepository.save(post);
             postReaction.setPost(post);
             postReaction.setReactionType(ReactionType.LIKE);
-            postReaction.setUser(userRepository.findById(currentUserID).get());
+            postReaction.setUser(userRepository.findById(currentUserID).orElseThrow(() -> new ResourceNotFoundException("User does not exist!")));
             postReactionRepository.save(postReaction);
         }
     }
 
     public void disLikePost(Long postId) {
         Long currentUserID = userServiceImpl.getCurrentUser().getUserId();
-        if (postReactionRepository.findByUserIdAndPostId(postId, currentUserID) != null) {
-            Post post = postRepository.findById(postId).get();
-            PostReaction postReacted = postReactionRepository.findByUserIdAndPostId(postId, currentUserID);
+        if (postReactionRepository.findByUser_UserIdAndPost_PostId(currentUserID, postId) != null) {
+            Post post = postRepository.findById(postId).orElseThrow(() -> new ResourceNotFoundException("Post does not exist!"));
+            PostReaction postReacted = postReactionRepository.findByUser_UserIdAndPost_PostId(currentUserID, postId);
             if (postReacted.getReactionType().equals(ReactionType.DISLIKE)) {
                 postReactionRepository.delete(postReacted);
                 post.setLikesCount(post.getDislikesCount() - 1);
@@ -70,12 +71,12 @@ public class PostReactionServiceImpl {
             }
         } else {
             PostReaction postReaction = new PostReaction();
-            Post post = postRepository.findById(postId).get();
+            Post post = postRepository.findById(postId).orElseThrow(() -> new ResourceNotFoundException("Post does not exist!"));
             post.setDislikesCount(post.getDislikesCount() + 1);
             postRepository.save(post);
             postReaction.setPost(post);
             postReaction.setReactionType(ReactionType.DISLIKE);
-            postReaction.setUser(userRepository.findById(currentUserID).get());
+            postReaction.setUser(userRepository.findById(currentUserID).orElseThrow(() -> new ResourceNotFoundException("User does not exist!")));
             postReactionRepository.save(postReaction);
         }
     }

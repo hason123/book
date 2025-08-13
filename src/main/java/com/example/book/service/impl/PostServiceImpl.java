@@ -1,158 +1,136 @@
 package com.example.book.service.impl;
 
-
-import com.example.book.dto.ResponseDTO.Comment.CommentDTO;
+import com.example.book.constant.RoleType;
+import com.example.book.dto.RequestDTO.PostRequestDTO;
+import com.example.book.dto.RequestDTO.Search.SearchPostRequest;
+import com.example.book.dto.ResponseDTO.PageResponseDTO;
 import com.example.book.dto.ResponseDTO.Post.PostListDTO;
-import com.example.book.dto.ResponseDTO.Post.PostDTO;
-import com.example.book.dto.ResponseDTO.UserCommentPostDTO;
-import com.example.book.entity.Comment;
+import com.example.book.dto.ResponseDTO.Post.PostResponseDTO;
 import com.example.book.entity.Post;
+import com.example.book.exception.ResourceNotFoundException;
+import com.example.book.exception.UnauthorizedException;
 import com.example.book.repository.PostRepository;
-import com.example.book.repository.UserRepository;
 import com.example.book.service.PostService;
-import jakarta.persistence.EntityNotFoundException;
+import com.example.book.specification.PostSpecification;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.time.LocalDate;
 
 @Service
 public class PostServiceImpl implements PostService {
 
     private final PostRepository postRepository;
-    private final UserRepository userRepository;
+    private final UserServiceImpl userServiceImpl;
+    private final CommentServiceImpl commentServiceImpl;
 
-    public PostServiceImpl(PostRepository postRepository, UserRepository userRepository) {
+    public PostServiceImpl(PostRepository postRepository,  UserServiceImpl userServiceImpl, CommentServiceImpl commentServiceImpl) {
         this.postRepository = postRepository;
-        this.userRepository = userRepository;
+        this.userServiceImpl = userServiceImpl;
+        this.commentServiceImpl = commentServiceImpl;
     }
 
     @Override
-    public PostDTO addPost(Post post) {
-        if(!userRepository.existsById(post.getUser().getUserId())){
-            throw new EntityNotFoundException("User not found");
-        }
+    public PostResponseDTO addPost(PostRequestDTO request) {
+        Post post = new Post();
+        post.setTitle(request.getTitle());
+        post.setContent(request.getContent());
+        post.setUser(userServiceImpl.getCurrentUser());
         postRepository.save(post);
-        return convertPostCreateToDTO(post);
+        return convertPostToDTO(post);
     }
 
-    /*
     @Override
-    public PostDTO updatePost(Long id, Post post) {
-        Optional<Post> updatedPost = postRepository.findById(id);
-        try{
-            updatedPost.get().setTitle(post.getTitle());
-            updatedPost.get().setContent(post.getContent());
-            postRepository.save(updatedPost.get());
-            return convertPostUpdateToDTO(updatedPost.get());
-        }
-        catch(EntityNotFoundException e){
-            return null;
-        }
+    public PostResponseDTO getPost(Long id) {
+        Post post = postRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Post not found"));
+        return convertPostToDTO(post);
     }
-    */
+
     @Override
-    public PostDTO updatePost(Long id, Post post) {
-        Optional<Post> optionalPost = postRepository.findById(id);
-        if (optionalPost.isPresent()) {
-            Post updatedPost = optionalPost.get();
+    public PageResponseDTO<PostListDTO> getAllPosts(Pageable pageable) {
+       Page<Post> posts = postRepository.findAll(pageable);
+       Page<PostListDTO> postList = posts.map(this::convertPostListToDTO);
+       return new PageResponseDTO<>(postList.getNumber(), postList.getNumberOfElements(), postList.getTotalPages(), postList.getContent());
+    }
+
+    @Override
+    public PageResponseDTO<PostListDTO> searchPost(Pageable pageable, SearchPostRequest request){
+        Specification<Post> spec = ((root, query, criteriaBuilder) -> criteriaBuilder.conjunction());
+        String title = request.getTitle();
+        String content = request.getContent();
+        String userName = request.getUserName();
+        LocalDate beforeDate = request.getBeforeDate();
+        LocalDate afterDate = request.getAfterDate();
+        if(StringUtils.hasText(title)){
+            spec = spec.and(PostSpecification.likeTitle(title));
+        }
+        if(StringUtils.hasText(content)){
+            spec = spec.and(PostSpecification.likeContent(content));
+        }
+        if(StringUtils.hasText(userName)){
+            spec = spec.and(PostSpecification.hasUser(userName));
+        }
+        if(beforeDate != null){
+            spec = spec.and(PostSpecification.uploadBeforeDate(beforeDate));
+        }
+        if(afterDate != null){
+            spec = spec.and(PostSpecification.uploadAfterDate(afterDate));
+        }
+        Page<Post> posts = postRepository.findAll(spec, pageable);
+        Page<PostListDTO> postList = posts.map(this::convertPostListToDTO);
+        return new PageResponseDTO<>(postList.getNumber(), postList.getNumberOfElements(),
+                postList.getTotalPages(), postList.getContent());
+    }
+
+    @Override
+    public PostResponseDTO updatePost(Long id, PostRequestDTO post) throws UnauthorizedException {
+        Post updatedPost = postRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Post not found"));
+        if(userServiceImpl.getCurrentUser().getRole().getRoleName().equals(RoleType.ADMIN) ||
+                userServiceImpl.getCurrentUser().equals(updatedPost.getUser())) {
             updatedPost.setTitle(post.getTitle());
             updatedPost.setContent(post.getContent());
             postRepository.save(updatedPost);
-            return convertPostUpdateToDTO(updatedPost);
-        } else {
-            return null;
+            return convertPostToDTO(updatedPost);
         }
-    }
-
-
-    @Override
-    public Optional<Post> getPost(Long id) {
-       return postRepository.findById(id);
-    }
-
-    @Override
-    public List<PostListDTO> getAllPosts() {
-        List<Post> posts = postRepository.findAll();
-        List<PostListDTO> postList = new ArrayList<>();
-        for (Post post : posts) {
-            PostListDTO postDTO = convertPostListToDTO(post);
-            postList.add(postDTO);
-        }
-        return postList;
+        else throw new UnauthorizedException("Access denied!");
     }
 
     @Override
     public void deletePost(Long id) {
-        postRepository.deleteById(id);
+        if(postRepository.existsById(id)) {
+            postRepository.deleteById(id);
+        }
+        else throw new ResourceNotFoundException("Post not found");
     }
 
     public PostListDTO convertPostListToDTO(Post post) {
         PostListDTO postListDTO = new PostListDTO();
         postListDTO.setId(post.getPostId());
         postListDTO.setTitle(post.getTitle());
-       // postListDTO.setCreatedAt(post.getCreatedAt());
-       // postListDTO.setUpdatedAt(post.getUpdatedAt());
-        UserCommentPostDTO userPost = new UserCommentPostDTO();
-        userPost.setUserId(post.getUser().getUserId());
-        userPost.setUserName(post.getUser().getUserName());
-        postListDTO.setUserPost(userPost);
+        postListDTO.setCreatedAt(post.getCreatedDate());
+        postListDTO.setUpdatedAt(post.getLastModifiedDate());
+        postListDTO.setUserPost(post.getUser().getUserName());
         postListDTO.setCommentCount(post.getComments().size());
+        postListDTO.setLikesCount(post.getLikesCount());
+        postListDTO.setDislikesCount(post.getDislikesCount());
         return postListDTO;
     }
 
-    public PostDTO convertPostCreateToDTO(Post post) {
-        PostDTO PostDTO = new PostDTO();
-        PostDTO.setId(post.getPostId());
-        PostDTO.setTitle(post.getTitle());
-       // PostDTO.setCreatedAt(post.getCreatedAt());
-        PostDTO.setContent(post.getContent());
-        UserCommentPostDTO userPost = new UserCommentPostDTO();
-        userPost.setUserId(post.getUser().getUserId());
-        userPost.setUserName(post.getUser().getUserName());
-        PostDTO.setUserPost(userPost);
-        return PostDTO;
-    }
-
-    public PostDTO convertPostUpdateToDTO(Post post) {
-        PostDTO PostDTO = new PostDTO();
-        PostDTO.setId(post.getPostId());
-        PostDTO.setTitle(post.getTitle());
-        PostDTO.setContent(post.getContent());
-       // PostDTO.setUpdatedAt(post.getUpdatedAt());
-        UserCommentPostDTO userPost = new UserCommentPostDTO();
-        userPost.setUserId(post.getUser().getUserId());
-        userPost.setUserName(post.getUser().getUserName());
-        PostDTO.setUserPost(userPost);
-        return PostDTO;
-    }
-
-    public PostDTO convertPostResponseToDTO(Post post) {
-        PostDTO postDTO = new PostDTO();
+    public PostResponseDTO convertPostToDTO(Post post) {
+        PostResponseDTO postDTO = new PostResponseDTO();
         postDTO.setId(post.getPostId());
         postDTO.setTitle(post.getTitle());
         postDTO.setContent(post.getContent());
-        UserCommentPostDTO userPost = new UserCommentPostDTO();
-        userPost.setUserId(post.getUser().getUserId());
-        userPost.setUserName(post.getUser().getUserName());
-        postDTO.setUserPost(userPost);
-        List<CommentDTO> commentUpdateDTO = new ArrayList<>();
-        for(Comment comment : post.getComments()) {
-            CommentDTO commentUpdate = new CommentDTO();
-            commentUpdate.setCommentDetail(comment.getCommentDetail());
-            //commentUpdate.setCommentId(comment.getCommentId());
-            commentUpdate.setUpdatedAt(comment.getUpdatedAt());
-            UserCommentPostDTO userComment = new UserCommentPostDTO();
-           // userPost.setUserId(comment.getUser().getUserId());
-            userPost.setUserName(comment.getUser().getUserName());
-            commentUpdate.setUserComment(userComment);
-            commentUpdateDTO.add(commentUpdate);
-        }
-        postDTO.setComments(commentUpdateDTO);
+        postDTO.setUserPost(post.getUser().getUserName());
+        postDTO.setCreatedAt(post.getCreatedDate());
+        postDTO.setUpdatedAt(post.getLastModifiedDate());
+        postDTO.setCommentCount(post.getComments().size());
+        postDTO.setLikesCount(post.getLikesCount());
+        postDTO.setDislikesCount(post.getDislikesCount());
+        postDTO.setComments(commentServiceImpl.getCommentByPost(post.getPostId()));
         return postDTO;
     }
-
-
-
 }

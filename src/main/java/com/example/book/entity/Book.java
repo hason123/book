@@ -3,7 +3,6 @@ package com.example.book.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-
 import java.util.List;
 
 

@@ -2,14 +2,13 @@ package com.example.book.repository;
 
 import com.example.book.entity.PostReaction;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
-public interface PostReactionRepository extends JpaRepository<PostReaction,Long> {
-    Boolean existsByUserIdAndPostId(Long userId, Long postId);
+@Repository
+public interface PostReactionRepository extends JpaRepository<PostReaction, Long> {
 
-    PostReaction findByUserIdAndPostId(Long userId, Long postId);
+    Boolean existsByUser_UserIdAndPost_PostId(Long userId, Long postId);
 
-
-
-
+    PostReaction findByUser_UserIdAndPost_PostId(Long userId, Long postId);
 
 }

@@ -1,16 +1,15 @@
 package com.example.book.controller;
 
 import com.example.book.dto.ResponseDTO.CategoryResponseDTO;
-import com.example.book.entity.Category;
-import com.example.book.service.CategoryService;
+import com.example.book.dto.ResponseDTO.PageResponseDTO;
 import com.example.book.service.impl.CategoryServiceImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/v1/library/")
@@ -20,37 +19,33 @@ public class CategoryController {
 
     public CategoryController( CategoryServiceImpl categoryServiceImpl) {
         this.categoryServiceImpl = categoryServiceImpl;
-
     }
-
+    @PreAuthorize("isAuthenticated()")
     @GetMapping("/categories")
-    public ResponseEntity<List<CategoryResponseDTO>> getCategories() {
-        List<CategoryResponseDTO> categories = categoryServiceImpl.getAllCategories();
-        if (categories.isEmpty()) {
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-        }
-        return ResponseEntity.ok(categories);
+    public ResponseEntity<PageResponseDTO<CategoryResponseDTO>> getCategories(@RequestParam(value = "pageNumber", required = false, defaultValue = "1") Integer pageNumber,
+                                                                              @RequestParam(value = "pageSize", required = false, defaultValue = "3") Integer pageSize) {
+        Pageable pageable = PageRequest.of(pageNumber - 1, pageSize);
+        PageResponseDTO<CategoryResponseDTO> categoryPage = categoryServiceImpl.getAllCategories(pageable);
+        return ResponseEntity.ok(categoryPage);
     }
 
+    @PreAuthorize("isAuthenticated()")
     @GetMapping("/category/{id}")
     public ResponseEntity<CategoryResponseDTO> getCategory(@PathVariable long id) {
-        Optional<Category> category = categoryServiceImpl.getCategory(id);
-        if (category.isPresent()) {
-            CategoryResponseDTO categoryResponseDTO = categoryServiceImpl.convertEntityToDTO(category.get());
-            return ResponseEntity.ok(categoryResponseDTO);
-        }
-        return ResponseEntity.notFound().build();
+        CategoryResponseDTO category = categoryServiceImpl.getCategory(id);
+        return ResponseEntity.ok(category);
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'LIBRARIAN')")
     @PostMapping("/category/create")
-    public ResponseEntity<CategoryResponseDTO> createCategory(@RequestBody Category category) {
-
+    public ResponseEntity<CategoryResponseDTO> createCategory(@RequestBody CategoryResponseDTO category) {
         CategoryResponseDTO categoryAdded = categoryServiceImpl.addCategory(category);
         return ResponseEntity.status(HttpStatus.CREATED).body(categoryAdded);
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'LIBRARIAN')")
     @PutMapping("/category/update/{id}")
-    public ResponseEntity<CategoryResponseDTO> updateCategory(@PathVariable long id, @RequestBody Category category) {
+    public ResponseEntity<CategoryResponseDTO> updateCategory(@PathVariable long id, @RequestBody CategoryResponseDTO category) {
         CategoryResponseDTO categoryUpdated = categoryServiceImpl.updateCategory(id, category);
         if (categoryUpdated == null) {
             return ResponseEntity.notFound().build();
@@ -58,13 +53,10 @@ public class CategoryController {
         return ResponseEntity.ok(categoryUpdated);
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'LIBRARIAN')")
     @DeleteMapping("/category/delete/{id}")
     public ResponseEntity<?> deleteCategory(@PathVariable long id) {
-        Optional<Category> category = categoryServiceImpl.getCategory(id);
-        if (category.isPresent()) {
-            categoryServiceImpl.deleteCategory(id);
-            return ResponseEntity.status(200).body("Delete success!");
-        }
-        return ResponseEntity.notFound().build();
+        categoryServiceImpl.getCategory(id);
+        return ResponseEntity.status(200).body("Delete success!");
     }
 }

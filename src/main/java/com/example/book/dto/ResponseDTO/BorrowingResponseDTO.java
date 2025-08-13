@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.LocalDate;
 import java.util.Date;
 
 
@@ -15,9 +16,9 @@ import java.util.Date;
 @AllArgsConstructor
 public class BorrowingResponseDTO {
     private Long borrowingId;
-    private Date borrowingDate;
-    private Date returnDate;
-
+    private LocalDate borrowingDate;
+    private LocalDate returnDate;
+    /*
     private UserCommentPostDTO userCommentPostDTO;
     private BookDTO bookDTO;
     @Getter
@@ -28,6 +29,11 @@ public class BorrowingResponseDTO {
         private Long bookId;
         private String bookName;
     }
+     */
+    private String username;
+    private String bookName;
+    //private String userId;
+    //private String bookId;
 
 
 }

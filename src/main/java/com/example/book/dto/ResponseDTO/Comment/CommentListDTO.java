@@ -6,14 +6,18 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDate;
+import java.util.List;
 
-@Getter
 @Setter
-@NoArgsConstructor
+@Getter
 @AllArgsConstructor
-public class CommentUserDTO {
+@NoArgsConstructor
+//POV of ADMIN/USER
+public class CommentListDTO {
     private Long commentId;
-    private String content;
+    private String commentDetail;
     private LocalDate createdAt;
     private LocalDate updatedAt;
+    private String userComment;
+    private String postId;
 }

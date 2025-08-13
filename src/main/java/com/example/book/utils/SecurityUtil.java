@@ -1,14 +1,10 @@
 package com.example.book.utils;
 
 
-import com.example.book.dto.RequestDTO.ReqLoginDTO;
-import com.example.book.entity.Role;
+import com.example.book.dto.ResponseDTO.LoginResponseDTO;
 import com.nimbusds.jose.util.Base64;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.*;
@@ -19,7 +15,6 @@ import javax.crypto.spec.SecretKeySpec;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 public class SecurityUtil {
@@ -41,17 +36,17 @@ public class SecurityUtil {
     @Value("${hayson.jwt.refresh-token-validity-in-seconds}")
     private long refreshTokenExpiration;
 
-    public String createAccessToken(String userName, ReqLoginDTO reqLoginDTO) {
+    public String createAccessToken(String userName, LoginResponseDTO loginResponseDTO) {
         Instant now = Instant.now();
         Instant validity = now.plus(accessTokenExpiration, ChronoUnit.SECONDS);
 
-        String role = reqLoginDTO.getUser().getRole();
+        String role = loginResponseDTO.getUser().getRole();
 
         JwtClaimsSet claims = JwtClaimsSet.builder()
                 .issuedAt(now)
                 .expiresAt(validity)
                 .subject(userName)
-                .claim("user", reqLoginDTO.getUser())
+                .claim("user", loginResponseDTO.getUser())
                 .claim("role", role)
                 .build();
 
@@ -59,7 +54,7 @@ public class SecurityUtil {
         return this.jwtEncoder.encode(JwtEncoderParameters.from(jwsHeader, claims)).getTokenValue();
     }
 
-    public String createRefreshToken(String userName, ReqLoginDTO requestDTO) {
+    public String createRefreshToken(String userName, LoginResponseDTO requestDTO) {
         Instant now = Instant.now();
         Instant validity = now.plus(refreshTokenExpiration, ChronoUnit.SECONDS);
 
