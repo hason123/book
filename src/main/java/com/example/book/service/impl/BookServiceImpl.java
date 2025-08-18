@@ -98,11 +98,7 @@ public class BookServiceImpl implements BookService {
     @Override
     public List<BookResponseDTO> getAllBooks() {
         List<Book> books = bookRepository.findAll();
-        List <BookResponseDTO> bookResponseDTOS = new ArrayList<>();
-        for (Book book : books) {
-            BookResponseDTO bookResponseDTO = convertBookToDTO(book);
-            bookResponseDTOS.add(bookResponseDTO);
-        }
+        List <BookResponseDTO> bookResponseDTOS = books.stream().map(this::convertBookToDTO).collect(Collectors.toList());
         return bookResponseDTOS;
     }
 

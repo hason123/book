@@ -5,6 +5,7 @@ import com.example.book.dto.RequestDTO.Search.SearchBookRequest;
 import com.example.book.dto.ResponseDTO.BookResponseDTO;
 import com.example.book.dto.ResponseDTO.PageResponseDTO;
 import com.example.book.service.impl.BookServiceImpl;
+import com.example.book.service.impl.BookSyncService;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -16,9 +17,11 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/library")
 public class BookController {
     private final BookServiceImpl bookService;
+    private final BookSyncService bookSyncService;
 
-    public BookController(BookServiceImpl bookService) {
+    public BookController(BookServiceImpl bookService, BookSyncService bookSyncService) {
         this.bookService = bookService;
+        this.bookSyncService = bookSyncService;
     }
 
     @PreAuthorize("isAuthenticated()")
@@ -68,7 +71,13 @@ public class BookController {
     public ResponseEntity<?> deleteBook(@PathVariable("id") long id) {
         bookService.deleteBookById(id);
         return ResponseEntity.status(200).body("Delete successful");
+    }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'LIBRARIAN')")
+    @PostMapping("/book/sync")
+    public ResponseEntity<Void> syncBook() {
+        bookSyncService.syncBooksFromGoogle();
+        return ResponseEntity.status(200).build();
     }
 
 

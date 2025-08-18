@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.ArrayList;
 import java.util.List;
 //ADMIN va nguoi dung ca nhan co the xem duoc
 @Getter
@@ -14,7 +15,7 @@ import java.util.List;
 @AllArgsConstructor
 public class UserDetailDTO {
     private UserRequestDTO userRequestDTO;
-    private List<Long> postIDs;
-    private List<Long> commentIDs;
-    private List<Long> borrowingIDs;
+    private List<Long> postIDs = new ArrayList<>();
+    private List<Long> commentIDs = new ArrayList<>();
+    private List<Long> borrowingIDs = new ArrayList<>();
 }

@@ -28,4 +28,7 @@ public class CommentReaction extends BaseEntity {
 
     @Enumerated(EnumType.STRING) //luu data vao DB dang String
     private ReactionType reactionType;
+
+
 }
+

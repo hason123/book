@@ -1,18 +1,18 @@
 package com.example.book.service;
 
 import com.example.book.dto.ResponseDTO.Comment.CommentResponseDTO;
+import com.example.book.dto.ResponseDTO.Comment.CommentShortResponseDTO;
 import com.example.book.entity.Comment;
-
 import java.util.List;
 
 public interface CommentService {
-    CommentResponseDTO addComment(Comment comment);
+    CommentShortResponseDTO addComment(Comment comment);
 
-    List<CommentResponseDTO> getComments();
+    List<CommentShortResponseDTO> getComments();
 
-    CommentResponseDTO getComment(Long id);
+    CommentShortResponseDTO getComment(Long id);
 
-    CommentResponseDTO updateComment(Long id, Comment comment);
+    CommentShortResponseDTO updateComment(Long id, Comment comment);
 
     void deleteComment(Long id);
 

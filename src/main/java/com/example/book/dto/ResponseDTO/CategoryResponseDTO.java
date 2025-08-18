@@ -4,8 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import java.util.ArrayList;
 import java.util.List;
-
 
 @Setter
 @Getter
@@ -14,7 +14,7 @@ import java.util.List;
 public class CategoryResponseDTO {
     private Long categoryId;
     private String categoryName;
-    private List<BookBasic> bookBasic;
+    private List<BookBasic> bookBasic = new ArrayList<>();
     @Setter
     @Getter
     @AllArgsConstructor

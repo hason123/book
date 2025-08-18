@@ -39,7 +39,7 @@ public class UserController {
             @RequestParam(value = "pageNumber", defaultValue = "1", required = false) Integer pageNumber,
             @RequestParam(value = "pageSize", defaultValue = "3", required = false) Integer pageSize
     ) {
-        Pageable pageable = PageRequest.of(pageNumber, pageSize);
+        Pageable pageable = PageRequest.of(pageNumber - 1, pageSize);
         PageResponseDTO<UserViewDTO> userPage = userService.getAllUsers(pageable);
         return ResponseEntity.ok(userPage); // HTTP 200 + JSON list
     }
@@ -49,7 +49,7 @@ public class UserController {
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/user/{id}")
     public ResponseEntity<?> getUserById(@PathVariable Long id) throws NullValueException {
-        User user = (User) userService.getUserById(id);
+        Object user = userService.getUserById(id);
         return ResponseEntity.ok(user);
     }
     //DeleteUser

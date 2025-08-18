@@ -29,4 +29,6 @@ public class PostSpecification {
         return (root,query, cb)
                 -> cb.greaterThanOrEqualTo(root.get("createdDate"), uploadDate);
     }
+    //By default, Spring Boot (via Jackson) accepts LocalDate in ISO 8601 format:
+    //"2025-08-13"
 }

@@ -13,10 +13,8 @@ import java.util.Map;
 @Service
 @RequiredArgsConstructor
 public class BookSyncService {
-
     private final RestTemplate restTemplate;
     private final BookRepository bookRepository;
-
 
     public void syncBooksFromGoogle() {
         String url = "https://www.googleapis.com/books/v1/volumes?q=java";
@@ -31,7 +29,7 @@ public class BookSyncService {
         List<Book> books = new ArrayList<>();
 
         for (Map<String, Object> item : items) {
-            String id = (String) item.get("id");
+
 
             Map<String, Object> volumeInfo = (Map<String, Object>) item.get("volumeInfo");
             if (volumeInfo == null) continue;

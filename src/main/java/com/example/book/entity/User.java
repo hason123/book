@@ -4,10 +4,13 @@ package com.example.book.entity;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
 
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 import org.hibernate.annotations.SQLRestriction;
+import org.springframework.format.annotation.NumberFormat;
+
 import java.time.LocalDate;
 import java.util.List;
 
@@ -23,7 +26,7 @@ public class User extends BaseEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "user_id")
     private Long userId;
-    @NotEmpty
+    @NotEmpty(message = "Username must be filled!")
     @Column(unique = true)
     private String userName;
     private String password;

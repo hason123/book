@@ -1,15 +1,16 @@
 package com.example.book.service.impl;
 
 import com.example.book.dto.ResponseDTO.Comment.CommentResponseDTO;
+import com.example.book.dto.ResponseDTO.Comment.CommentShortResponseDTO;
 import com.example.book.entity.Comment;
 import com.example.book.exception.ResourceNotFoundException;
 import com.example.book.repository.CommentRepository;
 import com.example.book.repository.PostRepository;
 import com.example.book.repository.UserRepository;
 import com.example.book.service.CommentService;
-import jakarta.persistence.EntityNotFoundException;
 import org.springframework.stereotype.Service;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class CommentServiceImpl implements CommentService {
@@ -25,48 +26,45 @@ public class CommentServiceImpl implements CommentService {
     }
 
     @Override
-    public CommentResponseDTO addComment(Comment comment) {
+    public CommentShortResponseDTO addComment(Comment comment) {
         if(!userRepository.existsById(comment.getUser().getUserId()) ||
                 !postRepository.existsById(comment.getPost().getPostId())) {
-            throw new IllegalStateException("User or Post doesn't exist");
+            throw new ResourceNotFoundException("User or Post doesn't exist");
         }
         commentRepository.save(comment);
-        return convertCommentToDTO(comment);
+        return convertCommentToShortDTO(comment);
     }
 
     @Override
-    public CommentResponseDTO updateComment(Long id, Comment comment) {
+    public CommentShortResponseDTO updateComment(Long id, Comment comment) {
         Optional<Comment> optionalComment = commentRepository.findById(id);
         if (optionalComment.isPresent()) {
             Comment updatedComment = optionalComment.get();
             updatedComment.setCommentDetail(comment.getCommentDetail());
             updatedComment.setLastModifiedDate(comment.getLastModifiedDate());
             commentRepository.save(updatedComment);
-            return convertCommentToDTO(updatedComment);
+            return convertCommentToShortDTO(updatedComment);
         } else {
-            throw new EntityNotFoundException("Post not found with id: " + id);
+            throw new ResourceNotFoundException("Post not found with id: " + id);
         }
     }
 
     @Override
-    public List<CommentResponseDTO> getComments() {
+    public List<CommentShortResponseDTO> getComments() {
         List<Comment> comments = commentRepository.findAll();
-        List<CommentResponseDTO> commentResponseDTOS = new ArrayList<>();
-        for(Comment comment : comments) {
-            CommentResponseDTO commentResponseDTO = convertCommentToDTO(comment);
-            commentResponseDTOS.add(commentResponseDTO);
-        }
-        return commentResponseDTOS;
+        List<CommentShortResponseDTO> commentShortResponseDTOS = comments.stream()
+                .map(this::convertCommentToShortDTO).toList();
+        return commentShortResponseDTOS;
     }
 
     @Override
-    public CommentResponseDTO getComment(Long id) {
+    public CommentShortResponseDTO getComment(Long id) {
         Optional<Comment> commentOptional = commentRepository.findById(id);
         if(commentOptional.isPresent()) {
             Comment comment = commentOptional.get();
-            return convertCommentToDTO(comment);
+            return convertCommentToShortDTO(comment);
         }
-        return null;
+        else throw new ResourceNotFoundException("Comment not found with id: " + id);
     }
 
     @Override
@@ -77,20 +75,9 @@ public class CommentServiceImpl implements CommentService {
         List<Comment> comments = commentRepository.findAllByPost_PostId(postId);
         Map<Long, CommentResponseDTO> nodeMap = new HashMap<>();
         for (Comment c : comments) {
-             CommentResponseDTO comment = new CommentResponseDTO();
-             comment.setCommentDetail(c.getCommentDetail());
-             comment.setCommentId(c.getCommentId());
-             comment.setUserComment(c.getUser().getUserName());
-            //  comment.setParentId(c.getParent().getCommentId() != null ? c.getParent().getCommentId() : null); // error NPE
-             Comment parent = c.getParent();
-             Long parentId = (parent != null) ? parent.getCommentId() : null;
-             comment.setParentId(parentId);
-             comment.setCreatedAt(c.getCreatedDate());
-             comment.setUpdatedAt(c.getLastModifiedDate());
-             comment.setReplies(new ArrayList<>());
+             CommentResponseDTO comment = convertCommentToDTO(c);
              nodeMap.put(c.getCommentId(), comment);
         }
-
         List<CommentResponseDTO> commentRoots = new ArrayList<>();
         for(CommentResponseDTO commentNode : nodeMap.values()) {
             if(commentNode.getParentId() != null) {
@@ -106,18 +93,8 @@ public class CommentServiceImpl implements CommentService {
         //Comparator<CommentResponseDTO> comparator = Comparator.comparing(CommentResponseDTO::getCreatedAt);
         //commentRoots.sort(comparator.reversed());
         return commentRoots;
-
     }
 
-
-
-    //@Override
-    /*
-    public void deleteComment(Long id) {
-        commentRepository.deleteById(id);
-    }
-
-     */
     //de the nay thi no se xoa het ca nhung comment con
     //co the can nhac de neu xoa comment nao thi ghi de ten nguoi dung la deleted, con noi dung comment la comment removed by user
     @Override
@@ -127,6 +104,8 @@ public class CommentServiceImpl implements CommentService {
 
     public CommentResponseDTO convertCommentToDTO(Comment comment){
         CommentResponseDTO commentResponse = new CommentResponseDTO();
+        commentResponse.setCommentId(comment.getCommentId());
+        commentResponse.setCommentDetail(comment.getCommentDetail());
         commentResponse.setCreatedAt(comment.getCreatedDate());
         commentResponse.setCommentDetail(comment.getCommentDetail());
         commentResponse.setUpdatedAt(comment.getLastModifiedDate());
@@ -135,18 +114,23 @@ public class CommentServiceImpl implements CommentService {
             commentResponse.setParentId(comment.getParent().getCommentId());
         }
         commentResponse.setReplies(new ArrayList<>());
-        List<CommentResponseDTO> commentChilds = new ArrayList<>();
+        commentResponse.setLikes(comment.getLikesCount());
+        commentResponse.setDislikes(comment.getDislikesCount());
         return commentResponse;
     }
 
-    private static CommentResponseDTO getCommentResponseDTO(Comment comment) {
-        CommentResponseDTO commentResponse = new CommentResponseDTO();
+    public CommentShortResponseDTO convertCommentToShortDTO(Comment comment){
+        CommentShortResponseDTO commentResponse = new CommentShortResponseDTO();
         commentResponse.setCreatedAt(comment.getCreatedDate());
         commentResponse.setCommentDetail(comment.getCommentDetail());
         commentResponse.setUpdatedAt(comment.getLastModifiedDate());
         commentResponse.setUserComment(comment.getUser().getUserName());
+        commentResponse.setCommentLikes(comment.getLikesCount());
+        commentResponse.setCommentId(comment.getCommentId());
+        commentResponse.setCommentDislikes(comment.getDislikesCount());
         return commentResponse;
     }
+
 
 
 }

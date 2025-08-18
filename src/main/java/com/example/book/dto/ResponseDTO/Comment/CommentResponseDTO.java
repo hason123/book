@@ -2,6 +2,8 @@ package com.example.book.dto.ResponseDTO.Comment;
 
 
 import lombok.*;
+import org.springframework.validation.beanvalidation.SpringValidatorAdapter;
+
 import java.time.LocalDate;
 import java.util.List;
 
@@ -17,5 +19,7 @@ public class CommentResponseDTO {
     private String userComment;
     private Long parentId;
     private List<CommentResponseDTO> replies;
+    private Integer likes;
+    private Integer dislikes;
 }
 

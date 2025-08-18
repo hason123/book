@@ -244,27 +244,5 @@ public class UserServiceImpl implements UserService {
         }
         return userViewDTO;
     }
-/*
-    private PostUserDTO convertPost(Post post) {
-        PostUserDTO dto = new PostUserDTO();
-        dto.setId(post.getPostId());
-        dto.setTitle(post.getTitle());
-        dto.setContent(post.getContent());
-        dto.setCreatedAt(post.getCreatedDate());
-        dto.setUpdatedAt(post.getLastModifiedDate());
-        dto.setLikesCount(post.getLikesCount());
-        return dto;
-    }
 
-    private CommentUserDTO convertComment(Comment comment) {
-        CommentUserDTO dto = new CommentUserDTO();
-        dto.setCommentId(comment.getCommentId());
-        dto.setCreatedAt(comment.getCreatedDate());
-        dto.setUpdatedAt(comment.getLastModifiedDate());
-        dto.setCommentDetail(comment.getCommentDetail());
-        PostCommentDTO postCommentDTO = new PostCommentDTO();
-        postCommentDTO.setUserPost(comment.getPost().getUser().getUserName());
-        return dto;
-    }
- */
 }
