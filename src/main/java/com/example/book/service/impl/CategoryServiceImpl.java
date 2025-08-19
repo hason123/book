@@ -1,5 +1,6 @@
 package com.example.book.service.impl;
 
+import com.example.book.config.MessageConfig;
 import com.example.book.dto.ResponseDTO.CategoryResponseDTO;
 import com.example.book.dto.ResponseDTO.PageResponseDTO;
 import com.example.book.entity.Category;
@@ -20,17 +21,21 @@ import java.util.stream.Collectors;
 public class CategoryServiceImpl implements CategoryService {
     private final CategoryRepository categoryRepository;
     private final BookRepository bookRepository;
+    private final MessageConfig messageConfig;
+    private final String CATEGORY_NOT_FOUND= "error.category.notfound";
+    //private final String BOOK_NOT_FOUND= "error.book.notfound";
 
-    public CategoryServiceImpl(CategoryRepository categoryRepository, BookRepository bookRepository) {
+    public CategoryServiceImpl(CategoryRepository categoryRepository, BookRepository bookRepository, MessageConfig messageConfig) {
         this.categoryRepository = categoryRepository;
         this.bookRepository = bookRepository;
+        this.messageConfig = messageConfig;
     }
 
     @Override
     public CategoryResponseDTO getCategory(Long id) {
         Category category = categoryRepository.findById(id).orElse(null);
         if(category == null){
-            throw new ResourceNotFoundException("Category with" + id + "not found");
+            throw new ResourceNotFoundException(messageConfig.getMessage(CATEGORY_NOT_FOUND,id));
         }
         return convertEntityToDTO(category);
     }
@@ -47,17 +52,16 @@ public class CategoryServiceImpl implements CategoryService {
     public CategoryResponseDTO updateCategory(Long id, CategoryResponseDTO request) {
         Category updatedCategory = categoryRepository.findById(id).orElse(null);
         if(updatedCategory == null){
-            throw new ResourceNotFoundException("Category with" + id + "not found");
+            throw new ResourceNotFoundException(messageConfig.getMessage(CATEGORY_NOT_FOUND,id));
         }
         updatedCategory.setCategoryName(request.getCategoryName());
         categoryRepository.save(updatedCategory);
         return convertEntityToDTO(updatedCategory);
     }
 
-
     @Override
     public void deleteCategory(Long id) {
-        Category category = categoryRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Category with" + id + "not found"));
+        Category category = categoryRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException(messageConfig.getMessage(CATEGORY_NOT_FOUND,id)));
         categoryRepository.deleteById(id);
     }
 
@@ -73,7 +77,6 @@ public class CategoryServiceImpl implements CategoryService {
         );
         return categoryPage;
     }
-
 
     public CategoryResponseDTO convertEntityToDTO(Category category) {
         CategoryResponseDTO categoryDTO = new CategoryResponseDTO();

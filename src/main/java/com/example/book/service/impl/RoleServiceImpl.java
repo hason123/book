@@ -22,7 +22,8 @@ public class RoleServiceImpl implements RoleService {
     private final RoleRepository roleRepository;
     private final PermissionRepository permissionRepository;
     private final MessageConfig messageConfig;
-    private final static String ROLE_NOT_FOUND_CODE = "error.role.notfound";
+    private final static String ROLE_NOT_FOUND = "error.role.notfound";
+    private final static String PERMISSION_NOT_FOUND = "error.permission.notfound";
 
     public RoleServiceImpl(RoleRepository roleRepository, PermissionRepository permissionRepository, MessageConfig messageConfig) {
         this.roleRepository = roleRepository;
@@ -32,11 +33,11 @@ public class RoleServiceImpl implements RoleService {
 
     @Override
     public RoleResponseDTO updateRole(RoleRequestDTO request, Long roleId) {
-        Role role = roleRepository.findById(roleId).orElseThrow(() -> new ResourceNotFoundException(messageConfig.getMessage(ROLE_NOT_FOUND_CODE, roleId)));
+        Role role = roleRepository.findById(roleId).orElseThrow(() -> new ResourceNotFoundException(messageConfig.getMessage(ROLE_NOT_FOUND, roleId)));
         role.setRoleDesc(request.getDescription());
         if(request.getPermissionIds() != null) {
             List<Permission> permissions = request.getPermissionIds().stream().map(id -> permissionRepository.findById(id).orElseThrow(()
-                    -> new ResourceNotFoundException("Permission not found"))).toList();
+                    -> new ResourceNotFoundException(messageConfig.getMessage(PERMISSION_NOT_FOUND, id)))).toList();
             role.setPermissions(permissions);
         }
         roleRepository.save(role);
@@ -48,7 +49,7 @@ public class RoleServiceImpl implements RoleService {
         if(roleRepository.findById(roleId).isPresent()) {
             roleRepository.deleteById(roleId);
         }
-        else throw new ResourceNotFoundException("Role not found");
+        else throw new ResourceNotFoundException(messageConfig.getMessage(ROLE_NOT_FOUND, roleId));
     }
 
     @Override
@@ -63,7 +64,7 @@ public class RoleServiceImpl implements RoleService {
 
     @Override
     public RoleResponseDTO getRole(Long roleId) {
-        Role role  = roleRepository.findById(roleId).orElseThrow(() -> new ResourceNotFoundException("Role not found"));
+        Role role  = roleRepository.findById(roleId).orElseThrow(() -> new ResourceNotFoundException(messageConfig.getMessage(ROLE_NOT_FOUND, roleId)));
         return convertRoleToDTO(role);
     }
 

@@ -38,7 +38,6 @@ public class User extends BaseEntity {
     @Size(min = 10, max = 10, message = "Phone number must be exactly 10 digits")
     private String phoneNumber;
     @Column(unique = true)
-    @Size(min = 12, max = 12, message = "Social Security must be exactly 12 digits")
     private String identityNumber;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private LocalDate birthday;

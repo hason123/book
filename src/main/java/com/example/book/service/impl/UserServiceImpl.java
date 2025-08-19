@@ -1,5 +1,6 @@
 package com.example.book.service.impl;
 
+import com.example.book.config.MessageConfig;
 import com.example.book.constant.RoleType;
 import com.example.book.dto.RequestDTO.Search.SearchUserRequest;
 import com.example.book.dto.RequestDTO.UserRequestDTO;
@@ -31,11 +32,17 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final RoleRepository roleRepository;
+    private final MessageConfig messageConfig;
+    private final String USER_NOT_FOUND= "error.user.notfound";
+    private final String ACCESS_DENIED= "error.auth.access.denied";
+    private final String USER_NAME_UNIQUE= "error.user.name.unique";
 
-    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder, RoleRepository roleRepository) {
+
+    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder, RoleRepository roleRepository, MessageConfig messageConfig) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.roleRepository = roleRepository;
+        this.messageConfig = messageConfig;
     }
 
     //CURRENT USER
@@ -43,7 +50,7 @@ public class UserServiceImpl implements UserService {
     public Object getUserById(Long id) throws NullValueException {
         User user = userRepository.findById(id).orElse(null);
         if (user == null) {
-            throw new NullValueException("User not found");
+            throw new NullValueException(messageConfig.getMessage(USER_NOT_FOUND, id));
         }
         if( isCurrentUser(id) || user.getRole().getRoleName().equals(RoleType.ADMIN)) {
             return convertUserDetailToDTO(user);
@@ -68,7 +75,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public void deleteUserById(Long id) throws NullValueException {
         if (!userRepository.existsById(id)) {
-            throw new NullValueException("User not found");
+            throw new NullValueException(messageConfig.getMessage(USER_NOT_FOUND, id));
         }
         userRepository.deleteById(id);
     }
@@ -78,7 +85,7 @@ public class UserServiceImpl implements UserService {
     public UserRequestDTO createUser(UserRequestDTO userRequest){
         User user = new User();
         if(userRepository.existsByUserName(userRequest.getUserName())){
-            throw new DataIntegrityViolationException("Username already exists");
+            throw new DataIntegrityViolationException(messageConfig.getMessage(USER_NAME_UNIQUE));
         }
         user.setUserName(userRequest.getUserName());
         user.setPassword(passwordEncoder.encode(userRequest.getPassword()));
@@ -95,10 +102,10 @@ public class UserServiceImpl implements UserService {
     public UserRequestDTO updateUser(Long id, UserRequestDTO userRequest) throws NullValueException, UnauthorizedException{
         User updatedUser = userRepository.findById(id).orElse(null);
         if(!isCurrentUser(id) ){
-            throw new UnauthorizedException("Access Denied!");
+            throw new UnauthorizedException(messageConfig.getMessage(ACCESS_DENIED));
         }
         if(updatedUser == null){
-            throw new NullValueException("User not found!");
+            throw new NullValueException(messageConfig.getMessage(USER_NOT_FOUND, id));
         }
         updatedUser.setUserName(userRequest.getUserName());
         updatedUser.setPassword(passwordEncoder.encode(userRequest.getPassword()));
@@ -119,7 +126,7 @@ public class UserServiceImpl implements UserService {
                 .map(userName -> {
                     User user = userRepository.findByUserName(userName);
                     if (user == null) {
-                        throw new ResourceNotFoundException("User not found: " + userName);
+                        throw new ResourceNotFoundException(messageConfig.getMessage(USER_NOT_FOUND, userName));
                     }
                     return user;
                 })
@@ -209,19 +216,13 @@ public class UserServiceImpl implements UserService {
         UserDetailDTO userDetailDTO = new UserDetailDTO();
         userDetailDTO.setUserRequestDTO(convertUserInfoToDTO(user));
         if (user.getPosts() != null) {
-            for (Post post : user.getPosts()) {
-                userDetailDTO.getPostIDs().add(post.getPostId());
-            }
+            user.getPosts().forEach(post -> userDetailDTO.getPostIDs().add(post.getPostId()));
         }
         if (user.getComments() != null) {
-            for (Comment comment : user.getComments()) {
-                userDetailDTO.getCommentIDs().add(comment.getCommentId());
-            }
+            user.getComments().forEach(comment -> userDetailDTO.getCommentIDs().add(comment.getCommentId()));
         }
         if (user.getBorrowing() != null) {
-            for (Borrowing borrowing : user.getBorrowing()) {
-                userDetailDTO.getBorrowingIDs().add(borrowing.getId());
-            }
+            user.getBorrowing().forEach(borrowing -> {userDetailDTO.getBorrowingIDs().add(borrowing.getId());});
         }
         return userDetailDTO;
     }
@@ -233,14 +234,10 @@ public class UserServiceImpl implements UserService {
         userViewDTO.setUserId(user.getUserId());
         userViewDTO.setRoleName(user.getRole().getRoleName().toString());
         if (user.getPosts() != null) {
-            for (Post post : user.getPosts()) {
-                userViewDTO.getPostIDs().add(post.getPostId());
-            }
+            user.getPosts().forEach(post -> userViewDTO.getPostIDs().add(post.getPostId()));
         }
         if (user.getComments() != null) {
-            for (Comment comment : user.getComments()) {
-                userViewDTO.getCommentIDs().add(comment.getCommentId());
-            }
+            user.getComments().forEach(comment -> userViewDTO.getCommentIDs().add(comment.getCommentId()));
         }
         return userViewDTO;
     }

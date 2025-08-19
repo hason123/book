@@ -1,5 +1,6 @@
 package com.example.book.service.impl;
 
+import com.example.book.config.MessageConfig;
 import com.example.book.constant.RoleType;
 import com.example.book.dto.RequestDTO.PostRequestDTO;
 import com.example.book.dto.RequestDTO.Search.SearchPostRequest;
@@ -26,11 +27,15 @@ public class PostServiceImpl implements PostService {
     private final PostRepository postRepository;
     private final UserServiceImpl userServiceImpl;
     private final CommentServiceImpl commentServiceImpl;
+    private final MessageConfig messageConfig;
+    private final String POST_NOT_FOUND = "error.post.notfound";
+    private final String ACCESS_DENIED = "error.auth.access.denied";
 
-    public PostServiceImpl(PostRepository postRepository,  UserServiceImpl userServiceImpl, CommentServiceImpl commentServiceImpl) {
+    public PostServiceImpl(PostRepository postRepository, UserServiceImpl userServiceImpl, CommentServiceImpl commentServiceImpl, MessageConfig messageConfig) {
         this.postRepository = postRepository;
         this.userServiceImpl = userServiceImpl;
         this.commentServiceImpl = commentServiceImpl;
+        this.messageConfig = messageConfig;
     }
 
     @Override
@@ -45,7 +50,7 @@ public class PostServiceImpl implements PostService {
 
     @Override
     public PostResponseDTO getPost(Long id) {
-        Post post = postRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Post not found"));
+        Post post = postRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException(messageConfig.getMessage(POST_NOT_FOUND, id)));
         return convertPostToDTO(post);
     }
 
@@ -87,7 +92,7 @@ public class PostServiceImpl implements PostService {
 
     @Override
     public PostResponseDTO updatePost(Long id, PostRequestDTO post) throws UnauthorizedException {
-        Post updatedPost = postRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Post not found"));
+        Post updatedPost = postRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException(messageConfig.getMessage(POST_NOT_FOUND, id)));
         if(userServiceImpl.getCurrentUser().getRole().getRoleName().equals(RoleType.ADMIN) ||
                 userServiceImpl.getCurrentUser().equals(updatedPost.getUser())) {
             updatedPost.setTitle(post.getTitle());
@@ -95,7 +100,7 @@ public class PostServiceImpl implements PostService {
             postRepository.save(updatedPost);
             return convertPostToDTO(updatedPost);
         }
-        else throw new UnauthorizedException("Access denied!");
+        else throw new UnauthorizedException(messageConfig.getMessage(ACCESS_DENIED));
     }
 
     @Override
@@ -103,7 +108,7 @@ public class PostServiceImpl implements PostService {
         if(postRepository.existsById(id)) {
             postRepository.deleteById(id);
         }
-        else throw new ResourceNotFoundException("Post not found");
+        else throw new ResourceNotFoundException(messageConfig.getMessage(POST_NOT_FOUND, id));
     }
 
     public PostListDTO convertPostListToDTO(Post post) {
@@ -130,7 +135,9 @@ public class PostServiceImpl implements PostService {
         postDTO.setCommentCount(post.getComments().size());
         postDTO.setLikesCount(post.getLikesCount());
         postDTO.setDislikesCount(post.getDislikesCount());
-        postDTO.setComments(commentServiceImpl.getCommentByPost(post.getPostId()));
+        if(commentServiceImpl.getCommentByPost(post.getPostId()) != null) {
+            postDTO.setComments(commentServiceImpl.getCommentByPost(post.getPostId()));
+        }
         return postDTO;
     }
 }

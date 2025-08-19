@@ -1,6 +1,7 @@
 package com.example.book.controller;
 
 
+import com.example.book.config.MessageConfig;
 import com.example.book.dto.RequestDTO.LoginRequestDTO;
 import com.example.book.dto.ResponseDTO.LoginResponseDTO;
 import com.example.book.dto.RequestDTO.UserRequestDTO;
@@ -9,6 +10,7 @@ import com.example.book.exception.UnauthorizedException;
 import com.example.book.service.impl.UserServiceImpl;
 import com.example.book.utils.SecurityUtil;
 import jakarta.validation.Valid;
+import org.aspectj.bridge.MessageUtil;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
@@ -22,27 +24,30 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/v1/auth")
+@RequestMapping("/api/v1/library")
 public class AuthController {
 
     private final AuthenticationManagerBuilder authenticationManagerBuilder;
-
     private final SecurityUtil securityUtil;
     private final UserServiceImpl userServiceImpl;
+    private final MessageConfig messageConfig;
 
     @Value("${hayson.jwt.access-token-validity-in-seconds}")
     private long accessTokenExpiration;
-
     @Value("${hayson.jwt.refresh-token-validity-in-seconds}")
     private long refreshTokenExpiration;
+    private final String TOKEN_NOT_EXISTED = "error.auth.token.refresh";
+    private final String LOGOUT_SUCCESS = "success.user.logout";
 
-    public AuthController(AuthenticationManagerBuilder authenticationManagerBuilder, SecurityUtil securityUtil, UserServiceImpl userServiceImpl) {
+    public AuthController(AuthenticationManagerBuilder authenticationManagerBuilder, SecurityUtil securityUtil, UserServiceImpl userServiceImpl, MessageConfig messageConfig) {
         this.authenticationManagerBuilder = authenticationManagerBuilder;
         this.securityUtil = securityUtil;
         this.userServiceImpl = userServiceImpl;
+        this.messageConfig = messageConfig;
     }
 
-    @PostMapping("/login")
+    @PreAuthorize("isAnonymous()")
+    @PostMapping("/auth/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequestDTO loginRequest) {
         //Nạp input gồm username/password vào Security
         UsernamePasswordAuthenticationToken authenticationToken
@@ -82,8 +87,8 @@ public class AuthController {
                 .body(requestDTO);
     }
 
-   
-    @GetMapping("/refresh")
+    @PreAuthorize("isAuthenticated()")
+    @PutMapping("/auth/refresh")
     public ResponseEntity<LoginResponseDTO> refreshToken(
             @CookieValue(name = "refresh_token", defaultValue = "none") String refreshToken) throws UnauthorizedException
              {
@@ -92,13 +97,13 @@ public class AuthController {
         // SecurityUtil.getCurrentUserLogin().get()
                  //Co the can nhac check xem user voi token co hop le ko
         if(userName.equals("none")) {
-            throw new UnauthorizedException("No refresh token in cookie");
+            throw new UnauthorizedException(messageConfig.getMessage(TOKEN_NOT_EXISTED));
         }
         LoginResponseDTO loginResponseDTO = new LoginResponseDTO();
         User currentUserDB = this.userServiceImpl.handleGetUserByUserNameAndRefreshToken(userName, refreshToken);
 
         if(currentUserDB == null) {
-            throw new UnauthorizedException("No refresh token in cookie");
+            throw new UnauthorizedException(messageConfig.getMessage(TOKEN_NOT_EXISTED));
         }
         LoginResponseDTO.UserLogin userLogin = new LoginResponseDTO.UserLogin(
                 currentUserDB.getUserId(),
@@ -127,14 +132,12 @@ public class AuthController {
         return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, resCookies.toString()).body(loginResponseDTO);
     }
 
+    @PreAuthorize("isAuthenticated()")
     @PostMapping("/logout")
     public ResponseEntity<String> logout() throws UnauthorizedException {
         Optional<String> currentUser = SecurityUtil.getCurrentUserLogin();
 
         String userName = currentUser.get();
-        if(userName.equals("anonymousUser")) {
-            throw new UnauthorizedException("User is not logged in. Please send your access token");
-        }
         userServiceImpl.updateUserToken("", userName);  // "" means delete token
 
         System.out.println(userName);
@@ -145,10 +148,9 @@ public class AuthController {
                 .maxAge(0) // Expire immediately
                 .build();
 
-
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, deleteCookie.toString())
-                .body("User" + userName + "logged out");
+                .body(LOGOUT_SUCCESS);
     }
 
     @PreAuthorize("isAnonymous()")

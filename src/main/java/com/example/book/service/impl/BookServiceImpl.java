@@ -1,5 +1,6 @@
 package com.example.book.service.impl;
 
+import com.example.book.config.MessageConfig;
 import com.example.book.dto.RequestDTO.BookRequestDTO;
 import com.example.book.dto.RequestDTO.Search.SearchBookRequest;
 import com.example.book.dto.ResponseDTO.BookResponseDTO;
@@ -27,10 +28,15 @@ public class BookServiceImpl implements BookService {
 
     private final BookRepository bookRepository;
     private final CategoryRepository categoryRepository;
+    private final MessageConfig messageConfig;
+    private final String CATEGORY_NOT_FOUND= "error.category.notfound";
+    private final String BOOK_NOT_FOUND= "error.book.notfound";
 
-    public BookServiceImpl(BookRepository bookRepository, CategoryRepository categoryRepository) {
+
+    public BookServiceImpl(BookRepository bookRepository, CategoryRepository categoryRepository, MessageConfig messageConfig) {
         this.bookRepository = bookRepository;
         this.categoryRepository = categoryRepository;
+        this.messageConfig = messageConfig;
     }
 
     @Override
@@ -46,7 +52,7 @@ public class BookServiceImpl implements BookService {
             List<Category> categories = request.getCategoryIDs().stream()
                     .map(categoryID -> categoryRepository.findById(categoryID)
                             .orElseThrow(() ->
-                                    new ResourceNotFoundException("Category with ID " + categoryID + " not found")))
+                                    new ResourceNotFoundException(messageConfig.getMessage(CATEGORY_NOT_FOUND,categoryID))))
                     .toList();
             book.setCategories(categories);
         }
@@ -58,7 +64,7 @@ public class BookServiceImpl implements BookService {
     public BookResponseDTO getBookById(Long id) {
         Book book = bookRepository.findById(id).orElse(null);
         if(book == null){
-            throw new ResourceNotFoundException("Book with ID " + id + " not found");
+            throw new ResourceNotFoundException(messageConfig.getMessage(BOOK_NOT_FOUND,id));
         }
         return convertBookToDTO(book);
     }
@@ -66,7 +72,7 @@ public class BookServiceImpl implements BookService {
     @Override
     public void deleteBookById(Long id) {
         if(!bookRepository.existsById(id)){
-            throw new ResourceNotFoundException("Book with ID " + id + " not found");
+            throw new ResourceNotFoundException(messageConfig.getMessage(BOOK_NOT_FOUND,id));
         }
         bookRepository.deleteById(id);
     }
@@ -75,7 +81,7 @@ public class BookServiceImpl implements BookService {
     public BookResponseDTO updateBook(Long id, BookRequestDTO request) {
         Book updatedBook = bookRepository.findById(id).orElse(null);
         if(updatedBook == null){
-            throw new ResourceNotFoundException("Book with ID " + id + " not found");
+            throw new ResourceNotFoundException(messageConfig.getMessage(BOOK_NOT_FOUND,id));
         }
         updatedBook.setAuthor(request.getAuthor());
         updatedBook.setBookDesc(request.getBookDesc());
@@ -87,7 +93,7 @@ public class BookServiceImpl implements BookService {
             List<Category> categories = request.getCategoryIDs().stream()
                     .map(categoryID -> categoryRepository.findById(categoryID)
                             .orElseThrow(() ->
-                                    new ResourceNotFoundException("Category with ID " + categoryID + " not found")))
+                                    new ResourceNotFoundException(messageConfig.getMessage(CATEGORY_NOT_FOUND,categoryID))))
                     .toList();
             updatedBook.setCategories(categories);
         }
@@ -166,7 +172,7 @@ public class BookServiceImpl implements BookService {
     @Override
     public PageResponseDTO<BookResponseDTO> getBookPage(Pageable pageable) {
         Page<Book> bookPage = bookRepository.findAll(pageable);
-        Page<BookResponseDTO> bookResponseDTO = bookPage.map(book -> convertBookToDTO(book));
+        Page<BookResponseDTO> bookResponseDTO = bookPage.map(this::convertBookToDTO);
         PageResponseDTO<BookResponseDTO> pageDTO = new PageResponseDTO<>(
                 bookResponseDTO.getNumber() + 1,
                 bookResponseDTO.getNumberOfElements(),
@@ -217,5 +223,4 @@ public class BookServiceImpl implements BookService {
         bookDTO.setCategories(categoryDTOs);
         return bookDTO;
     }
-
 }

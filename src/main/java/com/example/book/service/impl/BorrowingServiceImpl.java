@@ -1,6 +1,7 @@
 package com.example.book.service.impl;
 
 
+import com.example.book.config.MessageConfig;
 import com.example.book.dto.RequestDTO.BorrowingRequestDTO;
 import com.example.book.dto.ResponseDTO.BorrowingResponseDTO;
 import com.example.book.dto.ResponseDTO.PageResponseDTO;
@@ -17,7 +18,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -25,27 +25,34 @@ public class BorrowingServiceImpl implements BorrowingService {
     private final BorrowingRepository borrowingRepository;
     private final BookRepository bookRepository;
     private final UserRepository userRepository;
+    private final MessageConfig messageConfig;
+    private final String BORROWING_NOT_FOUND = "error.borrowing.notfound";
+    private final String USER_NOT_FOUND = "error.user.notfound";
+    private final String BOOK_NOT_FOUND = "error.book.notfound";
+    private final String BOOK_OUT_OF_STOCK = "error.book.outofstock";
+    private final String BORROWING_WRONG_DATE = "error.borrowing.wrongdate";
 
-    public BorrowingServiceImpl(BorrowingRepository borrowingRepository, BookRepository bookRepository, UserRepository userRepository) {
+    public BorrowingServiceImpl(BorrowingRepository borrowingRepository, BookRepository bookRepository, UserRepository userRepository, MessageConfig messageConfig) {
         this.borrowingRepository = borrowingRepository;
         this.bookRepository = bookRepository;
         this.userRepository = userRepository;
+        this.messageConfig = messageConfig;
     }
 
     @Override
     public BorrowingResponseDTO addBorrowing(BorrowingRequestDTO request) {
-        User userAdded = userRepository.findById(request.getUserId()).orElseThrow(() -> new ResourceNotFoundException("Can't find user"));
-        Book bookAdded = bookRepository.findById(request.getBookId()).orElseThrow(() -> new ResourceNotFoundException("Can't find book"));
+        User userAdded = userRepository.findById(request.getUserId()).orElseThrow(() -> new ResourceNotFoundException(messageConfig.getMessage(USER_NOT_FOUND , request.getUserId())));
+        Book bookAdded = bookRepository.findById(request.getBookId()).orElseThrow(() -> new ResourceNotFoundException(messageConfig.getMessage(BOOK_NOT_FOUND, request.getBookId())));
         Borrowing borrowing = new Borrowing();
         borrowing.setUser(userAdded);
         borrowing.setBook(bookAdded);
         borrowing.setBorrowDate(request.getBorrowingDate());
         borrowing.setReturnDate(request.getReturnDate());
         if (checkDuplicate(borrowing)) {
-            throw new BusinessException("Please choose another date! User has already borrowed this book!");
+            throw new BusinessException(messageConfig.getMessage(BORROWING_WRONG_DATE));
         }
         if(bookAdded.getQuantity() == 0){
-            throw new BusinessException ("Book with ID " + borrowing.getBook().getBookId() + " is out of stock");
+            throw new BusinessException (messageConfig.getMessage(BOOK_OUT_OF_STOCK, request.getBookId()));
         }
         borrowingRepository.save(borrowing);
         borrowBooks(borrowing);
@@ -54,7 +61,7 @@ public class BorrowingServiceImpl implements BorrowingService {
 
     @Override
     public BorrowingResponseDTO getBorrowingById(Long id) {
-        Borrowing borrowing = borrowingRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Can't find borrowing"));
+        Borrowing borrowing = borrowingRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException(messageConfig.getMessage(BORROWING_NOT_FOUND, id)));
         return convertBorrowingToDTO(borrowing);
     }
 
@@ -63,19 +70,19 @@ public class BorrowingServiceImpl implements BorrowingService {
         if(borrowingRepository.existsById(id)) {
             borrowingRepository.deleteById(id);
         }
-        else throw new ResourceNotFoundException("Can't find borrowing");
+        else throw new ResourceNotFoundException(messageConfig.getMessage(BORROWING_NOT_FOUND, id));
     }
 
     //don't know if this thing even works
     @Override
-    public BorrowingResponseDTO updateBook(Long id, BorrowingRequestDTO request) {
-        Borrowing updatedBorrowing = borrowingRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Can't find borrowing"));
-        User newUser = userRepository.findById(request.getUserId()).orElseThrow(() -> new ResourceNotFoundException("Can't find user"));
+    public BorrowingResponseDTO updateBorrowing(Long id, BorrowingRequestDTO request) {
+        Borrowing updatedBorrowing = borrowingRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException(messageConfig.getMessage(BORROWING_NOT_FOUND, id)));
+        User newUser = userRepository.findById(request.getUserId()).orElseThrow(() -> new ResourceNotFoundException(messageConfig.getMessage(USER_NOT_FOUND , request.getUserId())));
         updatedBorrowing.setUser(newUser);
         updatedBorrowing.setBorrowDate(request.getBorrowingDate());
         updatedBorrowing.setReturnDate(request.getReturnDate());
         Book oldBook = updatedBorrowing.getBook();
-        Book newBook = bookRepository.findById(request.getBookId()).orElseThrow(() -> new ResourceNotFoundException("Can't find book"));
+        Book newBook = bookRepository.findById(request.getBookId()).orElseThrow(() -> new ResourceNotFoundException(messageConfig.getMessage(BOOK_NOT_FOUND, request.getBookId())));
         if(!oldBook.equals(newBook)){
             updatedBorrowing.setBook(newBook);
             oldBook.setQuantity(oldBook.getQuantity() + 1);
@@ -84,7 +91,7 @@ public class BorrowingServiceImpl implements BorrowingService {
             borrowBooks(updatedBorrowing);
         }
         if (checkDuplicate(updatedBorrowing)) {
-            throw new BusinessException("Please choose another date! User has already borrowed this book!");
+            throw new BusinessException(messageConfig.getMessage(BORROWING_WRONG_DATE));
         }
         borrowingRepository.save(updatedBorrowing);
         return convertBorrowingToDTO(updatedBorrowing);
@@ -102,7 +109,7 @@ public class BorrowingServiceImpl implements BorrowingService {
         );
         return pageDTO;
     }
-
+/*
     public List<BorrowingResponseDTO> getAllBorrowings() {
         List<BorrowingResponseDTO> borrowList = new ArrayList<>();
         List<Borrowing> borrows = borrowingRepository.findAll();
@@ -113,6 +120,7 @@ public class BorrowingServiceImpl implements BorrowingService {
         return borrowList;
     }
 
+ */
     //books out of stock meaning cannot borrow the same book during borrow date - return date
     //book's quantity reduces by one during the time of borrowing
     private void borrowBooks(Borrowing borrowing) {

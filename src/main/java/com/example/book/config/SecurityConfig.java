@@ -38,7 +38,7 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable()) // dùng lambda thay vì csrf().disable()
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/", "/api/v1/auth/login", "/api/v1/auth/refresh", "/api/v1/auth/register", "/api/v1/auth/logout").permitAll()
+                        .requestMatchers("/", "/api/v1/library/auth/login", "/api/v1/library/auth/register").permitAll()
                         .anyRequest().authenticated() // tất cả request được phép
                 )
                 .oauth2ResourceServer(oauth2 -> oauth2

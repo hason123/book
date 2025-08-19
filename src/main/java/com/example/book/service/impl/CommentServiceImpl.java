@@ -1,5 +1,6 @@
 package com.example.book.service.impl;
 
+import com.example.book.config.MessageConfig;
 import com.example.book.dto.ResponseDTO.Comment.CommentResponseDTO;
 import com.example.book.dto.ResponseDTO.Comment.CommentShortResponseDTO;
 import com.example.book.entity.Comment;
@@ -18,18 +19,21 @@ public class CommentServiceImpl implements CommentService {
     private final CommentRepository commentRepository;
     private final UserRepository userRepository;
     private final PostRepository postRepository;
+    private final MessageConfig messageConfig;
+    private final String POST_NOT_FOUND = "error.post.notfound";
+    private final String COMMENT_NOT_FOUND = "error.comment.notfound";
 
-    public CommentServiceImpl(CommentRepository commentRepository, UserRepository userRepository, PostRepository postRepository) {
+    public CommentServiceImpl(CommentRepository commentRepository, UserRepository userRepository, PostRepository postRepository, MessageConfig messageConfig) {
         this.commentRepository = commentRepository;
         this.userRepository = userRepository;
         this.postRepository = postRepository;
+        this.messageConfig = messageConfig;
     }
 
     @Override
     public CommentShortResponseDTO addComment(Comment comment) {
-        if(!userRepository.existsById(comment.getUser().getUserId()) ||
-                !postRepository.existsById(comment.getPost().getPostId())) {
-            throw new ResourceNotFoundException("User or Post doesn't exist");
+        if(!postRepository.existsById(comment.getPost().getPostId())) {
+            throw new ResourceNotFoundException(messageConfig.getMessage(POST_NOT_FOUND, comment.getPost().getPostId()));
         }
         commentRepository.save(comment);
         return convertCommentToShortDTO(comment);
@@ -45,7 +49,7 @@ public class CommentServiceImpl implements CommentService {
             commentRepository.save(updatedComment);
             return convertCommentToShortDTO(updatedComment);
         } else {
-            throw new ResourceNotFoundException("Post not found with id: " + id);
+            throw new ResourceNotFoundException(messageConfig.getMessage(POST_NOT_FOUND, comment.getPost().getPostId()));
         }
     }
 
@@ -64,13 +68,13 @@ public class CommentServiceImpl implements CommentService {
             Comment comment = commentOptional.get();
             return convertCommentToShortDTO(comment);
         }
-        else throw new ResourceNotFoundException("Comment not found with id: " + id);
+        else throw new ResourceNotFoundException(messageConfig.getMessage(COMMENT_NOT_FOUND, id));
     }
 
     @Override
     public List<CommentResponseDTO> getCommentByPost(Long postId) {
         if (!postRepository.existsById(postId)) {
-            throw new ResourceNotFoundException("Post not found with id: " + postId);
+            throw new ResourceNotFoundException(messageConfig.getMessage(POST_NOT_FOUND, postId));
         }
         List<Comment> comments = commentRepository.findAllByPost_PostId(postId);
         Map<Long, CommentResponseDTO> nodeMap = new HashMap<>();
@@ -99,7 +103,15 @@ public class CommentServiceImpl implements CommentService {
     //co the can nhac de neu xoa comment nao thi ghi de ten nguoi dung la deleted, con noi dung comment la comment removed by user
     @Override
     public void deleteComment(Long id){
-        commentRepository.deleteById(id);
+        Comment commentDeleted = commentRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException(messageConfig.getMessage(COMMENT_NOT_FOUND, id)));
+        List<Comment> comments = commentRepository.findAllByParent_CommentId(id);
+        comments.forEach(c -> { if(commentDeleted.getParent() != null)
+            {
+                c.setParent(commentDeleted.getParent()); commentRepository.save(c);
+            }
+            else {c.setParent(null); commentRepository.save(c);}
+        });
+        commentRepository.delete(commentDeleted);
     }
 
     public CommentResponseDTO convertCommentToDTO(Comment comment){

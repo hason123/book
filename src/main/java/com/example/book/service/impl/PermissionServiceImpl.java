@@ -1,5 +1,6 @@
 package com.example.book.service.impl;
 
+import com.example.book.config.MessageConfig;
 import com.example.book.dto.RequestDTO.PermissionRequestDTO;
 import com.example.book.dto.ResponseDTO.PageResponseDTO;
 import com.example.book.dto.ResponseDTO.PermissionResponseDTO;
@@ -19,10 +20,14 @@ public class PermissionServiceImpl implements PermissionService {
 
     private final PermissionRepository permissionRepository;
     private final RoleRepository roleRepository;
+    private final MessageConfig messageConfig;
+    private final static String ROLE_NOT_FOUND = "error.role.notfound";
+    private final static String PERMISSION_NOT_FOUND = "error.permission.notfound";
 
-    public PermissionServiceImpl(PermissionRepository permissionRepository, RoleRepository roleRepository) {
+    public PermissionServiceImpl(PermissionRepository permissionRepository, RoleRepository roleRepository, MessageConfig messageConfig) {
         this.permissionRepository = permissionRepository;
         this.roleRepository = roleRepository;
+        this.messageConfig = messageConfig;
     }
 
     @Override
@@ -32,9 +37,9 @@ public class PermissionServiceImpl implements PermissionService {
         permission.setDescription(request.getDescription());
         if (request.getRoleIDs() != null) {
             List<Role> roles = request.getRoleIDs().stream()
-                    .map(roleID -> roleRepository.findById(roleID)
+                    .map(roleId -> roleRepository.findById(roleId)
                             .orElseThrow(() ->
-                                    new ResourceNotFoundException("Role not found!")))
+                                    new ResourceNotFoundException(messageConfig.getMessage(ROLE_NOT_FOUND, roleId))))
                     .toList();
             permission.setRoles(roles);
         }
@@ -44,7 +49,7 @@ public class PermissionServiceImpl implements PermissionService {
 
     @Override
     public PermissionResponseDTO updatePermission(Long id, PermissionRequestDTO request) {
-        Permission permission =  permissionRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Permission not found"));
+        Permission permission =  permissionRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException(messageConfig.getMessage(PERMISSION_NOT_FOUND, id)));
         permission.setName(request.getName());
         permission.setDescription(request.getDescription());
         if (request.getRoleIDs() != null) {
@@ -64,7 +69,7 @@ public class PermissionServiceImpl implements PermissionService {
         if(permissionRepository.findById(id).isPresent()) {
             permissionRepository.deleteById(id);
         }
-        else throw new ResourceNotFoundException("Permission not found");
+        else throw new ResourceNotFoundException(messageConfig.getMessage(PERMISSION_NOT_FOUND, id));
     }
 
     @Override
@@ -79,7 +84,7 @@ public class PermissionServiceImpl implements PermissionService {
 
     @Override
     public PermissionResponseDTO getPermissionById(Long id) {
-        Permission permission =  permissionRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Permission not found"));
+        Permission permission =  permissionRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException(messageConfig.getMessage(PERMISSION_NOT_FOUND, id)));
         return convertPermissionToDTO(permission);
     }
 

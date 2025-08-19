@@ -20,7 +20,6 @@ public class BorrowingController {
 
     public BorrowingController(BorrowingServiceImpl borrowingServiceImpl) {
         this.borrowingServiceImpl = borrowingServiceImpl;
-
     }
 
     @PreAuthorize("hasAnyRole('ADMIN', 'LIBRARIAN')")
@@ -50,7 +49,7 @@ public class BorrowingController {
     @PreAuthorize("hasAnyRole('ADMIN', 'LIBRARIAN')")
     @PutMapping("/borrow/update/{id}")
     public ResponseEntity<BorrowingResponseDTO> updateBorrowing(@PathVariable Long id, @RequestBody BorrowingRequestDTO borrowing) {
-        BorrowingResponseDTO borrowingUpdated = borrowingServiceImpl.updateBook(id, borrowing);
+        BorrowingResponseDTO borrowingUpdated = borrowingServiceImpl.updateBorrowing(id, borrowing);
         return ResponseEntity.ok(borrowingUpdated);
     }
 

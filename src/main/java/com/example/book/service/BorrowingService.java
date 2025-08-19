@@ -14,8 +14,7 @@ public interface BorrowingService {
 
     void deleteBookById(Long id);
 
-    //don't know if this thing even works
-    BorrowingResponseDTO updateBook(Long id, BorrowingRequestDTO request);
+    BorrowingResponseDTO updateBorrowing(Long id, BorrowingRequestDTO request);
 
     PageResponseDTO<BorrowingResponseDTO> getBorrowingPage(Pageable pageable);
 
