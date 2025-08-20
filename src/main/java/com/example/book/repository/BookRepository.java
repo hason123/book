@@ -20,4 +20,5 @@ public interface BookRepository extends JpaRepository<Book, Long> , JpaSpecifica
     List<BookResponseDTO> findBooksBySearchText(@Param("searchText") String keyword);
 */
 
+
 }

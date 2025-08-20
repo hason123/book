@@ -19,7 +19,7 @@ public class UserRequestDTO {
     @Size(min = 3)
     private String password;
     private String fullName;
-    @Size(min = 12, max = 12, message = "Phone number must be exactly 12 digits")
+    @Size(min = 10, max = 10, message = "Phone number must be exactly 10 digits")
     private String phoneNumber;
     @Size(min = 12, max = 12, message = "Social Security must be exactly 12 digits")
     private String identityNumber;

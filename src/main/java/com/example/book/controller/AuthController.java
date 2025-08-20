@@ -133,8 +133,8 @@ public class AuthController {
     }
 
     @PreAuthorize("isAuthenticated()")
-    @PostMapping("/logout")
-    public ResponseEntity<String> logout() throws UnauthorizedException {
+    @PostMapping("/auth/logout")
+    public ResponseEntity<?> logout() throws UnauthorizedException {
         Optional<String> currentUser = SecurityUtil.getCurrentUserLogin();
 
         String userName = currentUser.get();
@@ -154,7 +154,7 @@ public class AuthController {
     }
 
     @PreAuthorize("isAnonymous()")
-    @PostMapping("/register")
+    @PostMapping("/auth/register")
     public ResponseEntity<UserRequestDTO> register(@Valid @RequestBody UserRequestDTO user) {
         UserRequestDTO userCreated = userServiceImpl.createUser(user);
         return ResponseEntity.ok(userCreated);

@@ -13,7 +13,7 @@ import java.io.IOException;
 @Component
 public class RestAccessDeniedHandler implements AccessDeniedHandler {
     private final MessageConfig messageConfig;
-    private final static String ACCESS_DENIED = "error.auth.access.denied";
+    private final static String ACCESS_DENIED = "error.auth.accessDenied";
 
     public RestAccessDeniedHandler(MessageConfig messageConfig) {
         this.messageConfig = messageConfig;

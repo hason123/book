@@ -34,7 +34,7 @@ public class UserServiceImpl implements UserService {
     private final RoleRepository roleRepository;
     private final MessageConfig messageConfig;
     private final String USER_NOT_FOUND= "error.user.notfound";
-    private final String ACCESS_DENIED= "error.auth.access.denied";
+    private final String ACCESS_DENIED= "error.auth.accessDenied";
     private final String USER_NAME_UNIQUE= "error.user.name.unique";
 
 
@@ -82,24 +82,25 @@ public class UserServiceImpl implements UserService {
 
     //ADMIN (thuc ra day la chuc nang register nhung ma admin co the tao nguoi dung khac :))))
     @Override
-    public UserRequestDTO createUser(UserRequestDTO userRequest){
+    public UserRequestDTO createUser(UserRequestDTO request){
         User user = new User();
-        if(userRepository.existsByUserName(userRequest.getUserName())){
+        if(userRepository.existsByUserName(request.getUserName())){
             throw new DataIntegrityViolationException(messageConfig.getMessage(USER_NAME_UNIQUE));
         }
-        user.setUserName(userRequest.getUserName());
-        user.setPassword(passwordEncoder.encode(userRequest.getPassword()));
+        user.setUserName(request.getUserName());
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setRole(roleRepository.findByRoleName(RoleType.USER));
-        user.setBirthday(userRequest.getBirthday());
-        user.setAddress(userRequest.getAddress());
-        user.setPhoneNumber(userRequest.getPhoneNumber());
-        user.setIdentityNumber(userRequest.getIdentityNumber());
+        user.setBirthday(request.getBirthday());
+        user.setAddress(request.getAddress());
+        user.setPhoneNumber(request.getPhoneNumber());
+        user.setIdentityNumber(request.getIdentityNumber());
+        user.setFullName(request.getFullName());
         userRepository.save(user);
         return convertUserInfoToDTO(user);
     }
     //
     @Override
-    public UserRequestDTO updateUser(Long id, UserRequestDTO userRequest) throws NullValueException, UnauthorizedException{
+    public UserRequestDTO updateUser(Long id, UserRequestDTO request) throws NullValueException, UnauthorizedException{
         User updatedUser = userRepository.findById(id).orElse(null);
         if(!isCurrentUser(id) ){
             throw new UnauthorizedException(messageConfig.getMessage(ACCESS_DENIED));
@@ -107,13 +108,13 @@ public class UserServiceImpl implements UserService {
         if(updatedUser == null){
             throw new NullValueException(messageConfig.getMessage(USER_NOT_FOUND, id));
         }
-        updatedUser.setUserName(userRequest.getUserName());
-        updatedUser.setPassword(passwordEncoder.encode(userRequest.getPassword()));
+        updatedUser.setUserName(request.getUserName());
+        updatedUser.setPassword(passwordEncoder.encode(request.getPassword()));
         updatedUser.setRole(roleRepository.findByRoleName(RoleType.USER));
-        updatedUser.setBirthday(userRequest.getBirthday());
-        updatedUser.setAddress(userRequest.getAddress());
-        updatedUser.setPhoneNumber(userRequest.getPhoneNumber());
-        updatedUser.setIdentityNumber(userRequest.getIdentityNumber());
+        updatedUser.setBirthday(request.getBirthday());
+        updatedUser.setAddress(request.getAddress());
+        updatedUser.setPhoneNumber(request.getPhoneNumber());
+        updatedUser.setIdentityNumber(request.getIdentityNumber());
         userRepository.save(updatedUser);
         return convertUserInfoToDTO(updatedUser);
     }

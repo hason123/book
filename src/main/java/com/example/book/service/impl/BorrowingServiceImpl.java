@@ -1,7 +1,7 @@
 package com.example.book.service.impl;
 
-
 import com.example.book.config.MessageConfig;
+import com.example.book.constant.BorrowingType;
 import com.example.book.dto.RequestDTO.BorrowingRequestDTO;
 import com.example.book.dto.ResponseDTO.BorrowingResponseDTO;
 import com.example.book.dto.ResponseDTO.PageResponseDTO;
@@ -14,9 +14,18 @@ import com.example.book.repository.BookRepository;
 import com.example.book.repository.BorrowingRepository;
 import com.example.book.repository.UserRepository;
 import com.example.book.service.BorrowingService;
+import jakarta.servlet.ServletOutputStream;
+import jakarta.servlet.http.HttpServletResponse;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -29,8 +38,9 @@ public class BorrowingServiceImpl implements BorrowingService {
     private final String BORROWING_NOT_FOUND = "error.borrowing.notfound";
     private final String USER_NOT_FOUND = "error.user.notfound";
     private final String BOOK_NOT_FOUND = "error.book.notfound";
-    private final String BOOK_OUT_OF_STOCK = "error.book.outofstock";
-    private final String BORROWING_WRONG_DATE = "error.borrowing.wrongdate";
+    private final String BOOK_OUT_OF_STOCK = "error.borrowing.outOfStock";
+    private final String BORROWING_WRONG_DATE = "error.borrowing.wrongDate";
+    private final String BORROWING_TITLE_EXCEL = "borrowing.title.excel";
 
     public BorrowingServiceImpl(BorrowingRepository borrowingRepository, BookRepository bookRepository, UserRepository userRepository, MessageConfig messageConfig) {
         this.borrowingRepository = borrowingRepository;
@@ -47,7 +57,9 @@ public class BorrowingServiceImpl implements BorrowingService {
         borrowing.setUser(userAdded);
         borrowing.setBook(bookAdded);
         borrowing.setBorrowDate(request.getBorrowingDate());
-        borrowing.setReturnDate(request.getReturnDate());
+        if(request.getReturnDate()!=null){
+            borrowing.setReturnDate(request.getReturnDate());
+        }
         if (checkDuplicate(borrowing)) {
             throw new BusinessException(messageConfig.getMessage(BORROWING_WRONG_DATE));
         }
@@ -55,7 +67,7 @@ public class BorrowingServiceImpl implements BorrowingService {
             throw new BusinessException (messageConfig.getMessage(BOOK_OUT_OF_STOCK, request.getBookId()));
         }
         borrowingRepository.save(borrowing);
-        borrowBooks(borrowing);
+        //borrowBooks(borrowing);
         return convertBorrowingToDTO(borrowing);
     }
 
@@ -88,7 +100,7 @@ public class BorrowingServiceImpl implements BorrowingService {
             oldBook.setQuantity(oldBook.getQuantity() + 1);
             bookRepository.save(oldBook);
             //luc nay da UPDATE het du lieu roi
-            borrowBooks(updatedBorrowing);
+           // borrowBooks(updatedBorrowing);
         }
         if (checkDuplicate(updatedBorrowing)) {
             throw new BusinessException(messageConfig.getMessage(BORROWING_WRONG_DATE));
@@ -109,36 +121,43 @@ public class BorrowingServiceImpl implements BorrowingService {
         );
         return pageDTO;
     }
-/*
-    public List<BorrowingResponseDTO> getAllBorrowings() {
-        List<BorrowingResponseDTO> borrowList = new ArrayList<>();
-        List<Borrowing> borrows = borrowingRepository.findAll();
-        for(Borrowing borrow : borrows ) {
-            BorrowingResponseDTO borrowDTO = convertBorrowingToDTO(borrow);
-            borrowList.add(borrowDTO);
-        }
-        return borrowList;
-    }
 
- */
     //books out of stock meaning cannot borrow the same book during borrow date - return date
     //book's quantity reduces by one during the time of borrowing
-    private void borrowBooks(Borrowing borrowing) {
+    @Scheduled(cron = "0 0 * * * *")
+    private void borrowBooks() {
         LocalDate localDate = LocalDate.now();
-        LocalDate borrowLocalDate = borrowing.getBorrowDate();
-        LocalDate returnLocalDate= borrowing.getReturnDate();
-        if ((localDate.isEqual(borrowLocalDate)|| localDate.isAfter(borrowLocalDate)) &&
-                (localDate.isEqual(returnLocalDate) || localDate.isBefore(returnLocalDate))){
-            borrowing.getBook().setQuantity(borrowing.getBook().getQuantity() - 1);
-            bookRepository.save(borrowing.getBook());
+        for(Borrowing borrowing : borrowingRepository.findAll()){
+            LocalDate borrowLocalDate = borrowing.getBorrowDate();
+            LocalDate returnLocalDate= borrowing.getReturnDate();
+            if ((localDate.isEqual(borrowLocalDate)|| localDate.isAfter(borrowLocalDate)) &&
+                    (localDate.isEqual(returnLocalDate) || localDate.isBefore(returnLocalDate)))
+            {
+                borrowing.getBook().setQuantity(borrowing.getBook().getQuantity() - 1);
+                bookRepository.save(borrowing.getBook());
+            }
+        }
+    }
+
+    @Scheduled(cron = "0 0 * * * *")
+    public void borrowingStatus(){
+        LocalDate currentDate = LocalDate.now();
+        for(Borrowing borrowing : borrowingRepository.findAll()){
+            if(borrowing.getReturnDate() != null){
+                if (currentDate.isAfter(borrowing.getBorrowDate().plusMonths(1))) {
+                    borrowing.setStatus(BorrowingType.DUE);
+                }
+                else borrowing.setStatus(BorrowingType.RETURNED);
+            }
+            else borrowing.setStatus(BorrowingType.DUE);
         }
     }
 
     private boolean checkDuplicate(Borrowing borrowing) {
         List<Borrowing> borrowingList = borrowingRepository.findAll();
         for(Borrowing b : borrowingList){
-           boolean checkDate = ((b.getBorrowDate().isAfter(borrowing.getBorrowDate())) && (b.getBorrowDate().isAfter(borrowing.getReturnDate())))
-                   || ((b.getReturnDate().isBefore(borrowing.getBorrowDate())) && (b.getReturnDate().isBefore(borrowing.getReturnDate())));
+            boolean checkDate = ((b.getBorrowDate().isAfter(borrowing.getBorrowDate())) && (b.getBorrowDate().isAfter(borrowing.getReturnDate())))
+                    || ((b.getReturnDate().isBefore(borrowing.getBorrowDate())) && (b.getReturnDate().isBefore(borrowing.getReturnDate())));
             if(b.getUser().getUserId().equals(borrowing.getUser().getUserId()) &&
                     b.getBook().getBookId().equals(borrowing.getBook().getBookId()) &&
                     !checkDate){
@@ -155,9 +174,31 @@ public class BorrowingServiceImpl implements BorrowingService {
         borrowingDTO.setReturnDate(borrowing.getReturnDate());
         borrowingDTO.setUsername(borrowing.getUser().getUserName());
         borrowingDTO.setBookName(borrowing.getBook().getBookName());
+        borrowingDTO.setStatus(borrowing.getStatus().toString());
         return borrowingDTO;
     }
 
+    @Override
+    public void createBorrowingWorkbook(HttpServletResponse response) throws IOException {
+        List<Book> books = borrowingRepository.findTopFiveBooks();
+        Workbook workbook = new XSSFWorkbook();
+        Sheet sheet = workbook.createSheet(messageConfig.getMessage(BORROWING_TITLE_EXCEL));
+        Row header = sheet.createRow(0);
+        header.createCell(0).setCellValue("STT");
+        header.createCell(1).setCellValue("Tên sách");
+        header.createCell(2).setCellValue("Tác giả");
+        int rowNum = 1; int x = 0;
+        for(Book book : books){
+            Row row = sheet.createRow(rowNum++);
+            row.createCell(0).setCellValue(x++);
+            row.createCell(1).setCellValue(book.getBookName());
+            row.createCell(2).setCellValue(book.getAuthor());
+        }
+        ServletOutputStream outputStream = response.getOutputStream();
+        workbook.write(outputStream);
+        workbook.close();
+        outputStream.close();
+    }
 
 
 }

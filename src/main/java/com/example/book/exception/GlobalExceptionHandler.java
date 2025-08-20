@@ -16,6 +16,15 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ApiResponse<Object>> handleAllException(Exception ex) {
+        ApiResponse<Object> res = new ApiResponse<>();
+        res.setCode(HttpStatus.INTERNAL_SERVER_ERROR.value());
+        res.setData(ex.getMessage());
+        res.setMessage("Internal Server Error");
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(res);
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<Object>> handleInvalidArgument(MethodArgumentNotValidException exception) {
         Map<String, String> errorMap = new HashMap<>();
@@ -43,7 +52,6 @@ public class GlobalExceptionHandler {
         ApiResponse<Object> res = new ApiResponse<>();
         res.setCode(HttpStatus.BAD_REQUEST.value());
         res.setMessage(e.getMessage());
-        res.setData("IdInvalidException");
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
     }
 

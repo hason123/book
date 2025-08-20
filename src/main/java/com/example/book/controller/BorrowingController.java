@@ -5,13 +5,18 @@ import com.example.book.dto.ResponseDTO.BorrowingResponseDTO;
 import com.example.book.dto.ResponseDTO.PageResponseDTO;
 import com.example.book.exception.ResourceNotFoundException;
 import com.example.book.service.impl.BorrowingServiceImpl;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.method.P;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.io.IOException;
 
 @RestController
 @RequestMapping("/api/v1/library")
@@ -58,5 +63,13 @@ public class BorrowingController {
     public ResponseEntity<?> deleteBorrowing(@PathVariable Long id) {
         borrowingServiceImpl.deleteBookById(id);
         return ResponseEntity.status(200).body("Delete successful!");
+    }
+
+    @PreAuthorize("isAuthenticated()")
+    @GetMapping("/borrow/dashboard")
+    public ResponseEntity<?> getBorrowingDashboard(HttpServletResponse response) throws IOException {
+        response.setHeader("Content-Type", "attachment; filename=borrowing.xlsx");
+        borrowingServiceImpl.createBorrowingWorkbook(response);
+        return ResponseEntity.status(HttpStatus.OK).build();
     }
 }

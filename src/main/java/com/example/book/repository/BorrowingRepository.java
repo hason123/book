@@ -10,11 +10,14 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 public interface BorrowingRepository  extends JpaRepository<Borrowing, Long> {
 
     @Query("SELECT b FROM Borrowing b ORDER BY CASE WHEN b.returnDate IS NULL THEN 0 ELSE 1 END ASC, b.returnDate DESC")
     Page<Borrowing> findAllCustomSort(Pageable pageable);
 
-    boolean existsByUserAndBook(User user, Book book);
+    @Query("SELECT b.book FROM Borrowing b WHERE b.status = com.example.book.constant.BorrowingType.BORROWING GROUP BY b.book ORDER BY COUNT(b) DESC")
+    List<Book> findTopFiveBooks();
 }

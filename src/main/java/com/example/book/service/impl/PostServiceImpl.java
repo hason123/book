@@ -29,7 +29,7 @@ public class PostServiceImpl implements PostService {
     private final CommentServiceImpl commentServiceImpl;
     private final MessageConfig messageConfig;
     private final String POST_NOT_FOUND = "error.post.notfound";
-    private final String ACCESS_DENIED = "error.auth.access.denied";
+    private final String ACCESS_DENIED = "error.auth.accessDenied";
 
     public PostServiceImpl(PostRepository postRepository, UserServiceImpl userServiceImpl, CommentServiceImpl commentServiceImpl, MessageConfig messageConfig) {
         this.postRepository = postRepository;

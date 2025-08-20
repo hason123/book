@@ -17,9 +17,10 @@ public class CommentResponseDTO {
     private LocalDate createdAt;
     private LocalDate updatedAt;
     private String userComment;
-    private Long parentId;
-    private List<CommentResponseDTO> replies;
     private Integer likes;
     private Integer dislikes;
+    private Long parentId;
+    private List<CommentResponseDTO> replies;
+
 }
 

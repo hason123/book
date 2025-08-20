@@ -32,6 +32,7 @@ public class BorrowingResponseDTO {
      */
     private String username;
     private String bookName;
+    private String status;
     //private String userId;
     //private String bookId;
 

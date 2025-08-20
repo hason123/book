@@ -1,9 +1,8 @@
 package com.example.book.dto.RequestDTO;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import jakarta.validation.constraints.NotEmpty;
+import lombok.*;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDate;
 
@@ -12,8 +11,11 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @AllArgsConstructor
 public class BorrowingRequestDTO {
+    @NotEmpty(message = "{error.borrowing.date.null}")
     private LocalDate borrowingDate;
     private LocalDate returnDate;
+    @NotEmpty(message = "{error.borrowing.userId.invalid}")
     private Long userId;
+    @NotEmpty(message = "{error.borrowing.bookId.invalid}")
     private Long bookId;
 }
