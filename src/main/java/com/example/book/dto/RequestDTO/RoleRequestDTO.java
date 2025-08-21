@@ -11,7 +11,6 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class RoleRequestDTO {
-    private String roleName;
     private String description;
     private List<Long> permissionIds;
 }

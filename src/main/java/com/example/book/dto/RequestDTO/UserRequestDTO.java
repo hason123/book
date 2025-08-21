@@ -3,8 +3,11 @@ package com.example.book.dto.RequestDTO;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.Column;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.*;
+import org.springframework.security.core.parameters.P;
+
 import java.time.LocalDate;
 
 @Getter
@@ -14,14 +17,15 @@ import java.time.LocalDate;
 //ADMIN xem duoc list nguoi dung, can xem chi tiet thi check UserDetail
 public class UserRequestDTO {
     private Long userId;
-    @NotEmpty(message = "Username must be filled!")
+    @NotEmpty(message = "{error.user.name.null}")
     private String userName;
-    @Size(min = 3)
+    @Size(min = 3, message = "{error.user.password.invalid}")
     private String password;
     private String fullName;
-    @Size(min = 10, max = 10, message = "Phone number must be exactly 10 digits")
+    @NotEmpty(message = "{error.user.phoneNumber.null}")
+    @Pattern(regexp = "^[0-9]{10}$", message = "{error.user.phoneNumber.invalid")
     private String phoneNumber;
-    @Size(min = 12, max = 12, message = "Social Security must be exactly 12 digits")
+    @Size(min = 12, max = 12, message = "{error.user.identityNumber.invalid}")
     private String identityNumber;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private LocalDate birthday;

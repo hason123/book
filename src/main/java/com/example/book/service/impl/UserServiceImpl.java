@@ -36,6 +36,7 @@ public class UserServiceImpl implements UserService {
     private final String USER_NOT_FOUND= "error.user.notfound";
     private final String ACCESS_DENIED= "error.auth.accessDenied";
     private final String USER_NAME_UNIQUE= "error.user.name.unique";
+    private final String ROLE_NOT_FOUND= "error.role.notfound";
 
 
     public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder, RoleRepository roleRepository, MessageConfig messageConfig) {
@@ -122,19 +123,22 @@ public class UserServiceImpl implements UserService {
     //ADMIN UPDATE ROLE OF ONE OR MORE PEOPLE
     @Override
     public void updateRole(UserRoleUpdateDTO userRole){
-        Role roleUpdated = roleRepository.findByRoleName(RoleType.valueOf(userRole.getRoleName()));
-        userRole.getUserNames().stream()
-                .map(userName -> {
-                    User user = userRepository.findByUserName(userName);
-                    if (user == null) {
-                        throw new ResourceNotFoundException(messageConfig.getMessage(USER_NOT_FOUND, userName));
-                    }
-                    return user;
-                })
-                .forEach(user -> {
-                    user.setRole(roleUpdated);
-                    userRepository.save(user);
-                });
+        if(roleRepository.existsByRoleName(RoleType.valueOf(userRole.getRoleName()))){
+            Role roleUpdated = roleRepository.findByRoleName(RoleType.valueOf(userRole.getRoleName()));
+            userRole.getUserNames().stream()
+                    .map(userName -> {
+                        User user = userRepository.findByUserName(userName);
+                        if (user == null) {
+                            throw new ResourceNotFoundException(messageConfig.getMessage(USER_NOT_FOUND, userName));
+                        }
+                        return user;
+                    })
+                    .forEach(user -> {
+                        user.setRole(roleUpdated);
+                        userRepository.save(user);
+                    });
+        }
+       else throw new ResourceNotFoundException(messageConfig.getMessage(ROLE_NOT_FOUND));
     }
 
     @Override
@@ -161,7 +165,6 @@ public class UserServiceImpl implements UserService {
                 userViewDTOPage.getTotalPages(),
                 userViewDTOPage.getContent()
         );
-
     }
 
     public boolean isCurrentUser(Long userId) {

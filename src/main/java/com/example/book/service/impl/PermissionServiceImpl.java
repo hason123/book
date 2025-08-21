@@ -35,14 +35,6 @@ public class PermissionServiceImpl implements PermissionService {
         Permission permission = new Permission();
         permission.setName(request.getName());
         permission.setDescription(request.getDescription());
-        if (request.getRoleIDs() != null) {
-            List<Role> roles = request.getRoleIDs().stream()
-                    .map(roleId -> roleRepository.findById(roleId)
-                            .orElseThrow(() ->
-                                    new ResourceNotFoundException(messageConfig.getMessage(ROLE_NOT_FOUND, roleId))))
-                    .toList();
-            permission.setRoles(roles);
-        }
         permissionRepository.save(permission);
         return convertPermissionToDTO(permission);
     }
@@ -52,14 +44,6 @@ public class PermissionServiceImpl implements PermissionService {
         Permission permission =  permissionRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException(messageConfig.getMessage(PERMISSION_NOT_FOUND, id)));
         permission.setName(request.getName());
         permission.setDescription(request.getDescription());
-        if (request.getRoleIDs() != null) {
-            List<Role> roles = request.getRoleIDs().stream()
-                    .map(roleID -> roleRepository.findById(roleID)
-                            .orElseThrow(() ->
-                                    new ResourceNotFoundException("Role not found!")))
-                    .toList();
-            permission.setRoles(roles);
-        }
         permissionRepository.save(permission);
         return convertPermissionToDTO(permission);
     }

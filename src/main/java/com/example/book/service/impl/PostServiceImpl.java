@@ -148,7 +148,6 @@ public class PostServiceImpl implements PostService {
         workbook.write(outputStream);
         workbook.close();
         outputStream.close();
-
     }
 
     public PostListDTO convertPostListToDTO(Post post) {
