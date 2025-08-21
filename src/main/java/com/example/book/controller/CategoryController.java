@@ -3,6 +3,7 @@ package com.example.book.controller;
 import com.example.book.dto.ResponseDTO.CategoryResponseDTO;
 import com.example.book.dto.ResponseDTO.PageResponseDTO;
 import com.example.book.service.impl.CategoryServiceImpl;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -10,6 +11,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.io.IOException;
 
 @RestController
 @RequestMapping("/api/v1/library/")
@@ -58,5 +61,12 @@ public class CategoryController {
     public ResponseEntity<?> deleteCategory(@PathVariable long id) {
         categoryServiceImpl.getCategory(id);
         return ResponseEntity.status(200).body("Delete success!");
+    }
+
+    @PreAuthorize("isAuthenticated()")
+    @GetMapping("/cateogory/dashboard")
+    public ResponseEntity<Void> getCategoryDashboard(HttpServletResponse response) throws IOException {
+        categoryServiceImpl.createCategoryWorkbook(response);
+        return ResponseEntity.ok().build();
     }
 }

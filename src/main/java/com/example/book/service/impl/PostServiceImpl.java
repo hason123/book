@@ -13,13 +13,22 @@ import com.example.book.exception.UnauthorizedException;
 import com.example.book.repository.PostRepository;
 import com.example.book.service.PostService;
 import com.example.book.specification.PostSpecification;
+import jakarta.servlet.ServletOutputStream;
+import jakarta.servlet.http.HttpServletResponse;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.io.IOException;
 import java.time.LocalDate;
+import java.util.List;
 
 @Service
 public class PostServiceImpl implements PostService {
@@ -109,6 +118,37 @@ public class PostServiceImpl implements PostService {
             postRepository.deleteById(id);
         }
         else throw new ResourceNotFoundException(messageConfig.getMessage(POST_NOT_FOUND, id));
+    }
+
+    @Override
+    @Scheduled(cron = "0 0 0 * * *")
+    public void createPostWorkbook(HttpServletResponse response) throws IOException {
+        List<Post> posts = postRepository.findTop5ByOrderByLikesCountDesc();
+        Workbook workbook = new XSSFWorkbook();
+        Sheet sheet = workbook.createSheet("TOP 5 POSTS");
+        Row header = sheet.createRow(0);
+        header.createCell(0).setCellValue("STT");
+        header.createCell(1).setCellValue("Tiêu đề bài viết");
+        header.createCell(2).setCellValue("Người đăng");
+        header.createCell(3).setCellValue("Lượt thích");
+        header.createCell(4).setCellValue("Lượt bình luận");
+        int rowNum = 1; int x = 1;
+        for(Post post : posts){
+            Row row = sheet.createRow(rowNum++);
+            row.createCell(0).setCellValue(x++);
+            row.createCell(1).setCellValue(post.getTitle());
+            row.createCell(2).setCellValue(post.getUser().getUserName());
+            row.createCell(3).setCellValue(post.getLikesCount());
+            row.createCell(4).setCellValue(post.getComments().size());
+        }
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        response.setHeader("Content-Disposition", "attachment; filename=\"report.xlsx\"");
+        //can co IOException
+        ServletOutputStream outputStream = response.getOutputStream();
+        workbook.write(outputStream);
+        workbook.close();
+        outputStream.close();
+
     }
 
     public PostListDTO convertPostListToDTO(Post post) {

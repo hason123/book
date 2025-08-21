@@ -8,10 +8,18 @@ import com.example.book.exception.ResourceNotFoundException;
 import com.example.book.repository.BookRepository;
 import com.example.book.repository.CategoryRepository;
 import com.example.book.service.CategoryService;
+import jakarta.servlet.ServletOutputStream;
+import jakarta.servlet.http.HttpServletResponse;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -78,6 +86,34 @@ public class CategoryServiceImpl implements CategoryService {
         return categoryPage;
     }
 
+    @Override
+    @Scheduled(cron = "0 0 0 * * *")
+    public void createCategoryWorkbook(HttpServletResponse response) throws IOException {
+        List<Object[]> result = categoryRepository.findCategoryAndBookCount();
+        Workbook workbook = new XSSFWorkbook();
+        Sheet sheet = workbook.createSheet("Category Report");
+        Row header = sheet.createRow(0);
+        header.createCell(0).setCellValue("STT");
+        header.createCell(1).setCellValue("Tên thể loại");
+        header.createCell(2).setCellValue("Số lượng sách");
+        int rowNum = 1; int index = 1;
+        //co ve Object[] luu nhieu lieu di lieu khac nhau
+        for (Object[] record : result) {
+            Category category = (Category) record[0];
+            Long bookCount = (Long) record[1];
+            Row excelRow = sheet.createRow(rowNum++);
+            excelRow.createCell(0).setCellValue(index++);
+            excelRow.createCell(1).setCellValue(category.getCategoryName());
+            excelRow.createCell(2).setCellValue(bookCount);
+        }
+        response.setHeader("Content-Type", "attachment; filename=borrowing.xlsx");
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        ServletOutputStream outputStream = response.getOutputStream();
+        workbook.write(outputStream);
+        workbook.close();
+        outputStream.close();
+    }
+
     public CategoryResponseDTO convertEntityToDTO(Category category) {
         CategoryResponseDTO categoryDTO = new CategoryResponseDTO();
         categoryDTO.setCategoryName(category.getCategoryName());
@@ -91,6 +127,8 @@ public class CategoryServiceImpl implements CategoryService {
         categoryDTO.setBookBasic(bookBasics);
         return categoryDTO;
     }
+
+
 
 
 

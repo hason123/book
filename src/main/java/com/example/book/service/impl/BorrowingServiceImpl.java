@@ -179,15 +179,16 @@ public class BorrowingServiceImpl implements BorrowingService {
     }
 
     @Override
+    @Scheduled(cron = "0 0 0 * * *")
     public void createBorrowingWorkbook(HttpServletResponse response) throws IOException {
-        List<Book> books = borrowingRepository.findTopFiveBooks();
+        List<Book> books = borrowingRepository.findCurrentBorrowingBooks();
         Workbook workbook = new XSSFWorkbook();
         Sheet sheet = workbook.createSheet(messageConfig.getMessage(BORROWING_TITLE_EXCEL));
-        Row header = sheet.createRow(0);
+        Row header = sheet.createRow(0); //excel is zero-based
         header.createCell(0).setCellValue("STT");
         header.createCell(1).setCellValue("Tên sách");
         header.createCell(2).setCellValue("Tác giả");
-        int rowNum = 1; int x = 0;
+        int rowNum = 1; int x = 1;
         for(Book book : books){
             Row row = sheet.createRow(rowNum++);
             row.createCell(0).setCellValue(x++);
@@ -199,6 +200,5 @@ public class BorrowingServiceImpl implements BorrowingService {
         workbook.close();
         outputStream.close();
     }
-
 
 }

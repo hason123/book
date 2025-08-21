@@ -19,5 +19,5 @@ public interface BorrowingRepository  extends JpaRepository<Borrowing, Long> {
     Page<Borrowing> findAllCustomSort(Pageable pageable);
 
     @Query("SELECT b.book FROM Borrowing b WHERE b.status = com.example.book.constant.BorrowingType.BORROWING GROUP BY b.book ORDER BY COUNT(b) DESC")
-    List<Book> findTopFiveBooks();
+    List<Book> findCurrentBorrowingBooks();
 }
