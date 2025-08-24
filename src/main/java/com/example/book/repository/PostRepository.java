@@ -9,4 +9,6 @@ import java.util.List;
 @Repository
 public interface PostRepository extends JpaRepository<Post, Long>, JpaSpecificationExecutor<Post> {
     List<Post> findTop5ByOrderByLikesCountDesc();
+
+    List<Post> findAllByUser_UserId(Long userId);
 }

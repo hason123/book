@@ -4,9 +4,7 @@ import com.example.book.dto.ResponseDTO.CategoryResponseDTO;
 import com.example.book.dto.ResponseDTO.PageResponseDTO;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.data.domain.Pageable;
-
 import java.io.IOException;
-
 
 public interface CategoryService {
 

@@ -79,14 +79,6 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
     }
 
-    @ExceptionHandler(value = NullValueException.class)
-    public ResponseEntity<ApiResponse<Object>> NullValueException(NullValueException e) {
-        ApiResponse<Object> res = new ApiResponse<>();
-        res.setCode(HttpStatus.BAD_REQUEST.value());
-        res.setMessage(e.getMessage());
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
-    }
-
     @ExceptionHandler(value = UnauthorizedException.class)
     public ResponseEntity<ApiResponse<Object>> UnauthorizedException(UnauthorizedException e) {
         ApiResponse<Object> res = new ApiResponse<>();

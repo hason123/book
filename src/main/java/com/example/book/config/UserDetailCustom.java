@@ -29,7 +29,7 @@ public class UserDetailCustom  implements UserDetailsService{
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         User user = userService.handleGetUserByUserName(username);
-
+        System.out.println("Trying to find user with username: " + username);
         String roleName = user.getRole().getRoleName().toString();
 
         SimpleGrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + roleName);

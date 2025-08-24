@@ -110,7 +110,6 @@ public class AuthController {
                 currentUserDB.getUserName(),
                 currentUserDB.getRole().getRoleName().name()
         );
-
         loginResponseDTO.setUser(userLogin);
                  // Tạo access token và refresh token
         String accesss_Token = this.securityUtil.createAccessToken(userName, loginResponseDTO);
@@ -134,7 +133,7 @@ public class AuthController {
 
     @PreAuthorize("isAuthenticated()")
     @PostMapping("/auth/logout")
-    public ResponseEntity<?> logout() throws UnauthorizedException {
+    public ResponseEntity<?> logout(){
         Optional<String> currentUser = SecurityUtil.getCurrentUserLogin();
 
         String userName = currentUser.get();

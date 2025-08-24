@@ -4,18 +4,22 @@ import com.example.book.config.MessageConfig;
 import com.example.book.constant.RoleType;
 import com.example.book.dto.RequestDTO.Search.SearchUserRequest;
 import com.example.book.dto.RequestDTO.UserRequestDTO;
-import com.example.book.dto.RequestDTO.UserRoleUpdateDTO;
+import com.example.book.dto.RequestDTO.UserRoleRequestDTO;
 import com.example.book.dto.ResponseDTO.PageResponseDTO;
 import com.example.book.dto.ResponseDTO.User.UserDetailDTO;
 import com.example.book.dto.ResponseDTO.User.UserViewDTO;
 import com.example.book.entity.*;
-import com.example.book.exception.NullValueException;
 import com.example.book.exception.ResourceNotFoundException;
 import com.example.book.exception.UnauthorizedException;
+import com.example.book.repository.CommentRepository;
+import com.example.book.repository.PostRepository;
 import com.example.book.repository.RoleRepository;
 import com.example.book.repository.UserRepository;
+import com.example.book.service.CommentService;
+import com.example.book.service.PostService;
 import com.example.book.service.UserService;
 import com.example.book.specification.UserSpecification;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -25,7 +29,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import java.util.List;
 
+@Slf4j
 @Service
 public class UserServiceImpl implements UserService {
 
@@ -33,25 +39,29 @@ public class UserServiceImpl implements UserService {
     private final PasswordEncoder passwordEncoder;
     private final RoleRepository roleRepository;
     private final MessageConfig messageConfig;
+    private final PostService postService;
+    private final PostRepository postRepository;
+    private final CommentRepository commentRepository;
     private final String USER_NOT_FOUND= "error.user.notfound";
     private final String ACCESS_DENIED= "error.auth.accessDenied";
     private final String USER_NAME_UNIQUE= "error.user.name.unique";
     private final String ROLE_NOT_FOUND= "error.role.notfound";
 
-
-    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder, RoleRepository roleRepository, MessageConfig messageConfig) {
+    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder, RoleRepository roleRepository, MessageConfig messageConfig, PostService postService, PostRepository postRepository, CommentRepository commentRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.roleRepository = roleRepository;
         this.messageConfig = messageConfig;
+        this.postService = postService;
+        this.postRepository = postRepository;
+        this.commentRepository = commentRepository;
     }
 
-    //CURRENT USER
     @Override
-    public Object getUserById(Long id) throws NullValueException {
+    public Object getUserById(Long id){
         User user = userRepository.findById(id).orElse(null);
         if (user == null) {
-            throw new NullValueException(messageConfig.getMessage(USER_NOT_FOUND, id));
+            throw new ResourceNotFoundException(messageConfig.getMessage(USER_NOT_FOUND, id));
         }
         if( isCurrentUser(id) || user.getRole().getRoleName().equals(RoleType.ADMIN)) {
             return convertUserDetailToDTO(user);
@@ -59,7 +69,6 @@ public class UserServiceImpl implements UserService {
         else return convertUserViewToDTO(user);
     }
 
-    //ADMIN OR USER
     @Override
     public PageResponseDTO<UserViewDTO> getAllUsers(Pageable pageable){
         Page<User> userPage = userRepository.findAll(pageable);
@@ -72,16 +81,22 @@ public class UserServiceImpl implements UserService {
         );
         return pageDTO;
     }
-    //ADMIN
+
     @Override
-    public void deleteUserById(Long id) throws NullValueException {
+    public void deleteUserById(Long id) throws UnauthorizedException {
         if (!userRepository.existsById(id)) {
-            throw new NullValueException(messageConfig.getMessage(USER_NOT_FOUND, id));
+            throw new ResourceNotFoundException(messageConfig.getMessage(USER_NOT_FOUND, id));
         }
-        userRepository.deleteById(id);
+        if(isCurrentUser(id) || getCurrentUser().getRole().getRoleName().equals(RoleType.ADMIN)) {
+            List<Post> deletedPosts = postRepository.findAllByUser_UserId(id);
+            deletedPosts.forEach(post -> {postService.deletePost(post.getPostId());});
+            List<Comment> deletedComments = commentRepository.findAllByUser_UserId(id);
+            commentRepository.deleteAll(deletedComments);
+            userRepository.deleteById(id);
+        }
+        else throw new UnauthorizedException(messageConfig.getMessage(ACCESS_DENIED));
     }
 
-    //ADMIN (thuc ra day la chuc nang register nhung ma admin co the tao nguoi dung khac :))))
     @Override
     public UserRequestDTO createUser(UserRequestDTO request){
         User user = new User();
@@ -101,13 +116,13 @@ public class UserServiceImpl implements UserService {
     }
     //
     @Override
-    public UserRequestDTO updateUser(Long id, UserRequestDTO request) throws NullValueException, UnauthorizedException{
+    public UserRequestDTO updateUser(Long id, UserRequestDTO request) throws UnauthorizedException{
         User updatedUser = userRepository.findById(id).orElse(null);
         if(!isCurrentUser(id) ){
             throw new UnauthorizedException(messageConfig.getMessage(ACCESS_DENIED));
         }
         if(updatedUser == null){
-            throw new NullValueException(messageConfig.getMessage(USER_NOT_FOUND, id));
+            throw new ResourceNotFoundException(messageConfig.getMessage(USER_NOT_FOUND, id));
         }
         updatedUser.setUserName(request.getUserName());
         updatedUser.setPassword(passwordEncoder.encode(request.getPassword()));
@@ -120,9 +135,8 @@ public class UserServiceImpl implements UserService {
         return convertUserInfoToDTO(updatedUser);
     }
 
-    //ADMIN UPDATE ROLE OF ONE OR MORE PEOPLE
     @Override
-    public void updateRole(UserRoleUpdateDTO userRole){
+    public void updateRole(UserRoleRequestDTO userRole){
         if(roleRepository.existsByRoleName(RoleType.valueOf(userRole.getRoleName()))){
             Role roleUpdated = roleRepository.findByRoleName(RoleType.valueOf(userRole.getRoleName()));
             userRole.getUserNames().stream()

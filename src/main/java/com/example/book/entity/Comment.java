@@ -1,39 +1,42 @@
 package com.example.book.entity;
+
 import jakarta.persistence.*;
 import lombok.*;
-
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
+
 @Setter
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
+@Table(name = "comment")
+@SQLDelete(sql = "UPDATE post SET is_deleted = true WHERE comment_id = ?")
+@SQLRestriction(value = "is_deleted = false")
 public class Comment extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "comment_id")
     private Long commentId;
+    @Column(name = "comment_detail")
     private String commentDetail;
-
+    @Column(name = "likes_count", nullable = false, columnDefinition = "mediumint default 0")
+    private int likesCount;
+    @Column(name = "dislikes_count" , nullable = false, columnDefinition = "mediumint default 0")
+    private int dislikesCount;
     @ManyToOne
     @JoinColumn(name = "user_comment_id")
     private User user;
-
     @ManyToOne
     @JoinColumn(name = "post_comment_id")
     private Post post;
-
     @ManyToOne
     @JoinColumn(name = "parent_id")
     private Comment parent;
-
     @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL)
     private List<Comment> children = new ArrayList<>();
-    @Column(nullable = false, columnDefinition = "mediumint default 0")
-    private int likesCount;
-    @Column(nullable = false, columnDefinition = "mediumint default 0")
-    private int dislikesCount;
 
     public void setLikesCount(int likesCount) {
         this.likesCount = Math.max(likesCount, 0);

@@ -6,6 +6,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
 
 import java.util.List;
 
@@ -15,12 +17,17 @@ import java.util.List;
 @NoArgsConstructor
 @Entity
 @Table(name="role")
+@SQLDelete(sql = "UPDATE role SET is_deleted = true WHERE role_id = ?")
+@SQLRestriction(value = "is_deleted = false")
 public class Role {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "role_id")
     private Long roleID;
+    @Column(name = "role_name")
     @Enumerated(EnumType.STRING) //luu data vao DB dang String
     private RoleType roleName;
+    @Column(name = "role_desc")
     private String roleDesc;
     @ManyToMany
     @JoinTable(

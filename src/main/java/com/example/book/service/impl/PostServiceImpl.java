@@ -7,9 +7,12 @@ import com.example.book.dto.RequestDTO.Search.SearchPostRequest;
 import com.example.book.dto.ResponseDTO.PageResponseDTO;
 import com.example.book.dto.ResponseDTO.Post.PostListDTO;
 import com.example.book.dto.ResponseDTO.Post.PostResponseDTO;
+import com.example.book.entity.Comment;
 import com.example.book.entity.Post;
+import com.example.book.entity.User;
 import com.example.book.exception.ResourceNotFoundException;
 import com.example.book.exception.UnauthorizedException;
+import com.example.book.repository.CommentRepository;
 import com.example.book.repository.PostRepository;
 import com.example.book.service.PostService;
 import com.example.book.specification.PostSpecification;
@@ -22,10 +25,8 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
-
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
@@ -34,14 +35,16 @@ import java.util.List;
 public class PostServiceImpl implements PostService {
 
     private final PostRepository postRepository;
+    private final CommentRepository commentRepository;
     private final UserServiceImpl userServiceImpl;
     private final CommentServiceImpl commentServiceImpl;
     private final MessageConfig messageConfig;
     private final String POST_NOT_FOUND = "error.post.notfound";
     private final String ACCESS_DENIED = "error.auth.accessDenied";
 
-    public PostServiceImpl(PostRepository postRepository, UserServiceImpl userServiceImpl, CommentServiceImpl commentServiceImpl, MessageConfig messageConfig) {
+    public PostServiceImpl(PostRepository postRepository, CommentRepository commentRepository, UserServiceImpl userServiceImpl, CommentServiceImpl commentServiceImpl, MessageConfig messageConfig) {
         this.postRepository = postRepository;
+        this.commentRepository = commentRepository;
         this.userServiceImpl = userServiceImpl;
         this.commentServiceImpl = commentServiceImpl;
         this.messageConfig = messageConfig;
@@ -115,13 +118,19 @@ public class PostServiceImpl implements PostService {
     @Override
     public void deletePost(Long id) {
         if(postRepository.existsById(id)) {
-            postRepository.deleteById(id);
+            Post postDeleted = postRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException(messageConfig.getMessage(POST_NOT_FOUND, id)));
+            User currentUser = userServiceImpl.getCurrentUser();
+            if (currentUser.getRole().getRoleName().equals(RoleType.ADMIN) ||
+                    currentUser.equals(postDeleted.getUser())) {
+                List<Comment> deletedComments = commentRepository.findAllByPost_PostId(id);
+                commentRepository.deleteAll(deletedComments);
+                postRepository.deleteById(id);
+            }
         }
         else throw new ResourceNotFoundException(messageConfig.getMessage(POST_NOT_FOUND, id));
     }
 
     @Override
-    @Scheduled(cron = "0 0 0 * * *")
     public void createPostWorkbook(HttpServletResponse response) throws IOException {
         List<Post> posts = postRepository.findTop5ByOrderByLikesCountDesc();
         Workbook workbook = new XSSFWorkbook();
@@ -179,4 +188,5 @@ public class PostServiceImpl implements PostService {
         }
         return postDTO;
     }
+
 }

@@ -8,10 +8,12 @@ import com.example.book.exception.ResourceNotFoundException;
 import com.example.book.repository.PostReactionRepository;
 import com.example.book.repository.PostRepository;
 import com.example.book.repository.UserRepository;
+import com.example.book.service.PostReactionService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class PostReactionServiceImpl {
+public class PostReactionServiceImpl implements PostReactionService {
     private final PostReactionRepository postReactionRepository;
     private final UserServiceImpl userServiceImpl;
     private final UserRepository userRepository;
@@ -19,7 +21,6 @@ public class PostReactionServiceImpl {
     private final MessageConfig messageConfig;
     private final String POST_NOT_FOUND = "error.post.notfound";
     private final String USER_NOT_FOUND = "error.user.notfound";
-
 
     public PostReactionServiceImpl(PostReactionRepository postReactionRepository, UserServiceImpl userServiceImpl, UserRepository userRepository, PostRepository postRepository, MessageConfig messageConfig) {
         this.postReactionRepository = postReactionRepository;
@@ -29,6 +30,8 @@ public class PostReactionServiceImpl {
         this.messageConfig = messageConfig;
     }
 
+    @Transactional
+    @Override
     public void likePost(Long postId) {
         Long currentUserID = userServiceImpl.getCurrentUser().getUserId();
         if (postReactionRepository.findByUser_UserIdAndPost_PostId(currentUserID, postId) != null) {
@@ -58,6 +61,8 @@ public class PostReactionServiceImpl {
         }
     }
 
+    @Transactional
+    @Override
     public void disLikePost(Long postId) {
         Long currentUserID = userServiceImpl.getCurrentUser().getUserId();
         if (postReactionRepository.findByUser_UserIdAndPost_PostId(currentUserID, postId) != null) {

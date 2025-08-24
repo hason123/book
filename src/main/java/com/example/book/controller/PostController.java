@@ -7,6 +7,7 @@ import com.example.book.dto.ResponseDTO.PageResponseDTO;
 import com.example.book.dto.ResponseDTO.Post.PostListDTO;
 import com.example.book.dto.ResponseDTO.Post.PostResponseDTO;
 import com.example.book.exception.UnauthorizedException;
+import com.example.book.service.PostReactionService;
 import com.example.book.service.impl.CommentServiceImpl;
 import com.example.book.service.impl.PostServiceImpl;
 import jakarta.servlet.http.HttpServletResponse;
@@ -18,7 +19,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
 import java.io.IOException;
 import java.util.List;
 
@@ -27,10 +27,12 @@ import java.util.List;
 public class PostController {
     private final PostServiceImpl postServiceImpl;
     private final CommentServiceImpl commentServiceImpl;
+    private final PostReactionService postReactionService;
 
-    public PostController(PostServiceImpl postServiceImpl, CommentServiceImpl commentServiceImpl) {
+    public PostController(PostServiceImpl postServiceImpl, CommentServiceImpl commentServiceImpl, PostReactionService postReactionService) {
         this.postServiceImpl = postServiceImpl;
         this.commentServiceImpl = commentServiceImpl;
+        this.postReactionService = postReactionService;
     }
 
     @PreAuthorize("isAuthenticated()")
@@ -88,8 +90,24 @@ public class PostController {
 
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/post/dashboard")
-    public ResponseEntity<Void> getPostDashboard(HttpServletResponse response) throws IOException {
+    public ResponseEntity<?> getPostDashboard(HttpServletResponse response) throws IOException {
         postServiceImpl.createPostWorkbook(response);
         return new ResponseEntity<>(HttpStatus.OK);
     }
+
+    @PreAuthorize("isAuthenticated()")
+    @PutMapping("/post/like/{id}")
+    public ResponseEntity<?> likePost(@PathVariable Long id){
+        postReactionService.likePost(id);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    @PreAuthorize("isAuthenticated()")
+    @PutMapping("/post/dislike/{id}")
+    public ResponseEntity<?> dislikePost(@PathVariable Long id){
+        postReactionService.disLikePost(id);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+
 }

@@ -1,11 +1,8 @@
 package com.example.book.entity;
 
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import java.util.List;
-
 
 @Setter
 @Getter
@@ -16,9 +13,10 @@ import java.util.List;
 public class Category {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "category_id")
     private Long categoryId;
+    @Column(name = "category_name")
     private String categoryName;
     @ManyToMany (mappedBy = "categories")
-    @JsonIgnore
     private List<Book> books;
 }

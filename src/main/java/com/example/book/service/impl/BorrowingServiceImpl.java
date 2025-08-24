@@ -24,6 +24,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.time.LocalDate;
@@ -122,9 +123,6 @@ public class BorrowingServiceImpl implements BorrowingService {
         return pageDTO;
     }
 
-    //books out of stock meaning cannot borrow the same book during borrow date - return date
-    //book's quantity reduces by one during the time of borrowing
-    @Scheduled(cron = "0 0 * * * *")
     private void borrowBooks() {
         LocalDate localDate = LocalDate.now();
         for(Borrowing borrowing : borrowingRepository.findAll()){
@@ -140,16 +138,19 @@ public class BorrowingServiceImpl implements BorrowingService {
     }
 
     @Scheduled(cron = "0 0 * * * *")
+    @Transactional
     public void borrowingStatus(){
         LocalDate currentDate = LocalDate.now();
         for(Borrowing borrowing : borrowingRepository.findAll()){
-            if(borrowing.getReturnDate() != null){
+            if(borrowing.getReturnDate() != null) {
+                borrowing.setStatus(BorrowingType.RETURNED);
+            }
+            else{
                 if (currentDate.isAfter(borrowing.getBorrowDate().plusMonths(1))) {
                     borrowing.setStatus(BorrowingType.DUE);
                 }
-                else borrowing.setStatus(BorrowingType.RETURNED);
+                else borrowing.setStatus(BorrowingType.BORROWING);
             }
-            else borrowing.setStatus(BorrowingType.DUE);
         }
     }
 
@@ -179,7 +180,6 @@ public class BorrowingServiceImpl implements BorrowingService {
     }
 
     @Override
-    @Scheduled(cron = "0 0 0 * * *")
     public void createBorrowingWorkbook(HttpServletResponse response) throws IOException {
         List<Book> books = borrowingRepository.findCurrentBorrowingBooks();
         Workbook workbook = new XSSFWorkbook();

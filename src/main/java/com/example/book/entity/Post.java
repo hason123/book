@@ -3,6 +3,8 @@ package com.example.book.entity;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
 
 import java.time.Instant;
 import java.util.List;
@@ -13,12 +15,22 @@ import java.util.concurrent.atomic.AtomicInteger;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
+@Table(name = "post")
+@SQLDelete(sql = "UPDATE post SET is_deleted = true WHERE post_id = ?")
+@SQLRestriction(value = "is_deleted = false")
 public class Post extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "post_id")
     private Long postId;
+    @Column(name = "title")
     private String title;
+    @Column(name = "content")
     private String content;
+    @Column(name = "likes_count", nullable = false, columnDefinition = "mediumint default 0")
+    private int likesCount;
+    @Column(name = "dislikes_count" , nullable = false, columnDefinition = "mediumint default 0")
+    private int dislikesCount;
     @ManyToOne
     @JoinColumn(name = "user_post_id")
     private User user;
@@ -26,10 +38,6 @@ public class Post extends BaseEntity {
     private List<Comment> comments;
     @OneToMany(mappedBy = "post")
     private List<PostReaction> postReactions;
-    @Column(nullable = false, columnDefinition = "mediumint default 0")
-    private int likesCount;
-    @Column(nullable = false, columnDefinition = "mediumint default 0")
-    private int dislikesCount;
 
     public void setLikesCount(int likesCount) {
         this.likesCount = Math.max(likesCount, 0);

@@ -8,10 +8,12 @@ import com.example.book.exception.ResourceNotFoundException;
 import com.example.book.repository.CommentReactionRepository;
 import com.example.book.repository.CommentRepository;
 import com.example.book.repository.UserRepository;
+import com.example.book.service.CommentReactionService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
-public class CommentReactionServiceImpl {
+public class CommentReactionServiceImpl implements CommentReactionService {
     private final CommentReactionRepository commentReactionRepository;
     private final UserServiceImpl userServiceImpl;
     private final UserRepository userRepository;
@@ -19,7 +21,6 @@ public class CommentReactionServiceImpl {
     private final MessageConfig messageConfig;
     private final String COMMENT_NOT_FOUND= "error.comment.notfound";
     private final String USER_NOT_FOUND= "error.user.notfound";
-
 
     public CommentReactionServiceImpl(CommentReactionRepository commentReactionRepository, UserServiceImpl userServiceImpl, UserRepository userRepository, CommentRepository commentRepository, MessageConfig messageConfig) {
         this.commentReactionRepository = commentReactionRepository;
@@ -29,6 +30,8 @@ public class CommentReactionServiceImpl {
         this.messageConfig = messageConfig;
     }
 
+    @Transactional
+    @Override
     public void likeComment(Long commentId) {
         Long currentUserID = userServiceImpl.getCurrentUser().getUserId();
         if (commentReactionRepository.findByUser_UserIdAndComment_CommentId(currentUserID, commentId) != null) {
@@ -58,6 +61,8 @@ public class CommentReactionServiceImpl {
         }
     }
 
+    @Transactional
+    @Override
     public void dislikeComment(Long commentId) {
         Long currentUserID = userServiceImpl.getCurrentUser().getUserId();
         if (commentReactionRepository.findByUser_UserIdAndComment_CommentId(currentUserID, commentId) != null) {

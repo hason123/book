@@ -1,14 +1,17 @@
 package com.example.book.controller;
 
+import com.example.book.dto.RequestDTO.CommentRequestDTO;
 import com.example.book.dto.ResponseDTO.Comment.CommentShortResponseDTO;
+import com.example.book.dto.ResponseDTO.PageResponseDTO;
 import com.example.book.entity.Comment;
 import com.example.book.service.impl.CommentReactionServiceImpl;
 import com.example.book.service.impl.CommentServiceImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/library")
@@ -23,8 +26,10 @@ public class CommentController {
 
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/comments")
-    public ResponseEntity<List<CommentShortResponseDTO>> getAllComments() {
-        List<CommentShortResponseDTO> comments = commentServiceImpl.getComments();
+    public ResponseEntity<PageResponseDTO<CommentShortResponseDTO>> getAllComments(@RequestParam(value = "pageNumber", required = false, defaultValue = "1") Integer pageNumber,
+                                                                                   @RequestParam(value = "pageSize", required = false, defaultValue = "3") Integer pageSize) {
+        Pageable pageable = PageRequest.of(pageNumber - 1, pageSize);
+        PageResponseDTO<CommentShortResponseDTO> comments = commentServiceImpl.getComments(pageable);
         return new ResponseEntity<>(comments, HttpStatus.OK);
     }
 
@@ -36,36 +41,36 @@ public class CommentController {
     }
 
     @PreAuthorize("isAuthenticated()")
-    @PostMapping("/comment/create")
-    public ResponseEntity<CommentShortResponseDTO> createComment(@RequestBody Comment comment){
-        CommentShortResponseDTO commentCreated = commentServiceImpl.addComment(comment);
+    @PostMapping("/post/{postId}/comment/create")
+    public ResponseEntity<CommentShortResponseDTO> createComment(@PathVariable Long postId , @RequestBody CommentRequestDTO request) {
+        CommentShortResponseDTO commentCreated = commentServiceImpl.addComment(postId, request);
         return new ResponseEntity<>(commentCreated, HttpStatus.CREATED);
     }
 
     @PreAuthorize("isAuthenticated()")
-    @PutMapping("/comment/update/{id}")
-    public ResponseEntity<CommentShortResponseDTO> updateComemnt(@PathVariable long id, @RequestBody Comment comment){
-        CommentShortResponseDTO commentUpdated = commentServiceImpl.updateComment(id, comment);
+    @PutMapping("/post/{postId}/comment/update/{commentId}")
+    public ResponseEntity<CommentShortResponseDTO> updateComemnt(@PathVariable Long postId , @PathVariable Long commentId, @RequestBody CommentRequestDTO request){
+        CommentShortResponseDTO commentUpdated = commentServiceImpl.updateComment(postId, commentId, request);
         return new ResponseEntity<>(commentUpdated, HttpStatus.OK);
     }
 
     @PreAuthorize("isAuthenticated()")
     @DeleteMapping("/comment/delete/{id}")
-    public ResponseEntity<String> deleteComment(@PathVariable long id){
+    public ResponseEntity<?> deleteComment(@PathVariable long id){
         commentServiceImpl.deleteComment(id);
         return ResponseEntity.ok().body("Delete successful");
     }
 
     @PreAuthorize("isAuthenticated()")
     @PostMapping("/comment/like/{id}")
-    public ResponseEntity<Void> likeComment(@PathVariable long id){
+    public ResponseEntity<?> likeComment(@PathVariable long id){
         commentReactionServiceImpl.likeComment(id);
         return ResponseEntity.ok().build();
     }
 
     @PreAuthorize("isAuthenticated()")
     @PostMapping("/comment/dislike/{id}")
-    public ResponseEntity<Void> dislikeComment(@PathVariable long id){
+    public ResponseEntity<?> dislikeComment(@PathVariable long id){
         commentReactionServiceImpl.dislikeComment(id);
         return ResponseEntity.ok().build();
     }

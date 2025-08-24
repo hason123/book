@@ -16,9 +16,7 @@ import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
@@ -87,7 +85,6 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
-    @Scheduled(cron = "0 0 0 * * *")
     public void createCategoryWorkbook(HttpServletResponse response) throws IOException {
         List<Object[]> result = categoryRepository.findCategoryAndBookCount();
         Workbook workbook = new XSSFWorkbook();
@@ -97,7 +94,7 @@ public class CategoryServiceImpl implements CategoryService {
         header.createCell(1).setCellValue("Tên thể loại");
         header.createCell(2).setCellValue("Số lượng sách");
         int rowNum = 1; int index = 1;
-        //co ve Object[] luu nhieu lieu di lieu khac nhau
+        //co ve Object[] luu nhieu lieu du lieu khac nhau
         for (Object[] record : result) {
             Category category = (Category) record[0];
             Long bookCount = (Long) record[1];
