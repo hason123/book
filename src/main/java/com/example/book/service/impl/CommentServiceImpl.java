@@ -13,11 +13,12 @@ import com.example.book.repository.CommentRepository;
 import com.example.book.repository.PostRepository;
 import com.example.book.repository.UserRepository;
 import com.example.book.service.CommentService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import java.util.*;
-
+@Slf4j
 @Service
 public class CommentServiceImpl implements CommentService {
 
@@ -39,7 +40,9 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     public CommentShortResponseDTO addComment(Long postId, CommentRequestDTO request) {
+        log.info("Add comment in post with id: {}", postId);
         if(!postRepository.existsById(postId)){
+            log.error("Post with id: {} not found", postId);
             throw new ResourceNotFoundException(messageConfig.getMessage(POST_NOT_FOUND, postId));
         }
         Comment comment = new Comment();
@@ -50,45 +53,58 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     public CommentShortResponseDTO updateComment(Long postId, Long commentId, CommentRequestDTO request) {
+        log.info("Update comment in post with id: {}", postId);
         if(!postRepository.existsById(postId)){
+            log.error("Post with id: {} not found", postId);
             throw new ResourceNotFoundException(messageConfig.getMessage(POST_NOT_FOUND, postId));
         }
         Optional<Comment> optionalComment = commentRepository.findById(commentId);
         if (optionalComment.isPresent()) {
+            log.info("Updating comment in post with id: {}", postId);
             Comment updatedComment = optionalComment.get();
             updatedComment.setCommentDetail(request.getContent());
             commentRepository.save(updatedComment);
             return convertCommentToShortDTO(updatedComment);
         } else {
+            log.error("Comment with id: {} not found", commentId);
             throw new ResourceNotFoundException(messageConfig.getMessage(COMMENT_NOT_FOUND, commentId));
         }
     }
 
     @Override
     public PageResponseDTO<CommentShortResponseDTO> getComments(Pageable pageable) {
+        log.info("Getting total comments!");
         Page<Comment> comments = commentRepository.findAll(pageable);
         Page<CommentShortResponseDTO> commentPage = comments.map(c -> convertCommentToShortDTO(c));
+        log.info("Total comments: {}", commentPage.getTotalElements());
         return new PageResponseDTO<>(
                 commentPage.getNumber() + 1,
                 commentPage.getNumberOfElements(),
                 commentPage.getTotalPages(),
                 commentPage.getContent()
         );
+
     }
 
     @Override
     public CommentShortResponseDTO getComment(Long id) {
+        log.info("Getting comment with id: {}", id);
         Optional<Comment> commentOptional = commentRepository.findById(id);
         if(commentOptional.isPresent()) {
             Comment comment = commentOptional.get();
             return convertCommentToShortDTO(comment);
         }
-        else throw new ResourceNotFoundException(messageConfig.getMessage(COMMENT_NOT_FOUND, id));
+        else{
+            log.info("Comment with id: {} not found", id);
+            throw new ResourceNotFoundException(messageConfig.getMessage(COMMENT_NOT_FOUND, id));
+        }
     }
 
     @Override
     public List<CommentResponseDTO> getCommentByPost(Long postId) {
+        log.info("Getting comments by post with id: {}", postId);
         if (!postRepository.existsById(postId)) {
+            log.error("Post with id: {} not found", postId);
             throw new ResourceNotFoundException(messageConfig.getMessage(POST_NOT_FOUND, postId));
         }
         List<Comment> comments = commentRepository.findAllByPost_PostId(postId);
@@ -111,12 +127,18 @@ public class CommentServiceImpl implements CommentService {
         }
         Comparator<CommentResponseDTO> comparator = Comparator.comparing(CommentResponseDTO::getCreatedAt);
         commentRoots.sort(comparator.reversed());
+        log.info("Total comments in post {} : {}", postId, commentRoots.size());
         return commentRoots;
     }
 
     @Override
     public void deleteComment(Long id){
-        Comment commentDeleted = commentRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException(messageConfig.getMessage(COMMENT_NOT_FOUND, id)));
+        log.info("Deleting comment with id: {}", id);
+        Comment commentDeleted = commentRepository.findById(id).orElseThrow(() ->
+        {
+            log.error("Comment with id: {} not found", id);
+            return new ResourceNotFoundException(messageConfig.getMessage(COMMENT_NOT_FOUND, id));
+        });
         User currentUser = userServiceImpl.getCurrentUser();
         if(currentUser.getRole().getRoleName().equals(RoleType.ADMIN) ||
                 currentUser.equals(commentDeleted.getUser()) || currentUser.equals(commentDeleted.getPost().getUser())){
@@ -129,6 +151,7 @@ public class CommentServiceImpl implements CommentService {
             });
             commentRepository.delete(commentDeleted);
         }
+        log.info("Comment with id: {} has been deleted", id);
     }
 
     public CommentResponseDTO convertCommentToDTO(Comment comment){

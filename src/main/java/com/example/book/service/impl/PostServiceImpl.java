@@ -14,14 +14,18 @@ import com.example.book.exception.ResourceNotFoundException;
 import com.example.book.exception.UnauthorizedException;
 import com.example.book.repository.CommentRepository;
 import com.example.book.repository.PostRepository;
+import com.example.book.service.CommentService;
 import com.example.book.service.PostService;
+import com.example.book.service.UserService;
 import com.example.book.specification.PostSpecification;
 import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -30,51 +34,62 @@ import org.springframework.util.StringUtils;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
-
+@Slf4j
 @Service
 public class PostServiceImpl implements PostService {
 
     private final PostRepository postRepository;
     private final CommentRepository commentRepository;
-    private final UserServiceImpl userServiceImpl;
-    private final CommentServiceImpl commentServiceImpl;
+    private final UserService userService;
+    private final CommentService commentService;
     private final MessageConfig messageConfig;
     private final String POST_NOT_FOUND = "error.post.notfound";
     private final String ACCESS_DENIED = "error.auth.accessDenied";
 
-    public PostServiceImpl(PostRepository postRepository, CommentRepository commentRepository, UserServiceImpl userServiceImpl, CommentServiceImpl commentServiceImpl, MessageConfig messageConfig) {
+    public PostServiceImpl(PostRepository postRepository, CommentRepository commentRepository, @Lazy UserService userService, @Lazy CommentService commentService, MessageConfig messageConfig) {
         this.postRepository = postRepository;
         this.commentRepository = commentRepository;
-        this.userServiceImpl = userServiceImpl;
-        this.commentServiceImpl = commentServiceImpl;
+        this.userService = userService;
+        this.commentService = commentService;
         this.messageConfig = messageConfig;
     }
 
     @Override
     public PostResponseDTO addPost(PostRequestDTO request) {
+        log.info("Adding post to database");
         Post post = new Post();
         post.setTitle(request.getTitle());
         post.setContent(request.getContent());
-        post.setUser(userServiceImpl.getCurrentUser());
+        post.setUser(userService.getCurrentUser());
         postRepository.save(post);
+        log.info("Saved post to database");
         return convertPostToDTO(post);
     }
 
     @Override
     public PostResponseDTO getPost(Long id) {
-        Post post = postRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException(messageConfig.getMessage(POST_NOT_FOUND, id)));
+        log.info("Getting post by id: {}", id);
+        Post post = postRepository.findById(id).orElseThrow(() ->
+        {
+            log.error(messageConfig.getMessage(POST_NOT_FOUND));
+            return new ResourceNotFoundException(messageConfig.getMessage(POST_NOT_FOUND, id));
+        });
+        log.info("Retrieved post by id: {}", id);
         return convertPostToDTO(post);
     }
 
     @Override
     public PageResponseDTO<PostListDTO> getAllPosts(Pageable pageable) {
+       log.info("Getting all posts from database");
        Page<Post> posts = postRepository.findAll(pageable);
        Page<PostListDTO> postList = posts.map(this::convertPostListToDTO);
+       log.info("Retrieved all posts from database");
        return new PageResponseDTO<>(postList.getNumber(), postList.getNumberOfElements(), postList.getTotalPages(), postList.getContent());
     }
 
     @Override
     public PageResponseDTO<PostListDTO> searchPost(Pageable pageable, SearchPostRequest request){
+        log.info("Searching posts from database");
         Specification<Post> spec = ((root, query, criteriaBuilder) -> criteriaBuilder.conjunction());
         String title = request.getTitle();
         String content = request.getContent();
@@ -98,28 +113,38 @@ public class PostServiceImpl implements PostService {
         }
         Page<Post> posts = postRepository.findAll(spec, pageable);
         Page<PostListDTO> postList = posts.map(this::convertPostListToDTO);
+        log.info("Retrieved all posts from database");
         return new PageResponseDTO<>(postList.getNumber(), postList.getNumberOfElements(),
                 postList.getTotalPages(), postList.getContent());
     }
 
     @Override
     public PostResponseDTO updatePost(Long id, PostRequestDTO post) throws UnauthorizedException {
-        Post updatedPost = postRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException(messageConfig.getMessage(POST_NOT_FOUND, id)));
-        if(userServiceImpl.getCurrentUser().getRole().getRoleName().equals(RoleType.ADMIN) ||
-                userServiceImpl.getCurrentUser().equals(updatedPost.getUser())) {
+        log.info("Updating post with {} from database", id);
+        Post updatedPost = postRepository.findById(id).orElseThrow(() ->
+        {
+            log.error(messageConfig.getMessage(POST_NOT_FOUND));
+            return new ResourceNotFoundException(messageConfig.getMessage(POST_NOT_FOUND, id));
+        });
+        if(userService.getCurrentUser().getRole().getRoleName().equals(RoleType.ADMIN) ||
+                userService.getCurrentUser().equals(updatedPost.getUser())) {
             updatedPost.setTitle(post.getTitle());
             updatedPost.setContent(post.getContent());
             postRepository.save(updatedPost);
             return convertPostToDTO(updatedPost);
         }
-        else throw new UnauthorizedException(messageConfig.getMessage(ACCESS_DENIED));
+        else {
+            log.error(messageConfig.getMessage(POST_NOT_FOUND));
+            throw new UnauthorizedException(messageConfig.getMessage(ACCESS_DENIED));
+        }
     }
 
     @Override
     public void deletePost(Long id) {
+        log.info("Deleting post with {} from database", id);
         if(postRepository.existsById(id)) {
             Post postDeleted = postRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException(messageConfig.getMessage(POST_NOT_FOUND, id)));
-            User currentUser = userServiceImpl.getCurrentUser();
+            User currentUser = userService.getCurrentUser();
             if (currentUser.getRole().getRoleName().equals(RoleType.ADMIN) ||
                     currentUser.equals(postDeleted.getUser())) {
                 List<Comment> deletedComments = commentRepository.findAllByPost_PostId(id);
@@ -127,11 +152,15 @@ public class PostServiceImpl implements PostService {
                 postRepository.deleteById(id);
             }
         }
-        else throw new ResourceNotFoundException(messageConfig.getMessage(POST_NOT_FOUND, id));
+        else {
+            log.error(messageConfig.getMessage(POST_NOT_FOUND));
+            throw new ResourceNotFoundException(messageConfig.getMessage(POST_NOT_FOUND, id));
+        }
     }
 
     @Override
     public void createPostWorkbook(HttpServletResponse response) throws IOException {
+        log.info("Creating post workbook");
         List<Post> posts = postRepository.findTop5ByOrderByLikesCountDesc();
         Workbook workbook = new XSSFWorkbook();
         Sheet sheet = workbook.createSheet("TOP 5 POSTS");
@@ -157,6 +186,7 @@ public class PostServiceImpl implements PostService {
         workbook.write(outputStream);
         workbook.close();
         outputStream.close();
+        log.info("Created post workbook");
     }
 
     public PostListDTO convertPostListToDTO(Post post) {
@@ -183,8 +213,8 @@ public class PostServiceImpl implements PostService {
         postDTO.setCommentCount(post.getComments().size());
         postDTO.setLikesCount(post.getLikesCount());
         postDTO.setDislikesCount(post.getDislikesCount());
-        if(commentServiceImpl.getCommentByPost(post.getPostId()) != null) {
-            postDTO.setComments(commentServiceImpl.getCommentByPost(post.getPostId()));
+        if(commentService.getCommentByPost(post.getPostId()) != null) {
+            postDTO.setComments(commentService.getCommentByPost(post.getPostId()));
         }
         return postDTO;
     }

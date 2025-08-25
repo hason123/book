@@ -3,13 +3,13 @@ package com.example.book.service.impl;
 import com.example.book.entity.Book;
 import com.example.book.repository.BookRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class BookSyncService {
@@ -17,6 +17,7 @@ public class BookSyncService {
     private final BookRepository bookRepository;
 
     public void syncBooksFromGoogle() {
+        log.info("Starting sync books from google");
         String url = "https://www.googleapis.com/books/v1/volumes?q=java";
 
         Map<String, Object> response = restTemplate.getForObject(url, Map.class);
@@ -29,11 +30,8 @@ public class BookSyncService {
         List<Book> books = new ArrayList<>();
 
         for (Map<String, Object> item : items) {
-
-
             Map<String, Object> volumeInfo = (Map<String, Object>) item.get("volumeInfo");
             if (volumeInfo == null) continue;
-
             String title = (String) volumeInfo.get("title");
             List<String> authors = (List<String>) volumeInfo.get("authors");
             String publisher = (String) volumeInfo.get("publisher");
@@ -41,7 +39,6 @@ public class BookSyncService {
             String printType = (String) volumeInfo.get("printType");
             String language = (String) volumeInfo.get("language");
             String description = (String) volumeInfo.get("description");
-
             Book book = new Book();
             book.setBookName(title);
             book.setAuthor(authors != null ? String.join(", ", authors) : null);
@@ -51,13 +48,10 @@ public class BookSyncService {
             book.setLanguage(language);
             book.setBookDesc(description);
             book.setQuantity(1); // hoặc mặc định khác
-
             books.add(book);
         }
-
-        // Lưu vào DB
         bookRepository.saveAll(books);
-        System.out.println("Đã đồng bộ " + books.size() + " sách từ Google Books API");
+        log.info("{} books have been saved to DB", books.size());
     }
 }
 

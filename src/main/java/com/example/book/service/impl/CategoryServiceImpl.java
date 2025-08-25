@@ -10,6 +10,7 @@ import com.example.book.repository.CategoryRepository;
 import com.example.book.service.CategoryService;
 import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -22,7 +23,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-
+@Slf4j
 @Service
 public class CategoryServiceImpl implements CategoryService {
     private final CategoryRepository categoryRepository;
@@ -39,10 +40,13 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public CategoryResponseDTO getCategory(Long id) {
+        log.info("Getting category with id {}", id);
         Category category = categoryRepository.findById(id).orElse(null);
         if(category == null){
+            log.error("Category with id {} not found", id);
             throw new ResourceNotFoundException(messageConfig.getMessage(CATEGORY_NOT_FOUND,id));
         }
+        log.info("Returning category {}", category);
         return convertEntityToDTO(category);
     }
 
@@ -56,23 +60,33 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public CategoryResponseDTO updateCategory(Long id, CategoryResponseDTO request) {
+        log.info("Updating category with id {}", id);
         Category updatedCategory = categoryRepository.findById(id).orElse(null);
         if(updatedCategory == null){
+            log.error("Category with id {} not found", id);
             throw new ResourceNotFoundException(messageConfig.getMessage(CATEGORY_NOT_FOUND,id));
         }
         updatedCategory.setCategoryName(request.getCategoryName());
         categoryRepository.save(updatedCategory);
+        log.info("Updated successfully");
         return convertEntityToDTO(updatedCategory);
     }
 
     @Override
     public void deleteCategory(Long id) {
-        Category category = categoryRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException(messageConfig.getMessage(CATEGORY_NOT_FOUND,id)));
-        categoryRepository.deleteById(id);
+        if(categoryRepository.existsById(id)){
+            log.info("Deleting category with id {}", id);
+            categoryRepository.deleteById(id);
+        }
+        else {
+            log.error("Category with id {} not found", id);
+            throw new ResourceNotFoundException(messageConfig.getMessage(CATEGORY_NOT_FOUND,id));
+        }
     }
 
     @Override
     public PageResponseDTO<CategoryResponseDTO> getAllCategories(Pageable pageable) {
+        log.info("Getting category's page");
         Page<Category> categories = categoryRepository.findAll(pageable);
         Page<CategoryResponseDTO> categoryDTO = categories.map(category -> convertEntityToDTO(category));
         PageResponseDTO<CategoryResponseDTO> categoryPage = new PageResponseDTO<>(
@@ -81,11 +95,13 @@ public class CategoryServiceImpl implements CategoryService {
                 categoryDTO.getTotalPages(),
                 categoryDTO.getContent()
         );
+        log.info("Returning category page!");
         return categoryPage;
     }
 
     @Override
     public void createCategoryWorkbook(HttpServletResponse response) throws IOException {
+        log.info("Creating category workbook");
         List<Object[]> result = categoryRepository.findCategoryAndBookCount();
         Workbook workbook = new XSSFWorkbook();
         Sheet sheet = workbook.createSheet("Category Report");
@@ -109,6 +125,7 @@ public class CategoryServiceImpl implements CategoryService {
         workbook.write(outputStream);
         workbook.close();
         outputStream.close();
+        log.info("Successfully created category workbook");
     }
 
     public CategoryResponseDTO convertEntityToDTO(Category category) {

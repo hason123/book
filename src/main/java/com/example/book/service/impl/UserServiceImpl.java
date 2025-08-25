@@ -15,7 +15,6 @@ import com.example.book.repository.CommentRepository;
 import com.example.book.repository.PostRepository;
 import com.example.book.repository.RoleRepository;
 import com.example.book.repository.UserRepository;
-import com.example.book.service.CommentService;
 import com.example.book.service.PostService;
 import com.example.book.service.UserService;
 import com.example.book.specification.UserSpecification;
@@ -34,7 +33,6 @@ import java.util.List;
 @Slf4j
 @Service
 public class UserServiceImpl implements UserService {
-
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final RoleRepository roleRepository;
@@ -191,6 +189,7 @@ public class UserServiceImpl implements UserService {
         return false;
     }
 
+    @Override
     public User getCurrentUser() {
         Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         if (principal instanceof Jwt jwt) {

@@ -4,14 +4,16 @@ import com.example.book.config.MessageConfig;
 import com.example.book.constant.ReactionType;
 import com.example.book.entity.Post;
 import com.example.book.entity.PostReaction;
+import com.example.book.entity.User;
 import com.example.book.exception.ResourceNotFoundException;
 import com.example.book.repository.PostReactionRepository;
 import com.example.book.repository.PostRepository;
 import com.example.book.repository.UserRepository;
 import com.example.book.service.PostReactionService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+@Slf4j
 @Service
 public class PostReactionServiceImpl implements PostReactionService {
     private final PostReactionRepository postReactionRepository;
@@ -33,64 +35,86 @@ public class PostReactionServiceImpl implements PostReactionService {
     @Transactional
     @Override
     public void likePost(Long postId) {
-        Long currentUserID = userServiceImpl.getCurrentUser().getUserId();
-        if (postReactionRepository.findByUser_UserIdAndPost_PostId(currentUserID, postId) != null) {
-            Post post = postRepository.findById(postId).orElseThrow(() -> new ResourceNotFoundException(messageConfig.getMessage(POST_NOT_FOUND, postId)));
-            PostReaction postReacted = postReactionRepository.findByUser_UserIdAndPost_PostId(currentUserID, postId);
-            if (postReacted.getReactionType().equals(ReactionType.LIKE)) {
-                postReactionRepository.delete(postReacted);
+        Long userId = userServiceImpl.getCurrentUser().getUserId();
+        log.info("User {} attempts to like post {}", userId, postId);
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> {
+                    log.error("Post {} not found for like action", postId);
+                    return new ResourceNotFoundException(messageConfig.getMessage(POST_NOT_FOUND, postId));
+                });
+        PostReaction reaction = postReactionRepository.findByUser_UserIdAndPost_PostId(userId, postId);
+        if (reaction != null) {
+            if (reaction.getReactionType() == ReactionType.LIKE) {
+                log.info("User {} removes like from post {}", userId, postId);
+                postReactionRepository.delete(reaction);
                 post.setLikesCount(post.getLikesCount() - 1);
-                postRepository.save(post);
-            }
-            if (postReacted.getReactionType().equals(ReactionType.DISLIKE)) {
-               postReacted.setReactionType(ReactionType.LIKE);
-               postReactionRepository.save(postReacted);
-               post.setLikesCount(post.getLikesCount() + 1);
-               post.setDislikesCount(post.getDislikesCount() - 1);
-               postRepository.save(post);
+            } else if (reaction.getReactionType() == ReactionType.DISLIKE) {
+                log.info("User {} switches reaction from DISLIKE to LIKE on post {}", userId, postId);
+                reaction.setReactionType(ReactionType.LIKE);
+                postReactionRepository.save(reaction);
+                post.setLikesCount(post.getLikesCount() + 1);
+                post.setDislikesCount(post.getDislikesCount() - 1);
             }
         } else {
-            PostReaction postReaction = new PostReaction();
-            Post post = postRepository.findById(postId).orElseThrow(() -> new ResourceNotFoundException(messageConfig.getMessage(POST_NOT_FOUND, postId)));
+            log.info("User {} adds LIKE to post {}", userId, postId);
+            User user = userRepository.findById(userId)
+                    .orElseThrow(() -> {
+                        log.error("User {} not found when reacting to post {}", userId, postId);
+                        return new ResourceNotFoundException(messageConfig.getMessage(USER_NOT_FOUND, userId));
+                    });
+            reaction = new PostReaction();
+            reaction.setPost(post);
+            reaction.setUser(user);
+            reaction.setReactionType(ReactionType.LIKE);
+            postReactionRepository.save(reaction);
             post.setLikesCount(post.getLikesCount() + 1);
-            postRepository.save(post);
-            postReaction.setPost(post);
-            postReaction.setReactionType(ReactionType.LIKE);
-            postReaction.setUser(userRepository.findById(currentUserID).orElseThrow(() -> new ResourceNotFoundException(messageConfig.getMessage(USER_NOT_FOUND, currentUserID))));
-            postReactionRepository.save(postReaction);
         }
+        postRepository.save(post);
+        log.info("Updated post {} reaction counts: {} likes, {} dislikes", postId, post.getLikesCount(), post.getDislikesCount());
     }
 
     @Transactional
     @Override
     public void disLikePost(Long postId) {
-        Long currentUserID = userServiceImpl.getCurrentUser().getUserId();
-        if (postReactionRepository.findByUser_UserIdAndPost_PostId(currentUserID, postId) != null) {
-            Post post = postRepository.findById(postId).orElseThrow(() -> new ResourceNotFoundException(messageConfig.getMessage(POST_NOT_FOUND, postId)));
-            PostReaction postReacted = postReactionRepository.findByUser_UserIdAndPost_PostId(currentUserID, postId);
-            if (postReacted.getReactionType().equals(ReactionType.DISLIKE)) {
-                postReactionRepository.delete(postReacted);
-                post.setLikesCount(post.getDislikesCount() - 1);
-                postRepository.save(post);
-            }
-            if (postReacted.getReactionType().equals(ReactionType.LIKE)) {
-                postReacted.setReactionType(ReactionType.DISLIKE);
+        Long userId = userServiceImpl.getCurrentUser().getUserId();
+        log.info("User {} attempts to dislike post {}", userId, postId);
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> {
+                    log.error("Post {} not found for dislike action", postId);
+                    return new ResourceNotFoundException(messageConfig.getMessage(POST_NOT_FOUND, postId));
+                });
+        PostReaction reaction = postReactionRepository.findByUser_UserIdAndPost_PostId(userId, postId);
+        if (reaction != null) {
+            if (reaction.getReactionType() == ReactionType.DISLIKE) {
+                log.info("User {} removes DISLIKE from post {}", userId, postId);
+                postReactionRepository.delete(reaction);
+                post.setDislikesCount(post.getDislikesCount() - 1);
+            } else if (reaction.getReactionType() == ReactionType.LIKE) {
+                log.info("User {} switches reaction from LIKE to DISLIKE on post {}", userId, postId);
+                reaction.setReactionType(ReactionType.DISLIKE);
+                postReactionRepository.save(reaction);
                 post.setLikesCount(post.getLikesCount() - 1);
                 post.setDislikesCount(post.getDislikesCount() + 1);
-                postReactionRepository.save(postReacted);
-                postRepository.save(post);
             }
         } else {
-            PostReaction postReaction = new PostReaction();
-            Post post = postRepository.findById(postId).orElseThrow(() -> new ResourceNotFoundException(messageConfig.getMessage(POST_NOT_FOUND, postId)));
+            log.info("User {} adds DISLIKE to post {}", userId, postId);
+            User user = userRepository.findById(userId)
+                    .orElseThrow(() -> {
+                        log.error("User {} not found when reacting to post {}", userId, postId);
+                        return new ResourceNotFoundException(messageConfig.getMessage(USER_NOT_FOUND, userId));
+                    });
+            reaction = new PostReaction();
+            reaction.setPost(post);
+            reaction.setUser(user);
+            reaction.setReactionType(ReactionType.DISLIKE);
+            postReactionRepository.save(reaction);
             post.setDislikesCount(post.getDislikesCount() + 1);
-            postRepository.save(post);
-            postReaction.setPost(post);
-            postReaction.setReactionType(ReactionType.DISLIKE);
-            postReaction.setUser(userRepository.findById(currentUserID).orElseThrow(() -> new ResourceNotFoundException(messageConfig.getMessage(USER_NOT_FOUND, currentUserID))));
-            postReactionRepository.save(postReaction);
         }
+        postRepository.save(post);
+        log.info("Updated post {} reaction counts: {} likes, {} dislikes", postId, post.getLikesCount(), post.getDislikesCount());
     }
+
+
 
 
 }

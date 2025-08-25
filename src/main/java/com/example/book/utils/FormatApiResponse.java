@@ -31,6 +31,10 @@ public class FormatApiResponse implements ResponseBodyAdvice<Object> {
         if (status >= 400) {
             return body;
         }
+        if (request.getURI().getPath().contains("/swagger") ||
+                request.getURI().getPath().contains("/v3/api-docs")) {
+            return body;
+        }
         res.setMessage("Call API Success");
         res.setData(body);
         return res;

@@ -10,12 +10,12 @@ import com.example.book.exception.ResourceNotFoundException;
 import com.example.book.repository.PermissionRepository;
 import com.example.book.repository.RoleRepository;
 import com.example.book.service.RoleService;
-import org.springframework.context.MessageSource;
-import org.springframework.context.i18n.LocaleContextHolder;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import java.util.List;
+@Slf4j
 @Service
 public class RoleServiceImpl implements RoleService {
 
@@ -33,27 +33,41 @@ public class RoleServiceImpl implements RoleService {
 
     @Override
     public RoleResponseDTO updateRole(RoleRequestDTO request, Long roleId) {
-        Role role = roleRepository.findById(roleId).orElseThrow(() -> new ResourceNotFoundException(messageConfig.getMessage(ROLE_NOT_FOUND, roleId)));
+        log.info("Update role with id {}", roleId);
+        Role role = roleRepository.findById(roleId).orElseThrow(() -> {
+            log.error(messageConfig.getMessage(ROLE_NOT_FOUND), roleId);
+            return new ResourceNotFoundException(messageConfig.getMessage(ROLE_NOT_FOUND, roleId));
+        });
         role.setRoleDesc(request.getDescription());
         if(request.getPermissionIds() != null) {
             List<Permission> permissions = request.getPermissionIds().stream().map(id -> permissionRepository.findById(id).orElseThrow(()
-                    -> new ResourceNotFoundException(messageConfig.getMessage(PERMISSION_NOT_FOUND, id)))).toList();
+                    ->{ log.error(messageConfig.getMessage(PERMISSION_NOT_FOUND), id);
+                return new ResourceNotFoundException(messageConfig.getMessage(PERMISSION_NOT_FOUND, id));
+            })).toList();
+            log.info("Adding or removing permissions of a role");
             role.setPermissions(permissions);
         }
         roleRepository.save(role);
+        log.info("Role with id {} has been updated", roleId);
         return convertRoleToDTO(role);
     }
 
     @Override
     public void deleteRole(Long roleId) {
+        log.info("Delete role with id {}", roleId);
         if(roleRepository.findById(roleId).isPresent()) {
             roleRepository.deleteById(roleId);
+            log.info("Role with id {} has been deleted", roleId);
         }
-        else throw new ResourceNotFoundException(messageConfig.getMessage(ROLE_NOT_FOUND, roleId));
+        else {
+            log.error(messageConfig.getMessage(ROLE_NOT_FOUND), roleId);
+            throw new ResourceNotFoundException(messageConfig.getMessage(ROLE_NOT_FOUND, roleId));
+        }
     }
 
     @Override
     public PageResponseDTO<RoleResponseDTO> getPageRole(Pageable pageable) {
+       log.info("Get roles with page {}", pageable);
        Page<Role> roles = roleRepository.findAll(pageable);
        Page<RoleResponseDTO> rolePage = roles.map(this::convertRoleToDTO);
        return new PageResponseDTO<>(rolePage.getNumber() + 1,
@@ -64,7 +78,11 @@ public class RoleServiceImpl implements RoleService {
 
     @Override
     public RoleResponseDTO getRole(Long roleId) {
-        Role role  = roleRepository.findById(roleId).orElseThrow(() -> new ResourceNotFoundException(messageConfig.getMessage(ROLE_NOT_FOUND, roleId)));
+        log.info("Get role with id {}", roleId);
+        Role role  = roleRepository.findById(roleId).orElseThrow(() -> {
+            log.error(messageConfig.getMessage(ROLE_NOT_FOUND), roleId);
+            return new ResourceNotFoundException(messageConfig.getMessage(ROLE_NOT_FOUND, roleId));
+        });
         return convertRoleToDTO(role);
     }
 

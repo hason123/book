@@ -1,15 +1,12 @@
 package com.example.book.exception;
 
-
 import com.example.book.dto.ResponseDTO.ApiResponse;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -47,14 +44,6 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
     }
 
-    @ExceptionHandler(value = IdInvalidException.class)
-    public ResponseEntity<ApiResponse<Object>> idInvalidException(IdInvalidException e) {
-        ApiResponse<Object> res = new ApiResponse<>();
-        res.setCode(HttpStatus.BAD_REQUEST.value());
-        res.setMessage(e.getMessage());
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
-    }
-
     @ExceptionHandler(value = ResourceNotFoundException.class)
     public ResponseEntity<ApiResponse<Object>> ResourceNotFoundException(ResourceNotFoundException e) {
         ApiResponse<Object> res = new ApiResponse<>();
@@ -64,7 +53,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(value = BusinessException.class)
-    public ResponseEntity<ApiResponse<Object>> LogicException(BusinessException e) {
+    public ResponseEntity<ApiResponse<Object>> BusinessException(BusinessException e) {
         ApiResponse<Object> res = new ApiResponse<>();
         res.setCode(HttpStatus.BAD_REQUEST.value());
         res.setMessage(e.getMessage());

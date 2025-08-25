@@ -5,16 +5,15 @@ import com.example.book.dto.RequestDTO.PermissionRequestDTO;
 import com.example.book.dto.ResponseDTO.PageResponseDTO;
 import com.example.book.dto.ResponseDTO.PermissionResponseDTO;
 import com.example.book.entity.Permission;
-import com.example.book.entity.Role;
 import com.example.book.exception.ResourceNotFoundException;
 import com.example.book.repository.PermissionRepository;
 import com.example.book.repository.RoleRepository;
 import com.example.book.service.PermissionService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import java.util.List;
-
+@Slf4j
 @Service
 public class PermissionServiceImpl implements PermissionService {
 
@@ -32,18 +31,26 @@ public class PermissionServiceImpl implements PermissionService {
 
     @Override
     public PermissionResponseDTO createPermission(PermissionRequestDTO request) {
+        log.info("create a new permission");
         Permission permission = new Permission();
         permission.setName(request.getName());
         permission.setDescription(request.getDescription());
+        log.info("successfully create a new permission");
         permissionRepository.save(permission);
         return convertPermissionToDTO(permission);
     }
 
     @Override
     public PermissionResponseDTO updatePermission(Long id, PermissionRequestDTO request) {
-        Permission permission =  permissionRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException(messageConfig.getMessage(PERMISSION_NOT_FOUND, id)));
+        log.info("update permission with id {}", id);
+        Permission permission =  permissionRepository.findById(id).orElseThrow(() ->
+        {
+            log.error(messageConfig.getMessage(PERMISSION_NOT_FOUND), id);
+            return new ResourceNotFoundException(messageConfig.getMessage(PERMISSION_NOT_FOUND, id));
+        });
         permission.setName(request.getName());
         permission.setDescription(request.getDescription());
+        log.info("successfully update permission with id {}", id);
         permissionRepository.save(permission);
         return convertPermissionToDTO(permission);
     }
@@ -51,15 +58,21 @@ public class PermissionServiceImpl implements PermissionService {
     @Override
     public void deletePermission(Long id) {
         if(permissionRepository.findById(id).isPresent()) {
+            log.info("delete permission with id {}", id);
             permissionRepository.deleteById(id);
         }
-        else throw new ResourceNotFoundException(messageConfig.getMessage(PERMISSION_NOT_FOUND, id));
+        else {
+            log.info(messageConfig.getMessage(PERMISSION_NOT_FOUND, id));
+            throw new ResourceNotFoundException(messageConfig.getMessage(PERMISSION_NOT_FOUND, id));
+        }
     }
 
     @Override
     public PageResponseDTO<PermissionResponseDTO> getPagePermission(Pageable pageable) {
+        log.info("Get permission's page");
         Page<Permission> permissions = permissionRepository.findAll(pageable);
         Page<PermissionResponseDTO> permissionPage = permissions.map(this::convertPermissionToDTO);
+        log.info("Return permission's page");
         return new PageResponseDTO<>(permissionPage.getNumber() + 1,
                 permissionPage.getNumberOfElements(),
                 permissionPage.getTotalPages(),
@@ -68,7 +81,12 @@ public class PermissionServiceImpl implements PermissionService {
 
     @Override
     public PermissionResponseDTO getPermissionById(Long id) {
-        Permission permission =  permissionRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException(messageConfig.getMessage(PERMISSION_NOT_FOUND, id)));
+        log.info("get permission with id {}", id);
+        Permission permission =  permissionRepository.findById(id).orElseThrow(() ->
+        {
+            log.error(messageConfig.getMessage(PERMISSION_NOT_FOUND), id);
+            return new ResourceNotFoundException(messageConfig.getMessage(PERMISSION_NOT_FOUND, id));
+        });
         return convertPermissionToDTO(permission);
     }
 
