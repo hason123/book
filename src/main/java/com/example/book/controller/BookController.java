@@ -35,14 +35,14 @@ public class BookController {
     }
 
     @PreAuthorize("isAuthenticated()")
-    @GetMapping("/book/{id}")
+    @GetMapping("/books/{id}")
     public ResponseEntity<BookResponseDTO> getBookById(@PathVariable("id") long id) {
         BookResponseDTO bookResponse = bookService.getBookById(id);
         return ResponseEntity.status(HttpStatus.OK).body(bookResponse);
     }
 
     @PreAuthorize("isAuthenticated()")
-    @GetMapping("/book/search")
+    @GetMapping("/books/search")
     public ResponseEntity<PageResponseDTO<BookResponseDTO>> searchBook(
             SearchBookRequest searchBookRequest,
             @RequestParam(value = "pageNumber", defaultValue = "1", required = false) Integer pageNumber,
@@ -53,28 +53,28 @@ public class BookController {
     }
 
     @PreAuthorize("hasAnyRole('ADMIN', 'LIBRARIAN')")
-    @PostMapping("/book/create")
+    @PostMapping("/books")
     public ResponseEntity<BookResponseDTO> createBook(@RequestBody BookRequestDTO book) {
         BookResponseDTO bookAdded = bookService.addBook(book);
         return ResponseEntity.status(201).body(bookAdded);
     }
 
     @PreAuthorize("hasAnyRole('ADMIN', 'LIBRARIAN')")
-    @PutMapping("/book/update/{id}")
+    @PutMapping("/books/{id}")
     public ResponseEntity<BookResponseDTO> updateBook(@PathVariable("id") long id, @RequestBody BookRequestDTO book) {
         BookResponseDTO bookUpdated = bookService.updateBook(id, book);
         return ResponseEntity.status(200).body(bookUpdated);
     }
 
     @PreAuthorize("hasAnyRole('ADMIN', 'LIBRARIAN')")
-    @DeleteMapping("/book/delete/{id}")
+    @DeleteMapping("/books/{id}")
     public ResponseEntity<?> deleteBook(@PathVariable("id") long id) {
         bookService.deleteBookById(id);
         return ResponseEntity.status(200).body("Delete successful");
     }
 
     @PreAuthorize("hasAnyRole('ADMIN', 'LIBRARIAN')")
-    @PostMapping("/book/sync")
+    @PostMapping("/books/sync")
     public ResponseEntity<Void> syncBook() {
         bookSyncService.syncBooksFromGoogle();
         return ResponseEntity.status(200).build();

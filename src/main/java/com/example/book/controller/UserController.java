@@ -39,28 +39,28 @@ public class UserController {
     }
 
     @PreAuthorize("isAuthenticated()")
-    @GetMapping("/user/{id}")
+    @GetMapping("/users/{id}")
     public ResponseEntity<?> getUserById(@PathVariable Long id)  {
         Object user = userService.getUserById(id);
         return ResponseEntity.ok(user);
     }
     //DeleteUser
     @PreAuthorize("hasRole('ADMIN')")
-    @DeleteMapping("/user/delete/{id}")
+    @DeleteMapping("/users/{id}")
     public ResponseEntity<?> deleteUser(@PathVariable Long id) throws UnauthorizedException {
         userService.deleteUserById(id);
         return ResponseEntity.ok("Delete successful");
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @PostMapping("/user/create")
+    @PostMapping("/users")
     public ResponseEntity<UserRequestDTO> createUser(@Valid @RequestBody UserRequestDTO user) {
         UserRequestDTO userAdded = userService.createUser(user);
         return ResponseEntity.status(HttpStatus.CREATED).body(userAdded);
     }
 
     @PreAuthorize("isAuthenticated()")
-    @PutMapping("/user/update/{id}")
+    @PutMapping("/users/{id}")
     public ResponseEntity<UserRequestDTO> updateUser( @PathVariable Long id,
                                                    @Valid @RequestBody UserRequestDTO user) throws UnauthorizedException {
         UserRequestDTO updatedUser = userService.updateUser(id, user);
@@ -68,7 +68,7 @@ public class UserController {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @PutMapping("/user/updateRole")
+    @PutMapping("/users/update-role")
     public ResponseEntity<?> updateRole(@Valid @RequestBody UserRoleRequestDTO userRole){
         userServiceImpl.updateRole(userRole);
         return ResponseEntity.status(HttpStatus.OK).build();

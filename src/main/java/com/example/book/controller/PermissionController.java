@@ -21,28 +21,28 @@ public class PermissionController {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @PutMapping("/permission/create/{id}")
+    @PutMapping("/permissions/{id}")
     public ResponseEntity<PermissionResponseDTO> createPermission(@RequestBody PermissionRequestDTO request) {
         PermissionResponseDTO permissionCreated = permissionService.createPermission(request);
         return ResponseEntity.ok(permissionCreated);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @PutMapping("/permission/update/{id}")
+    @PutMapping("/permissions/{id}")
     public ResponseEntity<PermissionResponseDTO> updatePermission(@PathVariable long id, @RequestBody PermissionRequestDTO request) {
         PermissionResponseDTO permissionUpdated = permissionService.updatePermission(id, request);
         return ResponseEntity.ok(permissionUpdated);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @PutMapping("/permission/{id}")
+    @PutMapping("/permissions/{id}")
     public ResponseEntity<PermissionResponseDTO> getRole(@PathVariable long id) {
         PermissionResponseDTO permission = permissionService.getPermissionById(id);
         return ResponseEntity.ok(permission);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @PutMapping("/permission/delete/{id}")
+    @PutMapping("/permissions/{id}")
     public ResponseEntity<String> deleteRole(@PathVariable long id) {
         permissionService.deletePermission(id);
         return ResponseEntity.status(HttpStatus.OK).body("Delete succesful!");

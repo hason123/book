@@ -45,42 +45,42 @@ public class PostController {
     }
 
     @PreAuthorize("isAuthenticated()")
-    @GetMapping("/post/{id}")
+    @GetMapping("/posts/{id}")
     public ResponseEntity<PostResponseDTO> getPostById(@PathVariable long id) {
         PostResponseDTO post = postServiceImpl.getPost(id);
         return ResponseEntity.ok(post);
     }
 
     @PreAuthorize("isAuthenticated()")
-    @PostMapping("/post/create")
+    @PostMapping("/posts")
     public ResponseEntity<PostResponseDTO> createPost(@RequestBody PostRequestDTO post){
         PostResponseDTO postCreate = postServiceImpl.addPost(post);
         return new ResponseEntity<>(postCreate, HttpStatus.CREATED);
     }
 
     @PreAuthorize("isAuthenticated()")
-    @PutMapping("/post/update/{id}")
+    @PutMapping("/posts/{id}")
     public ResponseEntity<PostResponseDTO> updatePost(@PathVariable long id, @RequestBody PostRequestDTO post) throws UnauthorizedException {
         PostResponseDTO postUpdate = postServiceImpl.updatePost(id, post);
         return new ResponseEntity<>(postUpdate, HttpStatus.OK);
     }
 
     @PreAuthorize("isAuthenticated()")
-    @DeleteMapping("/post/delete/{id}")
+    @DeleteMapping("/posts/{id}")
     public ResponseEntity<String> deletePost(@PathVariable long id){
         postServiceImpl.deletePost(id);
         return ResponseEntity.status(200).body("Delete successful");
     }
 
     @PreAuthorize("isAuthenticated()")
-    @GetMapping("/post/{postId}/comments")
+    @GetMapping("/posts/{postId}/comments")
     public ResponseEntity<List<CommentResponseDTO>> getCommentsByPostId(@PathVariable long postId) {
         List<CommentResponseDTO> commentPosts =  commentServiceImpl.getCommentByPost(postId);
         return ResponseEntity.ok(commentPosts);
     }
 
     @PreAuthorize("isAuthenticated()")
-    @GetMapping("/post/search")
+    @GetMapping("/posts/search")
     public ResponseEntity<PageResponseDTO<PostListResponseDTO>> searchPost(@RequestParam(value = "pageNumber", required = false, defaultValue = "1") Integer pageNumber,
                                                                            @RequestParam(value = "pageSize", required = false, defaultValue = "3") Integer pageSize, SearchPostRequest request) {
         Pageable pageable = PageRequest.of(pageNumber - 1, pageSize);
@@ -89,21 +89,21 @@ public class PostController {
     }
 
     @PreAuthorize("isAuthenticated()")
-    @GetMapping("/post/dashboard")
+    @GetMapping("/posts/dashboard")
     public ResponseEntity<?> getPostDashboard(HttpServletResponse response) throws IOException {
         postServiceImpl.createPostWorkbook(response);
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
     @PreAuthorize("isAuthenticated()")
-    @PutMapping("/post/like/{id}")
+    @PutMapping("/posts/{id}/like")
     public ResponseEntity<?> likePost(@PathVariable Long id){
         postReactionService.likePost(id);
         return new ResponseEntity<>(HttpStatus.OK);
     }
 
     @PreAuthorize("isAuthenticated()")
-    @PutMapping("/post/dislike/{id}")
+    @PutMapping("/posts/{id}/dislike")
     public ResponseEntity<?> dislikePost(@PathVariable Long id){
         postReactionService.disLikePost(id);
         return new ResponseEntity<>(HttpStatus.OK);

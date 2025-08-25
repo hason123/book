@@ -34,42 +34,42 @@ public class CommentController {
     }
 
     @PreAuthorize("isAuthenticated()")
-    @GetMapping("/comment/{id}")
+    @GetMapping("/comments/{id}")
     public ResponseEntity<CommentShortResponseDTO> getCommentById(@PathVariable long id) {
         CommentShortResponseDTO comment = commentServiceImpl.getComment(id);
         return new ResponseEntity<>(comment, HttpStatus.OK);
     }
 
     @PreAuthorize("isAuthenticated()")
-    @PostMapping("/post/{postId}/comment/create")
+    @PostMapping("/posts/{postId}/comments/create")
     public ResponseEntity<CommentShortResponseDTO> createComment(@PathVariable Long postId , @RequestBody CommentRequestDTO request) {
         CommentShortResponseDTO commentCreated = commentServiceImpl.addComment(postId, request);
         return new ResponseEntity<>(commentCreated, HttpStatus.CREATED);
     }
 
     @PreAuthorize("isAuthenticated()")
-    @PutMapping("/post/{postId}/comment/update/{commentId}")
+    @PutMapping("/posts/{postId}/comments/{commentId}")
     public ResponseEntity<CommentShortResponseDTO> updateComemnt(@PathVariable Long postId , @PathVariable Long commentId, @RequestBody CommentRequestDTO request){
         CommentShortResponseDTO commentUpdated = commentServiceImpl.updateComment(postId, commentId, request);
         return new ResponseEntity<>(commentUpdated, HttpStatus.OK);
     }
 
     @PreAuthorize("isAuthenticated()")
-    @DeleteMapping("/comment/delete/{id}")
+    @DeleteMapping("/comments/{id}")
     public ResponseEntity<?> deleteComment(@PathVariable long id){
         commentServiceImpl.deleteComment(id);
         return ResponseEntity.ok().body("Delete successful");
     }
 
     @PreAuthorize("isAuthenticated()")
-    @PostMapping("/comment/like/{id}")
+    @PostMapping("/comments/{id}/like")
     public ResponseEntity<?> likeComment(@PathVariable long id){
         commentReactionServiceImpl.likeComment(id);
         return ResponseEntity.ok().build();
     }
 
     @PreAuthorize("isAuthenticated()")
-    @PostMapping("/comment/dislike/{id}")
+    @PostMapping("/comments/{id}/dislike")
     public ResponseEntity<?> dislikeComment(@PathVariable long id){
         commentReactionServiceImpl.dislikeComment(id);
         return ResponseEntity.ok().build();

@@ -33,21 +33,21 @@ public class CategoryController {
     }
 
     @PreAuthorize("isAuthenticated()")
-    @GetMapping("/category/{id}")
+    @GetMapping("/categories/{id}")
     public ResponseEntity<CategoryResponseDTO> getCategory(@PathVariable long id) {
         CategoryResponseDTO category = categoryServiceImpl.getCategory(id);
         return ResponseEntity.ok(category);
     }
 
     @PreAuthorize("hasAnyRole('ADMIN', 'LIBRARIAN')")
-    @PostMapping("/category/create")
+    @PostMapping("/categories")
     public ResponseEntity<CategoryResponseDTO> createCategory(@RequestBody CategoryResponseDTO category) {
         CategoryResponseDTO categoryAdded = categoryServiceImpl.addCategory(category);
         return ResponseEntity.status(HttpStatus.CREATED).body(categoryAdded);
     }
 
     @PreAuthorize("hasAnyRole('ADMIN', 'LIBRARIAN')")
-    @PutMapping("/category/update/{id}")
+    @PutMapping("/categories/{id}")
     public ResponseEntity<CategoryResponseDTO> updateCategory(@PathVariable long id, @RequestBody CategoryResponseDTO category) {
         CategoryResponseDTO categoryUpdated = categoryServiceImpl.updateCategory(id, category);
         if (categoryUpdated == null) {
@@ -57,14 +57,14 @@ public class CategoryController {
     }
 
     @PreAuthorize("hasAnyRole('ADMIN', 'LIBRARIAN')")
-    @DeleteMapping("/category/delete/{id}")
+    @DeleteMapping("/categories/{id}")
     public ResponseEntity<?> deleteCategory(@PathVariable long id) {
         categoryServiceImpl.deleteCategory(id);
         return ResponseEntity.status(200).body("Delete success!");
     }
 
     @PreAuthorize("isAuthenticated()")
-    @GetMapping("/cateogory/dashboard")
+    @GetMapping("/categories/dashboard")
     public ResponseEntity<Void> getCategoryDashboard(HttpServletResponse response) throws IOException {
         categoryServiceImpl.createCategoryWorkbook(response);
         return ResponseEntity.ok().build();

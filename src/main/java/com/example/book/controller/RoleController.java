@@ -22,21 +22,21 @@ public class RoleController {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @PutMapping("/role/update/{id}")
+    @PutMapping("/roles/{id}")
     public ResponseEntity<RoleResponseDTO> updateRole(@PathVariable long id, @RequestBody RoleRequestDTO request) {
         RoleResponseDTO roleUpdated = roleService.updateRole(request, id);
         return ResponseEntity.ok(roleUpdated);
     }
 
     @PreAuthorize("hasRole('USER')")
-    @GetMapping("/role/{id}")
+    @GetMapping("/roles/{id}")
     public ResponseEntity<RoleResponseDTO> getRole(@PathVariable long id) {
         RoleResponseDTO role = roleService.getRole(id);
         return ResponseEntity.ok(role);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @PutMapping("/role/delete/{id}")
+    @PutMapping("/roles/{id}")
     public ResponseEntity<String> deleteRole(@PathVariable long id) {
         roleService.deleteRole(id);
         return ResponseEntity.status(HttpStatus.OK).body("Delete succesful!");
