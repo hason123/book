@@ -5,7 +5,7 @@ import com.example.book.constant.RoleType;
 import com.example.book.dto.RequestDTO.PostRequestDTO;
 import com.example.book.dto.RequestDTO.Search.SearchPostRequest;
 import com.example.book.dto.ResponseDTO.PageResponseDTO;
-import com.example.book.dto.ResponseDTO.Post.PostListDTO;
+import com.example.book.dto.ResponseDTO.Post.PostListResponseDTO;
 import com.example.book.dto.ResponseDTO.Post.PostResponseDTO;
 import com.example.book.entity.Comment;
 import com.example.book.entity.Post;
@@ -79,16 +79,16 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
-    public PageResponseDTO<PostListDTO> getAllPosts(Pageable pageable) {
+    public PageResponseDTO<PostListResponseDTO> getAllPosts(Pageable pageable) {
        log.info("Getting all posts from database");
        Page<Post> posts = postRepository.findAll(pageable);
-       Page<PostListDTO> postList = posts.map(this::convertPostListToDTO);
+       Page<PostListResponseDTO> postList = posts.map(this::convertPostListToDTO);
        log.info("Retrieved all posts from database");
        return new PageResponseDTO<>(postList.getNumber(), postList.getNumberOfElements(), postList.getTotalPages(), postList.getContent());
     }
 
     @Override
-    public PageResponseDTO<PostListDTO> searchPost(Pageable pageable, SearchPostRequest request){
+    public PageResponseDTO<PostListResponseDTO> searchPost(Pageable pageable, SearchPostRequest request){
         log.info("Searching posts from database");
         Specification<Post> spec = ((root, query, criteriaBuilder) -> criteriaBuilder.conjunction());
         String title = request.getTitle();
@@ -112,7 +112,7 @@ public class PostServiceImpl implements PostService {
             spec = spec.and(PostSpecification.uploadAfterDate(afterDate));
         }
         Page<Post> posts = postRepository.findAll(spec, pageable);
-        Page<PostListDTO> postList = posts.map(this::convertPostListToDTO);
+        Page<PostListResponseDTO> postList = posts.map(this::convertPostListToDTO);
         log.info("Retrieved all posts from database");
         return new PageResponseDTO<>(postList.getNumber(), postList.getNumberOfElements(),
                 postList.getTotalPages(), postList.getContent());
@@ -189,8 +189,8 @@ public class PostServiceImpl implements PostService {
         log.info("Created post workbook");
     }
 
-    public PostListDTO convertPostListToDTO(Post post) {
-        PostListDTO postListDTO = new PostListDTO();
+    public PostListResponseDTO convertPostListToDTO(Post post) {
+        PostListResponseDTO postListDTO = new PostListResponseDTO();
         postListDTO.setId(post.getPostId());
         postListDTO.setTitle(post.getTitle());
         postListDTO.setCreatedAt(post.getCreatedDate());

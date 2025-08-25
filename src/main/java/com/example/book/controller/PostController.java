@@ -4,7 +4,7 @@ import com.example.book.dto.RequestDTO.PostRequestDTO;
 import com.example.book.dto.RequestDTO.Search.SearchPostRequest;
 import com.example.book.dto.ResponseDTO.Comment.CommentResponseDTO;
 import com.example.book.dto.ResponseDTO.PageResponseDTO;
-import com.example.book.dto.ResponseDTO.Post.PostListDTO;
+import com.example.book.dto.ResponseDTO.Post.PostListResponseDTO;
 import com.example.book.dto.ResponseDTO.Post.PostResponseDTO;
 import com.example.book.exception.UnauthorizedException;
 import com.example.book.service.PostReactionService;
@@ -37,10 +37,10 @@ public class PostController {
 
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/posts")
-    public ResponseEntity<PageResponseDTO<PostListDTO>> getAllPosts(@RequestParam(value = "pageNumber", required = false, defaultValue = "1") Integer pageNumber,
-                                                                    @RequestParam(value = "pageSize", required = false, defaultValue = "3") Integer pageSize) {
+    public ResponseEntity<PageResponseDTO<PostListResponseDTO>> getAllPosts(@RequestParam(value = "pageNumber", required = false, defaultValue = "1") Integer pageNumber,
+                                                                            @RequestParam(value = "pageSize", required = false, defaultValue = "3") Integer pageSize) {
         Pageable pageable = PageRequest.of(pageNumber - 1, pageSize);
-        PageResponseDTO<PostListDTO> posts = postServiceImpl.getAllPosts(pageable);
+        PageResponseDTO<PostListResponseDTO> posts = postServiceImpl.getAllPosts(pageable);
         return new ResponseEntity<>(posts, HttpStatus.OK);
     }
 
@@ -81,10 +81,10 @@ public class PostController {
 
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/post/search")
-    public ResponseEntity<PageResponseDTO<PostListDTO>> searchPost(@RequestParam(value = "pageNumber", required = false, defaultValue = "1") Integer pageNumber,
-                                                                    @RequestParam(value = "pageSize", required = false, defaultValue = "3") Integer pageSize, SearchPostRequest request) {
+    public ResponseEntity<PageResponseDTO<PostListResponseDTO>> searchPost(@RequestParam(value = "pageNumber", required = false, defaultValue = "1") Integer pageNumber,
+                                                                           @RequestParam(value = "pageSize", required = false, defaultValue = "3") Integer pageSize, SearchPostRequest request) {
         Pageable pageable = PageRequest.of(pageNumber - 1, pageSize);
-        PageResponseDTO<PostListDTO> posts = postServiceImpl.searchPost(pageable, request);
+        PageResponseDTO<PostListResponseDTO> posts = postServiceImpl.searchPost(pageable, request);
         return new ResponseEntity<>(posts, HttpStatus.OK);
     }
 

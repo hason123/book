@@ -1,26 +1,21 @@
 package com.example.book.dto.ResponseDTO.User;
 
-
-import com.fasterxml.jackson.annotation.JsonFormat;
+import com.example.book.dto.RequestDTO.UserRequestDTO;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import java.time.LocalDate;
+
 import java.util.ArrayList;
 import java.util.List;
-//Nguoi dung phu thong
+//ADMIN va nguoi dung ca nhan co the xem duoc
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserViewDTO {
-    private Long userId;
-    private String userName;
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
-    private LocalDate birthday;
+public class UserDetailResponseDTO {
+    private UserRequestDTO userRequestDTO;
     private List<Long> postIDs = new ArrayList<>();
     private List<Long> commentIDs = new ArrayList<>();
-    private String roleName;
-
+    private List<Long> borrowingIDs = new ArrayList<>();
 }

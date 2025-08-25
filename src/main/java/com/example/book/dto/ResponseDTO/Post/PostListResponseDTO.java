@@ -7,7 +7,7 @@ import java.time.LocalDate;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class PostListDTO {
+public class PostListResponseDTO {
     private Long id;
     private String userPost;
     private String title;

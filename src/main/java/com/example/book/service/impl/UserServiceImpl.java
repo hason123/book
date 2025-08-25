@@ -6,8 +6,8 @@ import com.example.book.dto.RequestDTO.Search.SearchUserRequest;
 import com.example.book.dto.RequestDTO.UserRequestDTO;
 import com.example.book.dto.RequestDTO.UserRoleRequestDTO;
 import com.example.book.dto.ResponseDTO.PageResponseDTO;
-import com.example.book.dto.ResponseDTO.User.UserDetailDTO;
-import com.example.book.dto.ResponseDTO.User.UserViewDTO;
+import com.example.book.dto.ResponseDTO.User.UserDetailResponseDTO;
+import com.example.book.dto.ResponseDTO.User.UserViewResponseDTO;
 import com.example.book.entity.*;
 import com.example.book.exception.ResourceNotFoundException;
 import com.example.book.exception.UnauthorizedException;
@@ -68,10 +68,10 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public PageResponseDTO<UserViewDTO> getAllUsers(Pageable pageable){
+    public PageResponseDTO<UserViewResponseDTO> getAllUsers(Pageable pageable){
         Page<User> userPage = userRepository.findAll(pageable);
-        Page<UserViewDTO> userResponsePage = userPage.map(this::convertUserViewToDTO);
-        PageResponseDTO<UserViewDTO> pageDTO = new PageResponseDTO<>(
+        Page<UserViewResponseDTO> userResponsePage = userPage.map(this::convertUserViewToDTO);
+        PageResponseDTO<UserViewResponseDTO> pageDTO = new PageResponseDTO<>(
                 userResponsePage.getNumber() + 1,
                 userResponsePage.getNumberOfElements(),
                 userResponsePage.getTotalPages(),
@@ -154,7 +154,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public PageResponseDTO<UserViewDTO> searchUser(SearchUserRequest request, Pageable pageable){
+    public PageResponseDTO<UserViewResponseDTO> searchUser(SearchUserRequest request, Pageable pageable){
         Specification<User> spec = (root, query, cb) -> cb.conjunction();
         String userName = request.getUserName();
         Long userId = request.getUserId();
@@ -170,7 +170,7 @@ public class UserServiceImpl implements UserService {
             spec = spec.and(UserSpecification.hasUserID(userId));
         }
         Page<User> userPage =  userRepository.findAll(spec, pageable);
-        Page<UserViewDTO> userViewDTOPage = userPage.map(this::convertUserViewToDTO);
+        Page<UserViewResponseDTO> userViewDTOPage = userPage.map(this::convertUserViewToDTO);
         return new PageResponseDTO<>(
                 userViewDTOPage.getNumber() + 1,
                 userViewDTOPage.getNumberOfElements(),
@@ -229,23 +229,24 @@ public class UserServiceImpl implements UserService {
         return userDTO;
     }
 
-    public UserDetailDTO convertUserDetailToDTO(User user){
-        UserDetailDTO userDetailDTO = new UserDetailDTO();
-        userDetailDTO.setUserRequestDTO(convertUserInfoToDTO(user));
+    public UserDetailResponseDTO convertUserDetailToDTO(User user){
+        UserDetailResponseDTO response = new UserDetailResponseDTO();
+        response.setUserRequestDTO(convertUserInfoToDTO(user));
         if (user.getPosts() != null) {
-            user.getPosts().forEach(post -> userDetailDTO.getPostIDs().add(post.getPostId()));
+            user.getPosts().forEach(post -> response.getPostIDs().add(post.getPostId()));
         }
         if (user.getComments() != null) {
-            user.getComments().forEach(comment -> userDetailDTO.getCommentIDs().add(comment.getCommentId()));
+            user.getComments().forEach(comment -> response.getCommentIDs().add(comment.getCommentId()));
         }
         if (user.getBorrowing() != null) {
-            user.getBorrowing().forEach(borrowing -> {userDetailDTO.getBorrowingIDs().add(borrowing.getId());});
+            user.getBorrowing().forEach(borrowing -> {
+                response.getBorrowingIDs().add(borrowing.getId());});
         }
-        return userDetailDTO;
+        return response;
     }
 
-    public UserViewDTO convertUserViewToDTO(User user){
-        UserViewDTO userViewDTO = new UserViewDTO();
+    public UserViewResponseDTO convertUserViewToDTO(User user){
+        UserViewResponseDTO userViewDTO = new UserViewResponseDTO();
         userViewDTO.setUserName(user.getUserName());
         userViewDTO.setBirthday(user.getBirthday());
         userViewDTO.setUserId(user.getUserId());

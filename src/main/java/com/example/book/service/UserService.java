@@ -4,7 +4,7 @@ import com.example.book.dto.RequestDTO.Search.SearchUserRequest;
 import com.example.book.dto.RequestDTO.UserRequestDTO;
 import com.example.book.dto.RequestDTO.UserRoleRequestDTO;
 import com.example.book.dto.ResponseDTO.PageResponseDTO;
-import com.example.book.dto.ResponseDTO.User.UserViewDTO;
+import com.example.book.dto.ResponseDTO.User.UserViewResponseDTO;
 import com.example.book.entity.User;
 import com.example.book.exception.ResourceNotFoundException;
 import com.example.book.exception.UnauthorizedException;
@@ -16,7 +16,7 @@ public interface UserService {
 
     Object getUserById(Long id) throws UnauthorizedException;
 
-    PageResponseDTO<UserViewDTO> getAllUsers(Pageable pageable);
+    PageResponseDTO<UserViewResponseDTO> getAllUsers(Pageable pageable);
 
     void deleteUserById(Long id) throws UnauthorizedException;
 
@@ -24,7 +24,7 @@ public interface UserService {
 
     void updateRole(UserRoleRequestDTO userRole) throws ResourceNotFoundException, UnauthorizedException;
 
-    PageResponseDTO<UserViewDTO> searchUser(SearchUserRequest request, Pageable pageable);
+    PageResponseDTO<UserViewResponseDTO> searchUser(SearchUserRequest request, Pageable pageable);
 
     User getCurrentUser();
 

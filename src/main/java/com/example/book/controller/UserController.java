@@ -4,7 +4,7 @@ import com.example.book.dto.RequestDTO.Search.SearchUserRequest;
 import com.example.book.dto.RequestDTO.UserRequestDTO;
 import com.example.book.dto.RequestDTO.UserRoleRequestDTO;
 import com.example.book.dto.ResponseDTO.PageResponseDTO;
-import com.example.book.dto.ResponseDTO.User.UserViewDTO;
+import com.example.book.dto.ResponseDTO.User.UserViewResponseDTO;
 import com.example.book.exception.UnauthorizedException;
 import com.example.book.service.impl.UserServiceImpl;
 import jakarta.validation.Valid;
@@ -29,12 +29,12 @@ public class UserController {
     //GetAll
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/users")
-    public ResponseEntity<PageResponseDTO<UserViewDTO>> getAllUsers(
+    public ResponseEntity<PageResponseDTO<UserViewResponseDTO>> getAllUsers(
             @RequestParam(value = "pageNumber", defaultValue = "1", required = false) Integer pageNumber,
             @RequestParam(value = "pageSize", defaultValue = "3", required = false) Integer pageSize
     ) {
         Pageable pageable = PageRequest.of(pageNumber - 1, pageSize);
-        PageResponseDTO<UserViewDTO> userPage = userService.getAllUsers(pageable);
+        PageResponseDTO<UserViewResponseDTO> userPage = userService.getAllUsers(pageable);
         return ResponseEntity.ok(userPage); // HTTP 200 + JSON list
     }
 
@@ -76,10 +76,10 @@ public class UserController {
 
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/users/search")
-    public ResponseEntity<PageResponseDTO<UserViewDTO>> searchUsers(@RequestParam(value = "pageNumber", required = false, defaultValue = "1") Integer pageNumber,
-                                                                    @RequestParam(value = "pageSize", required = false, defaultValue = "3") Integer pageSize, SearchUserRequest request){
+    public ResponseEntity<PageResponseDTO<UserViewResponseDTO>> searchUsers(@RequestParam(value = "pageNumber", required = false, defaultValue = "1") Integer pageNumber,
+                                                                            @RequestParam(value = "pageSize", required = false, defaultValue = "3") Integer pageSize, SearchUserRequest request){
         Pageable pageable = PageRequest.of(pageNumber - 1, pageSize);
-        PageResponseDTO<UserViewDTO> results = userServiceImpl.searchUser(request,pageable);
+        PageResponseDTO<UserViewResponseDTO> results = userServiceImpl.searchUser(request,pageable);
         return ResponseEntity.ok(results);
     }
 

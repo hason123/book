@@ -3,7 +3,7 @@ package com.example.book.service;
 import com.example.book.dto.RequestDTO.PostRequestDTO;
 import com.example.book.dto.RequestDTO.Search.SearchPostRequest;
 import com.example.book.dto.ResponseDTO.PageResponseDTO;
-import com.example.book.dto.ResponseDTO.Post.PostListDTO;
+import com.example.book.dto.ResponseDTO.Post.PostListResponseDTO;
 import com.example.book.dto.ResponseDTO.Post.PostResponseDTO;
 import com.example.book.exception.UnauthorizedException;
 import jakarta.servlet.http.HttpServletResponse;
@@ -16,9 +16,9 @@ public interface PostService {
 
     PostResponseDTO getPost(Long id);
 
-    PageResponseDTO<PostListDTO> getAllPosts(Pageable pageable);
+    PageResponseDTO<PostListResponseDTO> getAllPosts(Pageable pageable);
 
-    PageResponseDTO<PostListDTO> searchPost(Pageable pageable, SearchPostRequest request);
+    PageResponseDTO<PostListResponseDTO> searchPost(Pageable pageable, SearchPostRequest request);
 
     PostResponseDTO updatePost(Long id, PostRequestDTO post) throws UnauthorizedException;
 
