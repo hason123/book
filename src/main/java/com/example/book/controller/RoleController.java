@@ -36,7 +36,7 @@ public class RoleController {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @PutMapping("/roles/{id}")
+    @DeleteMapping("/roles/{id}")
     public ResponseEntity<String> deleteRole(@PathVariable long id) {
         roleService.deleteRole(id);
         return ResponseEntity.status(HttpStatus.OK).body("Delete succesful!");

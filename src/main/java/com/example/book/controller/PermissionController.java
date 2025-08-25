@@ -21,7 +21,7 @@ public class PermissionController {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @PutMapping("/permissions/{id}")
+    @PostMapping("/permissions/{id}")
     public ResponseEntity<PermissionResponseDTO> createPermission(@RequestBody PermissionRequestDTO request) {
         PermissionResponseDTO permissionCreated = permissionService.createPermission(request);
         return ResponseEntity.ok(permissionCreated);
@@ -35,25 +35,25 @@ public class PermissionController {
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @PutMapping("/permissions/{id}")
-    public ResponseEntity<PermissionResponseDTO> getRole(@PathVariable long id) {
+    @GetMapping("/permissions/{id}")
+    public ResponseEntity<PermissionResponseDTO> getPermission(@PathVariable long id) {
         PermissionResponseDTO permission = permissionService.getPermissionById(id);
         return ResponseEntity.ok(permission);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @PutMapping("/permissions/{id}")
-    public ResponseEntity<String> deleteRole(@PathVariable long id) {
+    @DeleteMapping("/permissions/{id}")
+    public ResponseEntity<String> deletePermission(@PathVariable long id) {
         permissionService.deletePermission(id);
         return ResponseEntity.status(HttpStatus.OK).body("Delete succesful!");
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @PutMapping("/permissions")
-    public ResponseEntity<PageResponseDTO<PermissionResponseDTO>> getPageRole(@RequestParam(value = "pageNumber", required = false, defaultValue = "1") Integer pageNumber,
+    @GetMapping("/permissions")
+    public ResponseEntity<PageResponseDTO<PermissionResponseDTO>> getPagePermission(@RequestParam(value = "pageNumber", required = false, defaultValue = "1") Integer pageNumber,
                                                                         @RequestParam(value = "pageSize", required = false, defaultValue = "1") Integer pageSize) {
         Pageable pageable = PageRequest.of(pageNumber, pageSize);
-        PageResponseDTO<PermissionResponseDTO> rolePage = permissionService.getPagePermission(pageable);
-        return ResponseEntity.ok(rolePage);
+        PageResponseDTO<PermissionResponseDTO> permissionPage = permissionService.getPagePermission(pageable);
+        return ResponseEntity.ok(permissionPage);
     }
 }
