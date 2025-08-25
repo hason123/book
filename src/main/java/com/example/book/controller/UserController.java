@@ -4,9 +4,11 @@ import com.example.book.dto.RequestDTO.Search.SearchUserRequest;
 import com.example.book.dto.RequestDTO.UserRequestDTO;
 import com.example.book.dto.RequestDTO.UserRoleRequestDTO;
 import com.example.book.dto.ResponseDTO.PageResponseDTO;
+import com.example.book.dto.ResponseDTO.User.UserInfoResponseDTO;
 import com.example.book.dto.ResponseDTO.User.UserViewResponseDTO;
 import com.example.book.exception.UnauthorizedException;
 import com.example.book.service.impl.UserServiceImpl;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -26,7 +28,8 @@ public class UserController {
         this.userService = userService;
         this.userServiceImpl = userServiceImpl;
     }
-    //GetAll
+
+    @Operation(summary = "Lấy danh sách người dùng có phân trang")
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/users")
     public ResponseEntity<PageResponseDTO<UserViewResponseDTO>> getAllUsers(
@@ -38,6 +41,7 @@ public class UserController {
         return ResponseEntity.ok(userPage); // HTTP 200 + JSON list
     }
 
+    @Operation(summary = "Lấy thông tin người dùng")
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/users/{id}")
     public ResponseEntity<?> getUserById(@PathVariable Long id)  {
@@ -45,6 +49,7 @@ public class UserController {
         return ResponseEntity.ok(user);
     }
     //DeleteUser
+    @Operation(summary = "Xóa người dùng")
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/users/{id}")
     public ResponseEntity<?> deleteUser(@PathVariable Long id) throws UnauthorizedException {
@@ -52,21 +57,24 @@ public class UserController {
         return ResponseEntity.ok("Delete successful");
     }
 
+    @Operation(summary = "Tạo mới người dùng")
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/users")
-    public ResponseEntity<UserRequestDTO> createUser(@Valid @RequestBody UserRequestDTO user) {
-        UserRequestDTO userAdded = userService.createUser(user);
+    public ResponseEntity<UserInfoResponseDTO> createUser(@Valid @RequestBody UserRequestDTO user) {
+        UserInfoResponseDTO userAdded = userService.createUser(user);
         return ResponseEntity.status(HttpStatus.CREATED).body(userAdded);
     }
 
+    @Operation(summary = "Cập nhật người dùng")
     @PreAuthorize("isAuthenticated()")
     @PutMapping("/users/{id}")
-    public ResponseEntity<UserRequestDTO> updateUser( @PathVariable Long id,
+    public ResponseEntity<UserInfoResponseDTO> updateUser( @PathVariable Long id,
                                                    @Valid @RequestBody UserRequestDTO user) throws UnauthorizedException {
-        UserRequestDTO updatedUser = userService.updateUser(id, user);
+        UserInfoResponseDTO updatedUser = userService.updateUser(id, user);
         return ResponseEntity.ok(updatedUser);
     }
 
+    @Operation(summary = "Cập nhật vai trò người dùng")
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/users/update-role")
     public ResponseEntity<?> updateRole(@Valid @RequestBody UserRoleRequestDTO userRole){
@@ -74,6 +82,7 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
+    @Operation(summary = "Tìm kiếm người dùng")
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/users/search")
     public ResponseEntity<PageResponseDTO<UserViewResponseDTO>> searchUsers(@RequestParam(value = "pageNumber", required = false, defaultValue = "1") Integer pageNumber,

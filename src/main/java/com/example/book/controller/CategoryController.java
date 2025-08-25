@@ -3,6 +3,7 @@ package com.example.book.controller;
 import com.example.book.dto.ResponseDTO.CategoryResponseDTO;
 import com.example.book.dto.ResponseDTO.PageResponseDTO;
 import com.example.book.service.impl.CategoryServiceImpl;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -23,6 +24,8 @@ public class CategoryController {
     public CategoryController( CategoryServiceImpl categoryServiceImpl) {
         this.categoryServiceImpl = categoryServiceImpl;
     }
+
+    @Operation(summary = "Lấy danh sách thể loại sách")
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/categories")
     public ResponseEntity<PageResponseDTO<CategoryResponseDTO>> getCategories(@RequestParam(value = "pageNumber", required = false, defaultValue = "1") Integer pageNumber,
@@ -32,6 +35,7 @@ public class CategoryController {
         return ResponseEntity.ok(categoryPage);
     }
 
+    @Operation(summary = "Lấy thông tin thể loại sách")
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/categories/{id}")
     public ResponseEntity<CategoryResponseDTO> getCategory(@PathVariable long id) {
@@ -39,6 +43,7 @@ public class CategoryController {
         return ResponseEntity.ok(category);
     }
 
+    @Operation(summary = "Thêm mới thể loại sách")
     @PreAuthorize("hasAnyRole('ADMIN', 'LIBRARIAN')")
     @PostMapping("/categories")
     public ResponseEntity<CategoryResponseDTO> createCategory(@RequestBody CategoryResponseDTO category) {
@@ -46,6 +51,7 @@ public class CategoryController {
         return ResponseEntity.status(HttpStatus.CREATED).body(categoryAdded);
     }
 
+    @Operation(summary = "Cập nhật thể loại sách")
     @PreAuthorize("hasAnyRole('ADMIN', 'LIBRARIAN')")
     @PutMapping("/categories/{id}")
     public ResponseEntity<CategoryResponseDTO> updateCategory(@PathVariable long id, @RequestBody CategoryResponseDTO category) {
@@ -56,6 +62,7 @@ public class CategoryController {
         return ResponseEntity.ok(categoryUpdated);
     }
 
+    @Operation(summary = "Xóa thể loại sách")
     @PreAuthorize("hasAnyRole('ADMIN', 'LIBRARIAN')")
     @DeleteMapping("/categories/{id}")
     public ResponseEntity<?> deleteCategory(@PathVariable long id) {
@@ -63,6 +70,7 @@ public class CategoryController {
         return ResponseEntity.status(200).body("Delete success!");
     }
 
+    @Operation(summary = "Thống kê số sách theo thể loại")
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/categories/dashboard")
     public ResponseEntity<Void> getCategoryDashboard(HttpServletResponse response) throws IOException {

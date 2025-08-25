@@ -5,6 +5,7 @@ import com.example.book.dto.ResponseDTO.BorrowingResponseDTO;
 import com.example.book.dto.ResponseDTO.PageResponseDTO;
 import com.example.book.exception.ResourceNotFoundException;
 import com.example.book.service.impl.BorrowingServiceImpl;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.data.domain.PageRequest;
@@ -27,6 +28,7 @@ public class BorrowingController {
         this.borrowingServiceImpl = borrowingServiceImpl;
     }
 
+    @Operation(summary = "Lấy danh sách mượn sách")
     @PreAuthorize("hasAnyRole('ADMIN', 'LIBRARIAN')")
     @GetMapping("/borrows")
     public ResponseEntity<?> getBorrowingPage(@RequestParam(value = "pageNumber", required = false) Integer pageNumber,
@@ -37,6 +39,7 @@ public class BorrowingController {
         return ResponseEntity.ok(borrowingPage);
     }
 
+    @Operation(summary = "Lấy thông tin lượt mượn sách")
     @PreAuthorize("hasAnyRole('ADMIN', 'LIBRARIAN')")
     @GetMapping("/borrows/{id}")
     public ResponseEntity<BorrowingResponseDTO> getBorrowingById(@PathVariable Long id) throws ResourceNotFoundException {
@@ -44,6 +47,7 @@ public class BorrowingController {
         return ResponseEntity.status(HttpStatus.OK).body(borrowing);
     }
 
+    @Operation(summary = "Thêm lượt mượn sách")
     @PreAuthorize("hasAnyRole('ADMIN', 'LIBRARIAN')")
     @PostMapping("/borrows")
     public ResponseEntity<BorrowingResponseDTO> addBorrowing(@RequestBody BorrowingRequestDTO borrowing) {
@@ -51,6 +55,7 @@ public class BorrowingController {
         return new ResponseEntity<>(borrowingAdded, HttpStatus.CREATED);
     }
 
+    @Operation(summary = "Cập nhật lượt mượn sách")
     @PreAuthorize("hasAnyRole('ADMIN', 'LIBRARIAN')")
     @PutMapping("/borrows/{id}")
     public ResponseEntity<BorrowingResponseDTO> updateBorrowing(@PathVariable Long id, @RequestBody BorrowingRequestDTO borrowing) {
@@ -58,6 +63,7 @@ public class BorrowingController {
         return ResponseEntity.ok(borrowingUpdated);
     }
 
+    @Operation(summary = "Xóa lượt mượn sách")
     @PreAuthorize("hasAnyRole('ADMIN', 'LIBRARIAN')")
     @DeleteMapping("/borrows/{id}")
     public ResponseEntity<?> deleteBorrowing(@PathVariable Long id) {
@@ -65,6 +71,7 @@ public class BorrowingController {
         return ResponseEntity.status(200).body("Delete successful!");
     }
 
+    @Operation(summary = "Lấy Top 5 những quyển sách được mượn nhiều nhất")
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/borrows/dashboard")
     public ResponseEntity<?> getBorrowingDashboard(HttpServletResponse response) throws IOException {

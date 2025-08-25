@@ -4,10 +4,12 @@ import com.example.book.config.MessageConfig;
 import com.example.book.dto.RequestDTO.LoginRequestDTO;
 import com.example.book.dto.ResponseDTO.LoginResponseDTO;
 import com.example.book.dto.RequestDTO.UserRequestDTO;
+import com.example.book.dto.ResponseDTO.User.UserInfoResponseDTO;
 import com.example.book.entity.User;
 import com.example.book.exception.UnauthorizedException;
 import com.example.book.service.impl.UserServiceImpl;
 import com.example.book.utils.SecurityUtil;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -45,6 +47,7 @@ public class AuthController {
         this.messageConfig = messageConfig;
     }
 
+    @Operation(summary = "Nguời dùng đăng nhập")
     @PreAuthorize("isAnonymous()")
     @PostMapping("/auth/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequestDTO loginRequest) {
@@ -85,6 +88,7 @@ public class AuthController {
                 .body(requestDTO);
     }
 
+    @Operation(summary = "Refresh Token")
     @PreAuthorize("isAuthenticated()")
     @PutMapping("/auth/refresh")
     public ResponseEntity<LoginResponseDTO> refreshToken(
@@ -127,6 +131,7 @@ public class AuthController {
         return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, resCookies.toString()).body(loginResponseDTO);
     }
 
+    @Operation(summary = "Nguời dùng đăng xuất")
     @PreAuthorize("isAuthenticated()")
     @PostMapping("/auth/logout")
     public ResponseEntity<?> logout(){
@@ -145,11 +150,12 @@ public class AuthController {
                 .body(LOGOUT_SUCCESS);
     }
 
+    @Operation(summary = "Người dùng đăng ký")
     @PreAuthorize("isAnonymous()")
     @PostMapping("/auth/register")
-    public ResponseEntity<UserRequestDTO> register(@Valid @RequestBody UserRequestDTO user) {
+    public ResponseEntity<UserInfoResponseDTO> register(@Valid @RequestBody UserRequestDTO user) {
         log.info("User registration attempt!");
-        UserRequestDTO userCreated = userServiceImpl.createUser(user);
+        UserInfoResponseDTO userCreated = userServiceImpl.createUser(user);
         log.info("User registered successfully!");
         return ResponseEntity.ok(userCreated);
     }

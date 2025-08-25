@@ -4,6 +4,7 @@ import com.example.book.dto.RequestDTO.Search.SearchUserRequest;
 import com.example.book.dto.RequestDTO.UserRequestDTO;
 import com.example.book.dto.RequestDTO.UserRoleRequestDTO;
 import com.example.book.dto.ResponseDTO.PageResponseDTO;
+import com.example.book.dto.ResponseDTO.User.UserInfoResponseDTO;
 import com.example.book.dto.ResponseDTO.User.UserViewResponseDTO;
 import com.example.book.entity.User;
 import com.example.book.exception.ResourceNotFoundException;
@@ -12,7 +13,7 @@ import org.springframework.data.domain.Pageable;
 
 public interface UserService {
 
-    UserRequestDTO createUser(UserRequestDTO userRequest);
+    UserInfoResponseDTO createUser(UserRequestDTO userRequest);
 
     Object getUserById(Long id) throws UnauthorizedException;
 
@@ -20,7 +21,7 @@ public interface UserService {
 
     void deleteUserById(Long id) throws UnauthorizedException;
 
-    UserRequestDTO updateUser(Long id, UserRequestDTO userRequest)  throws UnauthorizedException;
+    UserInfoResponseDTO updateUser(Long id, UserRequestDTO userRequest)  throws UnauthorizedException;
 
     void updateRole(UserRoleRequestDTO userRole) throws ResourceNotFoundException, UnauthorizedException;
 

@@ -4,6 +4,7 @@ import com.example.book.dto.RequestDTO.PermissionRequestDTO;
 import com.example.book.dto.ResponseDTO.PageResponseDTO;
 import com.example.book.dto.ResponseDTO.PermissionResponseDTO;
 import com.example.book.service.PermissionService;
+import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -20,6 +21,7 @@ public class PermissionController {
         this.permissionService = permissionService;
     }
 
+    @Operation(summary = "Thêm mới quyền hạn")
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/permissions/{id}")
     public ResponseEntity<PermissionResponseDTO> createPermission(@RequestBody PermissionRequestDTO request) {
@@ -27,6 +29,7 @@ public class PermissionController {
         return ResponseEntity.ok(permissionCreated);
     }
 
+    @Operation(summary = "Cập nhật quyền hạn")
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/permissions/{id}")
     public ResponseEntity<PermissionResponseDTO> updatePermission(@PathVariable long id, @RequestBody PermissionRequestDTO request) {
@@ -34,6 +37,7 @@ public class PermissionController {
         return ResponseEntity.ok(permissionUpdated);
     }
 
+    @Operation(summary = "Lấy thông tin quyền hạn")
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/permissions/{id}")
     public ResponseEntity<PermissionResponseDTO> getPermission(@PathVariable long id) {
@@ -41,6 +45,7 @@ public class PermissionController {
         return ResponseEntity.ok(permission);
     }
 
+    @Operation(summary = "Xóa quyền hạn")
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/permissions/{id}")
     public ResponseEntity<String> deletePermission(@PathVariable long id) {
@@ -48,6 +53,7 @@ public class PermissionController {
         return ResponseEntity.status(HttpStatus.OK).body("Delete succesful!");
     }
 
+    @Operation(summary = "Lấy danh sách quyền hạn có phân trang")
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/permissions")
     public ResponseEntity<PageResponseDTO<PermissionResponseDTO>> getPagePermission(@RequestParam(value = "pageNumber", required = false, defaultValue = "1") Integer pageNumber,

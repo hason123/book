@@ -14,7 +14,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UserDetailResponseDTO {
-    private UserRequestDTO userRequestDTO;
+    private UserInfoResponseDTO userInfo;
     private List<Long> postIDs = new ArrayList<>();
     private List<Long> commentIDs = new ArrayList<>();
     private List<Long> borrowingIDs = new ArrayList<>();

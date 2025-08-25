@@ -6,6 +6,7 @@ import com.example.book.dto.ResponseDTO.BookResponseDTO;
 import com.example.book.dto.ResponseDTO.PageResponseDTO;
 import com.example.book.service.impl.BookServiceImpl;
 import com.example.book.service.impl.BookSyncService;
+import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -24,6 +25,7 @@ public class BookController {
         this.bookSyncService = bookSyncService;
     }
 
+    @Operation(summary = "Lấy danh sách phân trang sách")
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/books")
     public ResponseEntity<PageResponseDTO<BookResponseDTO>> getAllBooks(@RequestParam(value = "pageNumber", required = false, defaultValue = "1") Integer pageNumber,
@@ -34,6 +36,7 @@ public class BookController {
         return ResponseEntity.ok(bookPage);
     }
 
+    @Operation(summary = "Lấy thông tin một cuốn sách")
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/books/{id}")
     public ResponseEntity<BookResponseDTO> getBookById(@PathVariable("id") long id) {
@@ -41,6 +44,7 @@ public class BookController {
         return ResponseEntity.status(HttpStatus.OK).body(bookResponse);
     }
 
+    @Operation(summary = "Tìm kiếm sách")
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/books/search")
     public ResponseEntity<PageResponseDTO<BookResponseDTO>> searchBook(
@@ -52,6 +56,7 @@ public class BookController {
         return ResponseEntity.ok(bookSearch);
     }
 
+    @Operation(summary = "Thêm mới cuốn sách")
     @PreAuthorize("hasAnyRole('ADMIN', 'LIBRARIAN')")
     @PostMapping("/books")
     public ResponseEntity<BookResponseDTO> createBook(@RequestBody BookRequestDTO book) {
@@ -59,6 +64,7 @@ public class BookController {
         return ResponseEntity.status(201).body(bookAdded);
     }
 
+    @Operation(summary = "Cập nhật thông tin cuốn sách")
     @PreAuthorize("hasAnyRole('ADMIN', 'LIBRARIAN')")
     @PutMapping("/books/{id}")
     public ResponseEntity<BookResponseDTO> updateBook(@PathVariable("id") long id, @RequestBody BookRequestDTO book) {
@@ -66,6 +72,7 @@ public class BookController {
         return ResponseEntity.status(200).body(bookUpdated);
     }
 
+    @Operation(summary = "Xóa mềm cuốn sách")
     @PreAuthorize("hasAnyRole('ADMIN', 'LIBRARIAN')")
     @DeleteMapping("/books/{id}")
     public ResponseEntity<?> deleteBook(@PathVariable("id") long id) {
@@ -73,6 +80,7 @@ public class BookController {
         return ResponseEntity.status(200).body("Delete successful");
     }
 
+    @Operation(summary = "Đồng bộ sách từ API khác ")
     @PreAuthorize("hasAnyRole('ADMIN', 'LIBRARIAN')")
     @PostMapping("/books/sync")
     public ResponseEntity<Void> syncBook() {

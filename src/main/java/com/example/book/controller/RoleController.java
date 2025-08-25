@@ -4,6 +4,7 @@ import com.example.book.dto.RequestDTO.RoleRequestDTO;
 import com.example.book.dto.ResponseDTO.PageResponseDTO;
 import com.example.book.dto.ResponseDTO.RoleResponseDTO;
 import com.example.book.service.impl.RoleServiceImpl;
+import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -21,6 +22,7 @@ public class RoleController {
         this.roleService = roleService;
     }
 
+    @Operation(summary = "Cập nhật vai trò")
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/roles/{id}")
     public ResponseEntity<RoleResponseDTO> updateRole(@PathVariable long id, @RequestBody RoleRequestDTO request) {
@@ -28,13 +30,15 @@ public class RoleController {
         return ResponseEntity.ok(roleUpdated);
     }
 
-    @PreAuthorize("hasRole('USER')")
+    @Operation(summary = "Xem thông tin vai trò")
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/roles/{id}")
     public ResponseEntity<RoleResponseDTO> getRole(@PathVariable long id) {
         RoleResponseDTO role = roleService.getRole(id);
         return ResponseEntity.ok(role);
     }
 
+    @Operation(summary = "Xóa vai trò")
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/roles/{id}")
     public ResponseEntity<String> deleteRole(@PathVariable long id) {
@@ -42,6 +46,7 @@ public class RoleController {
         return ResponseEntity.status(HttpStatus.OK).body("Delete succesful!");
     }
 
+    @Operation(summary = "Lấy danh sách vai trò")
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/roles")
     public ResponseEntity<PageResponseDTO<RoleResponseDTO>> getPageRole(@RequestParam(value = "pageNumber", required = false, defaultValue = "1") Integer pageNumber,

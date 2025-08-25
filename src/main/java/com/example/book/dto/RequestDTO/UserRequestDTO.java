@@ -16,20 +16,17 @@ import java.time.LocalDate;
 @AllArgsConstructor
 //ADMIN xem duoc list nguoi dung, can xem chi tiet thi check UserDetail
 public class UserRequestDTO {
-    private Long userId;
     @NotEmpty(message = "{error.user.name.null}")
     private String userName;
     @Size(min = 3, message = "{error.user.password.invalid}")
     private String password;
     private String fullName;
     @NotEmpty(message = "{error.user.phoneNumber.null}")
-    @Pattern(regexp = "^[0-9]{10}$", message = "{error.user.phoneNumber.invalid")
+    @Pattern(regexp = "^[0-9]{10}$", message = "{error.user.phoneNumber.invalid}")
     private String phoneNumber;
     @Size(min = 12, max = 12, message = "{error.user.identityNumber.invalid}")
     private String identityNumber;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private LocalDate birthday;
     private String address;
-    private String roleName;
-
 }

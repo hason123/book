@@ -7,6 +7,7 @@ import com.example.book.dto.RequestDTO.UserRequestDTO;
 import com.example.book.dto.RequestDTO.UserRoleRequestDTO;
 import com.example.book.dto.ResponseDTO.PageResponseDTO;
 import com.example.book.dto.ResponseDTO.User.UserDetailResponseDTO;
+import com.example.book.dto.ResponseDTO.User.UserInfoResponseDTO;
 import com.example.book.dto.ResponseDTO.User.UserViewResponseDTO;
 import com.example.book.entity.*;
 import com.example.book.exception.ResourceNotFoundException;
@@ -96,7 +97,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserRequestDTO createUser(UserRequestDTO request){
+    public UserInfoResponseDTO createUser(UserRequestDTO request){
         User user = new User();
         if(userRepository.existsByUserName(request.getUserName())){
             throw new DataIntegrityViolationException(messageConfig.getMessage(USER_NAME_UNIQUE));
@@ -114,7 +115,7 @@ public class UserServiceImpl implements UserService {
     }
     //
     @Override
-    public UserRequestDTO updateUser(Long id, UserRequestDTO request) throws UnauthorizedException{
+    public UserInfoResponseDTO updateUser(Long id, UserRequestDTO request) throws UnauthorizedException{
         User updatedUser = userRepository.findById(id).orElse(null);
         if(!isCurrentUser(id) ){
             throw new UnauthorizedException(messageConfig.getMessage(ACCESS_DENIED));
@@ -215,15 +216,15 @@ public class UserServiceImpl implements UserService {
         }
     }
 
-    public UserRequestDTO convertUserInfoToDTO(User user){
-        UserRequestDTO userDTO = new UserRequestDTO();
+    public UserInfoResponseDTO convertUserInfoToDTO(User user){
+        UserInfoResponseDTO userDTO = new UserInfoResponseDTO();
+        userDTO.setUserId(user.getUserId());
         userDTO.setUserName(user.getUserName());
         userDTO.setBirthday(user.getBirthday());
         userDTO.setIdentityNumber(user.getIdentityNumber());
         userDTO.setAddress(user.getAddress());
         userDTO.setPhoneNumber(user.getPhoneNumber());
         userDTO.setFullName(user.getFullName());
-        userDTO.setUserId(user.getUserId());
         userDTO.setPassword("HIDDEN");
         userDTO.setRoleName(user.getRole().getRoleName().toString());
         return userDTO;
@@ -231,7 +232,7 @@ public class UserServiceImpl implements UserService {
 
     public UserDetailResponseDTO convertUserDetailToDTO(User user){
         UserDetailResponseDTO response = new UserDetailResponseDTO();
-        response.setUserRequestDTO(convertUserInfoToDTO(user));
+        response.setUserInfo(convertUserInfoToDTO(user));
         if (user.getPosts() != null) {
             user.getPosts().forEach(post -> response.getPostIDs().add(post.getPostId()));
         }

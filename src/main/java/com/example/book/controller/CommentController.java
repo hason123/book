@@ -6,6 +6,7 @@ import com.example.book.dto.ResponseDTO.PageResponseDTO;
 import com.example.book.entity.Comment;
 import com.example.book.service.impl.CommentReactionServiceImpl;
 import com.example.book.service.impl.CommentServiceImpl;
+import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -24,6 +25,7 @@ public class CommentController {
         this.commentReactionServiceImpl = commentReactionServiceImpl;
     }
 
+    @Operation(summary = "Lấy danh sách phân trang bình luận")
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/comments")
     public ResponseEntity<PageResponseDTO<CommentShortResponseDTO>> getAllComments(@RequestParam(value = "pageNumber", required = false, defaultValue = "1") Integer pageNumber,
@@ -33,6 +35,7 @@ public class CommentController {
         return new ResponseEntity<>(comments, HttpStatus.OK);
     }
 
+    @Operation(summary = "Lấy thông tin bình luận")
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/comments/{id}")
     public ResponseEntity<CommentShortResponseDTO> getCommentById(@PathVariable long id) {
@@ -40,6 +43,7 @@ public class CommentController {
         return new ResponseEntity<>(comment, HttpStatus.OK);
     }
 
+    @Operation(summary = "Thêm mới bình luận")
     @PreAuthorize("isAuthenticated()")
     @PostMapping("/posts/{postId}/comments/create")
     public ResponseEntity<CommentShortResponseDTO> createComment(@PathVariable Long postId , @RequestBody CommentRequestDTO request) {
@@ -47,6 +51,7 @@ public class CommentController {
         return new ResponseEntity<>(commentCreated, HttpStatus.CREATED);
     }
 
+    @Operation(summary = "Cập nhật bình luận")
     @PreAuthorize("isAuthenticated()")
     @PutMapping("/posts/{postId}/comments/{commentId}")
     public ResponseEntity<CommentShortResponseDTO> updateComemnt(@PathVariable Long postId , @PathVariable Long commentId, @RequestBody CommentRequestDTO request){
@@ -54,6 +59,7 @@ public class CommentController {
         return new ResponseEntity<>(commentUpdated, HttpStatus.OK);
     }
 
+    @Operation(summary = "Xóa bình luận")
     @PreAuthorize("isAuthenticated()")
     @DeleteMapping("/comments/{id}")
     public ResponseEntity<?> deleteComment(@PathVariable long id){
@@ -61,6 +67,7 @@ public class CommentController {
         return ResponseEntity.ok().body("Delete successful");
     }
 
+    @Operation(summary = "Thích bình luận")
     @PreAuthorize("isAuthenticated()")
     @PostMapping("/comments/{id}/like")
     public ResponseEntity<?> likeComment(@PathVariable long id){
@@ -68,6 +75,7 @@ public class CommentController {
         return ResponseEntity.ok().build();
     }
 
+    @Operation(summary = "Không thích bình luận")
     @PreAuthorize("isAuthenticated()")
     @PostMapping("/comments/{id}/dislike")
     public ResponseEntity<?> dislikeComment(@PathVariable long id){

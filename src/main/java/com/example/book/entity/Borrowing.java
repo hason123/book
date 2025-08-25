@@ -4,6 +4,9 @@ import com.example.book.constant.BorrowingType;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
+
 import java.time.LocalDate;
 
 @Setter
@@ -12,7 +15,9 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @Entity
 @Table(name = "borrowing")
-public class Borrowing {
+@SQLDelete(sql = "UPDATE borrowing SET is_deleted = true WHERE borrowing_id = ?")
+@SQLRestriction(value = "is_deleted = false")
+public class Borrowing extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "borrowing_id")

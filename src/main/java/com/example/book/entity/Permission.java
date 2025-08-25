@@ -1,11 +1,9 @@
 package com.example.book.entity;
 
-
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
-
 import java.util.List;
 
 
@@ -17,7 +15,7 @@ import java.util.List;
 @Table(name = "permission")
 @SQLDelete(sql = "UPDATE permission SET is_deleted = true WHERE permission_id = ?")
 @SQLRestriction(value = "is_deleted = false")
-public class Permission {
+public class Permission extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "permission_id")
