@@ -3,6 +3,7 @@ package com.example.book.service.impl;
 import com.example.book.config.MessageConfig;
 import com.example.book.dto.ResponseDTO.CategoryResponseDTO;
 import com.example.book.dto.ResponseDTO.PageResponseDTO;
+import com.example.book.entity.Book;
 import com.example.book.entity.Category;
 import com.example.book.exception.ResourceNotFoundException;
 import com.example.book.repository.BookRepository;
@@ -66,7 +67,10 @@ public class CategoryServiceImpl implements CategoryService {
             log.error("Category with id {} not found", id);
             throw new ResourceNotFoundException(messageConfig.getMessage(CATEGORY_NOT_FOUND,id));
         }
-        updatedCategory.setCategoryName(request.getCategoryName());
+        if(request.getCategoryName() != null){
+            updatedCategory.setCategoryName(request.getCategoryName());
+        }
+        else updatedCategory.setCategoryName(updatedCategory.getCategoryName());
         categoryRepository.save(updatedCategory);
         log.info("Updated successfully");
         return convertEntityToDTO(updatedCategory);
@@ -74,14 +78,14 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     public void deleteCategory(Long id) {
-        if(categoryRepository.existsById(id)){
-            log.info("Deleting category with id {}", id);
-            categoryRepository.deleteById(id);
-        }
-        else {
-            log.error("Category with id {} not found", id);
-            throw new ResourceNotFoundException(messageConfig.getMessage(CATEGORY_NOT_FOUND,id));
-        }
+        Category category = categoryRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException(messageConfig.getMessage(CATEGORY_NOT_FOUND, id)));
+        category.getBooks().forEach(book ->
+        {
+            book.getCategories().remove(category);
+            bookRepository.save(book);
+        } );
+        categoryRepository.delete(category);
     }
 
     @Override
@@ -136,7 +140,7 @@ public class CategoryServiceImpl implements CategoryService {
             Optional.ofNullable(category.getBooks())
                     .orElseGet(Collections::emptyList)
                     .stream()
-                    .map(book -> new CategoryResponseDTO.BookBasic(book.getBookId(), book.getBookName(), book.getAuthor()))
+                    .map(book -> new CategoryResponseDTO.BookBasic(book.getBookId(), book.getBookName()))
                     .collect(Collectors.toList());
         categoryDTO.setBookBasic(bookBasics);
         return categoryDTO;

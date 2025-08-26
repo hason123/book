@@ -22,6 +22,5 @@ public class CategoryResponseDTO {
     public static class BookBasic{
         private Long bookId;
         private String bookName;
-        private String author;
     }
 }

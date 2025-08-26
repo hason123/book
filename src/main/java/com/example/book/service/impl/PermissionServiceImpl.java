@@ -5,6 +5,7 @@ import com.example.book.dto.RequestDTO.PermissionRequestDTO;
 import com.example.book.dto.ResponseDTO.PageResponseDTO;
 import com.example.book.dto.ResponseDTO.PermissionResponseDTO;
 import com.example.book.entity.Permission;
+import com.example.book.entity.Role;
 import com.example.book.exception.ResourceNotFoundException;
 import com.example.book.repository.PermissionRepository;
 import com.example.book.repository.RoleRepository;
@@ -13,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import java.util.List;
 @Slf4j
 @Service
 public class PermissionServiceImpl implements PermissionService {
@@ -34,8 +36,16 @@ public class PermissionServiceImpl implements PermissionService {
         log.info("create a new permission");
         Permission permission = new Permission();
         permission.setName(request.getName());
+        permission.setApiPath(request.getApiPath());
+        permission.setMethod(request.getMethod());
         permission.setDescription(request.getDescription());
-        log.info("successfully create a new permission");
+        if (request.getRoleIds() != null) {
+            List<Role> roles = request.getRoleIds().stream().map(id ->
+                    roleRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException(messageConfig.getMessage(ROLE_NOT_FOUND, id)))
+            ).toList();
+            permission.setRoles(roles);
+        }
+        log.info("successfully create new permission");
         permissionRepository.save(permission);
         return convertPermissionToDTO(permission);
     }
@@ -48,8 +58,24 @@ public class PermissionServiceImpl implements PermissionService {
             log.error(messageConfig.getMessage(PERMISSION_NOT_FOUND), id);
             return new ResourceNotFoundException(messageConfig.getMessage(PERMISSION_NOT_FOUND, id));
         });
-        permission.setName(request.getName());
-        permission.setDescription(request.getDescription());
+        if (request.getName() != null) {
+            permission.setName(request.getName());
+        } else permission.setName(permission.getName());
+        if (request.getDescription() != null) {
+            permission.setDescription(request.getDescription());
+        }
+        if (request.getApiPath() != null) {
+            permission.setApiPath(request.getApiPath());
+        } else permission.setApiPath(permission.getApiPath());
+        if (request.getMethod() != null) {
+            permission.setMethod(request.getMethod());
+        } else permission.setMethod(permission.getMethod());
+        if (request.getRoleIds() != null) {
+            List<Role> roles = request.getRoleIds().stream().map(roleId ->
+                    roleRepository.findById(roleId).orElseThrow(() -> new ResourceNotFoundException(messageConfig.getMessage(ROLE_NOT_FOUND, roleId)))
+            ).toList();
+            permission.setRoles(roles);
+        }
         log.info("successfully update permission with id {}", id);
         permissionRepository.save(permission);
         return convertPermissionToDTO(permission);
@@ -57,14 +83,18 @@ public class PermissionServiceImpl implements PermissionService {
 
     @Override
     public void deletePermission(Long id) {
-        if(permissionRepository.findById(id).isPresent()) {
-            log.info("delete permission with id {}", id);
-            permissionRepository.deleteById(id);
-        }
-        else {
-            log.info(messageConfig.getMessage(PERMISSION_NOT_FOUND, id));
-            throw new ResourceNotFoundException(messageConfig.getMessage(PERMISSION_NOT_FOUND, id));
-        }
+        log.info("delete permission with id {}", id);
+        Permission permission = permissionRepository.findById(id)
+                .orElseThrow(() -> {
+                    log.info(messageConfig.getMessage(PERMISSION_NOT_FOUND, id));
+                    return new ResourceNotFoundException(messageConfig.getMessage(PERMISSION_NOT_FOUND, id));
+                });
+        permission.getRoles().forEach(role -> {
+            role.getPermissions().remove(permission);
+            roleRepository.save(role);
+        });
+        permissionRepository.deleteById(id);
+        log.info("Permission with id {} has been deleted", id);
     }
 
     @Override
@@ -91,10 +121,13 @@ public class PermissionServiceImpl implements PermissionService {
     }
 
     public PermissionResponseDTO convertPermissionToDTO(Permission permission) {
-        PermissionResponseDTO permissionResponseDTO = new PermissionResponseDTO();
-        permissionResponseDTO.setId(permission.getId());
-        permissionResponseDTO.setName(permission.getName());
-        permissionResponseDTO.setDescription(permission.getDescription());
-        return permissionResponseDTO;
+        PermissionResponseDTO response = new PermissionResponseDTO();
+        response.setId(permission.getId());
+        response.setName(permission.getName());
+        response.setApiPath(permission.getApiPath());
+        response.setMethod(permission.getMethod());
+        response.setDescription(permission.getDescription());
+        response.setRoleName(permission.getRoles().stream().map(role -> role.getRoleName().toString()).toList());
+        return response;
     }
 }

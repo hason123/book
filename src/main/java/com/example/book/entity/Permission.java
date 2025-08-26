@@ -22,6 +22,10 @@ public class Permission extends BaseEntity {
     private Long id;
     @Column(name = "permission_name")
     private String name;
+    @Column(name = "api_path")
+    private String apiPath;
+    @Column(name = "method")
+    private String method;
     @Column(name = "permission_desc")
     private String description;
     @ManyToMany(mappedBy = "permissions")

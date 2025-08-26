@@ -24,7 +24,8 @@ public class UserRequestDTO {
     @NotEmpty(message = "{error.user.phoneNumber.null}")
     @Pattern(regexp = "^[0-9]{10}$", message = "{error.user.phoneNumber.invalid}")
     private String phoneNumber;
-    @Size(min = 12, max = 12, message = "{error.user.identityNumber.invalid}")
+    @NotEmpty(message = "{error.user.identityNumber.null}")
+    @Pattern(regexp = "^[0-9]{10}$", message = "{error.user.identityNumber.invalid}")
     private String identityNumber;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private LocalDate birthday;

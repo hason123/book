@@ -133,7 +133,7 @@ public class AuthController {
 
     @Operation(summary = "Nguời dùng đăng xuất")
     @PreAuthorize("isAuthenticated()")
-    @PostMapping("/auth/logout")
+    @PutMapping("/auth/logout")
     public ResponseEntity<?> logout(){
         Optional<String> currentUser = SecurityUtil.getCurrentUserLogin();
         String userName = currentUser.get();

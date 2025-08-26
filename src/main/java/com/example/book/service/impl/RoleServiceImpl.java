@@ -54,16 +54,18 @@ public class RoleServiceImpl implements RoleService {
 
     @Override
     public void deleteRole(Long roleId) {
-        log.info("Delete role with id {}", roleId);
-        if(roleRepository.findById(roleId).isPresent()) {
-            roleRepository.deleteById(roleId);
-            log.info("Role with id {} has been deleted", roleId);
-        }
-        else {
-            log.error(messageConfig.getMessage(ROLE_NOT_FOUND), roleId);
-            throw new ResourceNotFoundException(messageConfig.getMessage(ROLE_NOT_FOUND, roleId));
-        }
+        Role role = roleRepository.findById(roleId)
+                .orElseThrow(() -> {
+                    log.error(messageConfig.getMessage(ROLE_NOT_FOUND), roleId);
+                    return new ResourceNotFoundException(messageConfig.getMessage(ROLE_NOT_FOUND, roleId));
+                });
+        role.getPermissions().forEach(permission -> {
+            permission.getRoles().remove(role);
+        });
+        roleRepository.deleteById(roleId);
+        log.info("Role with id {} has been deleted", roleId);
     }
+
 
     @Override
     public PageResponseDTO<RoleResponseDTO> getPageRole(Pageable pageable) {

@@ -1,6 +1,7 @@
 package com.example.book.service.impl;
 
 import com.example.book.config.MessageConfig;
+import com.example.book.constant.ReactionType;
 import com.example.book.constant.RoleType;
 import com.example.book.dto.RequestDTO.Search.SearchUserRequest;
 import com.example.book.dto.RequestDTO.UserRequestDTO;
@@ -12,10 +13,8 @@ import com.example.book.dto.ResponseDTO.User.UserViewResponseDTO;
 import com.example.book.entity.*;
 import com.example.book.exception.ResourceNotFoundException;
 import com.example.book.exception.UnauthorizedException;
-import com.example.book.repository.CommentRepository;
-import com.example.book.repository.PostRepository;
-import com.example.book.repository.RoleRepository;
-import com.example.book.repository.UserRepository;
+import com.example.book.repository.*;
+import com.example.book.service.CommentService;
 import com.example.book.service.PostService;
 import com.example.book.service.UserService;
 import com.example.book.specification.UserSpecification;
@@ -41,12 +40,15 @@ public class UserServiceImpl implements UserService {
     private final PostService postService;
     private final PostRepository postRepository;
     private final CommentRepository commentRepository;
+    private final CommentService commentService;
+    private final PostReactionRepository postReactionRepository;
+    private final CommentReactionRepository commentReactionRepository;
     private final String USER_NOT_FOUND= "error.user.notfound";
     private final String ACCESS_DENIED= "error.auth.accessDenied";
     private final String USER_NAME_UNIQUE= "error.user.name.unique";
     private final String ROLE_NOT_FOUND= "error.role.notfound";
 
-    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder, RoleRepository roleRepository, MessageConfig messageConfig, PostService postService, PostRepository postRepository, CommentRepository commentRepository) {
+    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder, RoleRepository roleRepository, MessageConfig messageConfig, PostService postService, PostRepository postRepository, CommentRepository commentRepository, CommentService commentService, PostReactionRepository postReactionRepository, CommentReactionRepository commentReactionRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.roleRepository = roleRepository;
@@ -54,6 +56,9 @@ public class UserServiceImpl implements UserService {
         this.postService = postService;
         this.postRepository = postRepository;
         this.commentRepository = commentRepository;
+        this.commentService = commentService;
+        this.postReactionRepository = postReactionRepository;
+        this.commentReactionRepository = commentReactionRepository;
     }
 
     @Override
@@ -62,7 +67,7 @@ public class UserServiceImpl implements UserService {
         if (user == null) {
             throw new ResourceNotFoundException(messageConfig.getMessage(USER_NOT_FOUND, id));
         }
-        if( isCurrentUser(id) || user.getRole().getRoleName().equals(RoleType.ADMIN)) {
+        if( isCurrentUser(id) || getCurrentUser().getRole().getRoleName().equals(RoleType.ADMIN)) {
             return convertUserDetailToDTO(user);
         }
         else return convertUserViewToDTO(user);
@@ -83,14 +88,37 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void deleteUserById(Long id) throws UnauthorizedException {
-        if (!userRepository.existsById(id)) {
+        User user = userRepository.findById(id).orElse(null);
+        if (user == null) {
             throw new ResourceNotFoundException(messageConfig.getMessage(USER_NOT_FOUND, id));
         }
         if(isCurrentUser(id) || getCurrentUser().getRole().getRoleName().equals(RoleType.ADMIN)) {
             List<Post> deletedPosts = postRepository.findAllByUser_UserId(id);
             deletedPosts.forEach(post -> {postService.deletePost(post.getPostId());});
             List<Comment> deletedComments = commentRepository.findAllByUser_UserId(id);
-            commentRepository.deleteAll(deletedComments);
+            deletedComments.forEach(comment -> {commentService.deleteComment(comment.getCommentId());});
+            List<CommentReaction> deletedCommentReacts = commentReactionRepository.findByUser_UserId(id);
+            for (CommentReaction cr : deletedCommentReacts) {
+                Comment comment = cr.getComment();
+                if (cr.getReactionType() == ReactionType.LIKE) {
+                    comment.setLikesCount(comment.getLikesCount() - 1);
+                } else if (cr.getReactionType() == ReactionType.DISLIKE) {
+                    comment.setDislikesCount(comment.getDislikesCount() - 1);
+                }
+                commentRepository.save(comment);
+            }
+            commentReactionRepository.deleteAll(deletedCommentReacts);
+            List<PostReaction> deletedPostReactions = postReactionRepository.findByUser_UserId(id);
+            for (PostReaction pr : deletedPostReactions) {
+                Post post = pr.getPost();
+                if (pr.getReactionType() == ReactionType.LIKE) {
+                    post.setLikesCount(post.getLikesCount() - 1);
+                } else if (pr.getReactionType() == ReactionType.DISLIKE) {
+                    post.setDislikesCount(post.getDislikesCount() - 1);
+                }
+                postRepository.save(post);
+            }
+            postReactionRepository.deleteAll(deletedPostReactions);
             userRepository.deleteById(id);
         }
         else throw new UnauthorizedException(messageConfig.getMessage(ACCESS_DENIED));
@@ -104,6 +132,10 @@ public class UserServiceImpl implements UserService {
         }
         user.setUserName(request.getUserName());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
+        Role role = roleRepository.findByRoleName(RoleType.USER);
+        if(role == null){
+            throw new ResourceNotFoundException(messageConfig.getMessage(ROLE_NOT_FOUND));
+        }
         user.setRole(roleRepository.findByRoleName(RoleType.USER));
         user.setBirthday(request.getBirthday());
         user.setAddress(request.getAddress());
@@ -113,7 +145,7 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user);
         return convertUserInfoToDTO(user);
     }
-    //
+    //khi cap nhat nguoi dung, phai truyen het tat ca field neu khong tru field nguoi dung cap nhat, cac field khac tra null
     @Override
     public UserInfoResponseDTO updateUser(Long id, UserRequestDTO request) throws UnauthorizedException{
         User updatedUser = userRepository.findById(id).orElse(null);
@@ -123,13 +155,30 @@ public class UserServiceImpl implements UserService {
         if(updatedUser == null){
             throw new ResourceNotFoundException(messageConfig.getMessage(USER_NOT_FOUND, id));
         }
-        updatedUser.setUserName(request.getUserName());
-        updatedUser.setPassword(passwordEncoder.encode(request.getPassword()));
-        updatedUser.setRole(roleRepository.findByRoleName(RoleType.USER));
-        updatedUser.setBirthday(request.getBirthday());
-        updatedUser.setAddress(request.getAddress());
-        updatedUser.setPhoneNumber(request.getPhoneNumber());
-        updatedUser.setIdentityNumber(request.getIdentityNumber());
+        if (request.getUserName() != null) {
+            updatedUser.setUserName(request.getUserName());
+        }
+        else{
+            updatedUser.setUserName(updatedUser.getUserName());
+        }
+        if (request.getPassword() != null) {
+            updatedUser.setPassword(passwordEncoder.encode(request.getPassword()));
+        }
+        else updatedUser.setPassword(updatedUser.getPassword());
+        if (request.getBirthday() != null) {
+            updatedUser.setBirthday(request.getBirthday());
+        }
+        if (request.getAddress() != null) {
+            updatedUser.setAddress(request.getAddress());
+        }
+        if (request.getPhoneNumber() != null) {
+            updatedUser.setPhoneNumber(request.getPhoneNumber());
+        }
+        else updatedUser.setPhoneNumber(updatedUser.getPhoneNumber());
+        if (request.getIdentityNumber() != null) {
+            updatedUser.setIdentityNumber(request.getIdentityNumber());
+        }
+        else updatedUser.setIdentityNumber(updatedUser.getIdentityNumber());
         userRepository.save(updatedUser);
         return convertUserInfoToDTO(updatedUser);
     }

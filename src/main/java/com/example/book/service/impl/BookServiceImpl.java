@@ -79,13 +79,18 @@ public class BookServiceImpl implements BookService {
     @Override
     public void deleteBookById(Long id) {
         log.info("Deleting book with id: {}", id);
-        if(!bookRepository.existsById(id)){
-            log.error(messageConfig.getMessage(BOOK_NOT_FOUND,id));
-            throw new ResourceNotFoundException(messageConfig.getMessage(BOOK_NOT_FOUND,id));
-        }
-        log.info("Book with id: {} has been deleted", id);
+        Book book = bookRepository.findById(id)
+                .orElseThrow(() -> {
+                    log.error(messageConfig.getMessage(BOOK_NOT_FOUND, id));
+                    return new ResourceNotFoundException(messageConfig.getMessage(BOOK_NOT_FOUND, id));
+                });
+        book.getCategories().forEach(category -> {
+            category.getBooks().remove(book);
+        });
         bookRepository.deleteById(id);
+        log.info("Book with id: {} has been deleted", id);
     }
+
 
     @Override
     public BookResponseDTO updateBook(Long id, BookRequestDTO request) {
@@ -95,12 +100,28 @@ public class BookServiceImpl implements BookService {
             log.error(messageConfig.getMessage(BOOK_NOT_FOUND,id));
             throw new ResourceNotFoundException(messageConfig.getMessage(BOOK_NOT_FOUND,id));
         }
-        updatedBook.setAuthor(request.getAuthor());
-        updatedBook.setBookDesc(request.getBookDesc());
-        updatedBook.setBookName(request.getBookName());
-        updatedBook.setPageCount(request.getPageCount());
-        updatedBook.setPublisher(request.getPublisher());
-        updatedBook.setQuantity(request.getQuantity());
+        if (request.getAuthor() != null) {
+            updatedBook.setAuthor(request.getAuthor());
+        }
+        else updatedBook.setAuthor(updatedBook.getAuthor());
+        if (request.getBookDesc() != null) {
+            updatedBook.setBookDesc(request.getBookDesc());
+        }
+        if (request.getBookName() != null) {
+            updatedBook.setBookName(request.getBookName());
+        }
+        else  updatedBook.setBookName(updatedBook.getBookName());
+        if (request.getPageCount() != null) {
+            updatedBook.setPageCount(request.getPageCount());
+        }
+        if (request.getPublisher() != null) {
+            updatedBook.setPublisher(request.getPublisher());
+        }
+        else updatedBook.setPublisher(updatedBook.getPublisher());
+        if (request.getQuantity() != null) {
+            updatedBook.setQuantity(request.getQuantity());
+        }
+        else updatedBook.setQuantity(updatedBook.getQuantity());
         if (request.getCategoryIDs() != null) {
             List<Category> categories = request.getCategoryIDs().stream()
                     .map(categoryID -> categoryRepository.findById(categoryID)
@@ -112,6 +133,7 @@ public class BookServiceImpl implements BookService {
                     .toList();
             updatedBook.setCategories(categories);
         }
+        else updatedBook.setCategories(updatedBook.getCategories());
         bookRepository.save(updatedBook);
         return convertBookToDTO(updatedBook);
     }

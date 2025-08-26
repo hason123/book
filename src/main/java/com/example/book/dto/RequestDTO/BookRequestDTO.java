@@ -20,11 +20,11 @@ public class BookRequestDTO {
     private String author;
     @NotBlank(message = "{error.book.publisher.null}")
     private String publisher;
-    private int pageCount;
+    private Integer pageCount;
     private String printType;
     private String language;
     @Pattern(regexp = "^\\d+$", message = "{error.book.quantity.invalid}")
-    private int quantity;
+    private Integer quantity;
     private String bookDesc;
     private List<Long> categoryIDs;
 }

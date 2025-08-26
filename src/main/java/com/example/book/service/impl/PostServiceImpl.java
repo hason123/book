@@ -14,6 +14,7 @@ import com.example.book.exception.ResourceNotFoundException;
 import com.example.book.exception.UnauthorizedException;
 import com.example.book.repository.CommentRepository;
 import com.example.book.repository.PostRepository;
+import com.example.book.repository.UserRepository;
 import com.example.book.service.CommentService;
 import com.example.book.service.PostService;
 import com.example.book.service.UserService;
@@ -40,15 +41,17 @@ public class PostServiceImpl implements PostService {
 
     private final PostRepository postRepository;
     private final CommentRepository commentRepository;
+    private final UserRepository userRepository;
     private final UserService userService;
     private final CommentService commentService;
     private final MessageConfig messageConfig;
     private final String POST_NOT_FOUND = "error.post.notfound";
     private final String ACCESS_DENIED = "error.auth.accessDenied";
 
-    public PostServiceImpl(PostRepository postRepository, CommentRepository commentRepository, @Lazy UserService userService, @Lazy CommentService commentService, MessageConfig messageConfig) {
+    public PostServiceImpl(PostRepository postRepository, CommentRepository commentRepository, UserRepository userRepository, @Lazy UserService userService, @Lazy CommentService commentService, MessageConfig messageConfig) {
         this.postRepository = postRepository;
         this.commentRepository = commentRepository;
+        this.userRepository = userRepository;
         this.userService = userService;
         this.commentService = commentService;
         this.messageConfig = messageConfig;
@@ -126,10 +129,14 @@ public class PostServiceImpl implements PostService {
             log.error(messageConfig.getMessage(POST_NOT_FOUND));
             return new ResourceNotFoundException(messageConfig.getMessage(POST_NOT_FOUND, id));
         });
-        if(userService.getCurrentUser().getRole().getRoleName().equals(RoleType.ADMIN) ||
-                userService.getCurrentUser().equals(updatedPost.getUser())) {
-            updatedPost.setTitle(post.getTitle());
-            updatedPost.setContent(post.getContent());
+        if(userService.getCurrentUser().equals(updatedPost.getUser())) {
+            if(post.getTitle() != null){
+                updatedPost.setTitle(post.getTitle());
+            } else updatedPost.setTitle(updatedPost.getTitle());
+            if(post.getContent() != null){
+                updatedPost.setContent(post.getContent());
+            }
+            else updatedPost.setContent(updatedPost.getContent());
             postRepository.save(updatedPost);
             return convertPostToDTO(updatedPost);
         }
@@ -145,10 +152,13 @@ public class PostServiceImpl implements PostService {
         if(postRepository.existsById(id)) {
             Post postDeleted = postRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException(messageConfig.getMessage(POST_NOT_FOUND, id)));
             User currentUser = userService.getCurrentUser();
+            User user = postDeleted.getUser();
             if (currentUser.getRole().getRoleName().equals(RoleType.ADMIN) ||
                     currentUser.equals(postDeleted.getUser())) {
                 List<Comment> deletedComments = commentRepository.findAllByPost_PostId(id);
                 commentRepository.deleteAll(deletedComments);
+                user.getPosts().remove(postDeleted);
+                userRepository.save(user);
                 postRepository.deleteById(id);
             }
         }

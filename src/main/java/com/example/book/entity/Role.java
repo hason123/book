@@ -18,7 +18,7 @@ import java.util.List;
 @Table(name="role")
 @SQLDelete(sql = "UPDATE role SET is_deleted = true WHERE role_id = ?")
 @SQLRestriction(value = "is_deleted = false")
-public class Role extends  BaseEntity {
+public class Role extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "role_id")

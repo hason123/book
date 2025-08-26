@@ -7,13 +7,16 @@ import com.example.book.dto.ResponseDTO.Comment.CommentResponseDTO;
 import com.example.book.dto.ResponseDTO.Comment.CommentShortResponseDTO;
 import com.example.book.dto.ResponseDTO.PageResponseDTO;
 import com.example.book.entity.Comment;
+import com.example.book.entity.Post;
 import com.example.book.entity.User;
 import com.example.book.exception.ResourceNotFoundException;
 import com.example.book.repository.CommentRepository;
 import com.example.book.repository.PostRepository;
 import com.example.book.repository.UserRepository;
 import com.example.book.service.CommentService;
+import com.example.book.service.UserService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -26,16 +29,16 @@ public class CommentServiceImpl implements CommentService {
     private final UserRepository userRepository;
     private final PostRepository postRepository;
     private final MessageConfig messageConfig;
-    private final UserServiceImpl userServiceImpl;
+    private final UserService userService;
     private final String POST_NOT_FOUND = "error.post.notfound";
     private final String COMMENT_NOT_FOUND = "error.comment.notfound";
 
-    public CommentServiceImpl(CommentRepository commentRepository, UserRepository userRepository, PostRepository postRepository, MessageConfig messageConfig, UserServiceImpl userServiceImpl) {
+    public CommentServiceImpl(CommentRepository commentRepository, UserRepository userRepository, PostRepository postRepository, MessageConfig messageConfig, @Lazy UserService userService) {
         this.commentRepository = commentRepository;
         this.userRepository = userRepository;
         this.postRepository = postRepository;
         this.messageConfig = messageConfig;
-        this.userServiceImpl = userServiceImpl;
+        this.userService = userService;
     }
 
     @Override
@@ -62,7 +65,9 @@ public class CommentServiceImpl implements CommentService {
         if (optionalComment.isPresent()) {
             log.info("Updating comment in post with id: {}", postId);
             Comment updatedComment = optionalComment.get();
-            updatedComment.setCommentDetail(request.getContent());
+            if(request.getContent() != null){
+                updatedComment.setCommentDetail(request.getContent());
+            } else updatedComment.setCommentDetail(updatedComment.getCommentDetail());
             commentRepository.save(updatedComment);
             return convertCommentToShortDTO(updatedComment);
         } else {
@@ -83,7 +88,6 @@ public class CommentServiceImpl implements CommentService {
                 commentPage.getTotalPages(),
                 commentPage.getContent()
         );
-
     }
 
     @Override
@@ -125,10 +129,19 @@ public class CommentServiceImpl implements CommentService {
                 commentRoots.add(commentNode);
             }
         }
-        Comparator<CommentResponseDTO> comparator = Comparator.comparing(CommentResponseDTO::getCreatedAt);
+        Comparator<CommentResponseDTO> comparator = Comparator.comparing(CommentResponseDTO::getUpdatedAt);
         commentRoots.sort(comparator.reversed());
-        log.info("Total comments in post {} : {}", postId, commentRoots.size());
+        commentRoots.forEach(root -> sortRepliesAscending(root.getReplies()));;
+        log.info("Successfully build comment trees!");
         return commentRoots;
+    }
+
+    private void sortRepliesAscending(List<CommentResponseDTO> comments) {
+        if (comments == null || comments.isEmpty()) return;
+        comments.sort(Comparator.comparing(CommentResponseDTO::getUpdatedAt));
+        for (CommentResponseDTO c : comments) {
+            sortRepliesAscending(c.getReplies());
+        }
     }
 
     @Override
@@ -139,7 +152,9 @@ public class CommentServiceImpl implements CommentService {
             log.error("Comment with id: {} not found", id);
             return new ResourceNotFoundException(messageConfig.getMessage(COMMENT_NOT_FOUND, id));
         });
-        User currentUser = userServiceImpl.getCurrentUser();
+        Post post = commentDeleted.getPost();
+        User user = commentDeleted.getUser();
+        User currentUser = userService.getCurrentUser();
         if(currentUser.getRole().getRoleName().equals(RoleType.ADMIN) ||
                 currentUser.equals(commentDeleted.getUser()) || currentUser.equals(commentDeleted.getPost().getUser())){
             List<Comment> comments = commentRepository.findAllByParent_CommentId(id);
@@ -149,6 +164,10 @@ public class CommentServiceImpl implements CommentService {
             }
             else {c.setParent(null); commentRepository.save(c);}
             });
+            post.getComments().remove(commentDeleted);
+            postRepository.save(post);
+            user.getComments().remove(commentDeleted);
+            userRepository.save(user);
             commentRepository.delete(commentDeleted);
         }
         log.info("Comment with id: {} has been deleted", id);
