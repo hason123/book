@@ -7,9 +7,9 @@ import com.example.book.dto.ResponseDTO.PageResponseDTO;
 import com.example.book.dto.ResponseDTO.Post.PostListResponseDTO;
 import com.example.book.dto.ResponseDTO.Post.PostResponseDTO;
 import com.example.book.exception.UnauthorizedException;
-import com.example.book.service.PostReactionService;
-import com.example.book.service.impl.CommentServiceImpl;
-import com.example.book.service.impl.PostServiceImpl;
+import com.example.book.service.CommentService;
+import com.example.book.service.PostReactionService;;
+import com.example.book.service.PostService;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.data.domain.PageRequest;
@@ -26,13 +26,13 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/library")
 public class PostController {
-    private final PostServiceImpl postServiceImpl;
-    private final CommentServiceImpl commentServiceImpl;
+    private final PostService postService;
+    private final CommentService commentService;
     private final PostReactionService postReactionService;
 
-    public PostController(PostServiceImpl postServiceImpl, CommentServiceImpl commentServiceImpl, PostReactionService postReactionService) {
-        this.postServiceImpl = postServiceImpl;
-        this.commentServiceImpl = commentServiceImpl;
+    public PostController(PostService postService, CommentService commentService, PostReactionService postReactionService) {
+        this.postService = postService;
+        this.commentService = commentService;
         this.postReactionService = postReactionService;
     }
 
@@ -42,7 +42,7 @@ public class PostController {
     public ResponseEntity<PageResponseDTO<PostListResponseDTO>> getAllPosts(@RequestParam(value = "pageNumber", required = false, defaultValue = "1") Integer pageNumber,
                                                                             @RequestParam(value = "pageSize", required = false, defaultValue = "3") Integer pageSize) {
         Pageable pageable = PageRequest.of(pageNumber - 1, pageSize);
-        PageResponseDTO<PostListResponseDTO> posts = postServiceImpl.getAllPosts(pageable);
+        PageResponseDTO<PostListResponseDTO> posts = postService.getAllPosts(pageable);
         return new ResponseEntity<>(posts, HttpStatus.OK);
     }
 
@@ -50,7 +50,7 @@ public class PostController {
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/posts/{id}")
     public ResponseEntity<PostResponseDTO> getPostById(@PathVariable long id) {
-        PostResponseDTO post = postServiceImpl.getPost(id);
+        PostResponseDTO post = postService.getPost(id);
         return ResponseEntity.ok(post);
     }
 
@@ -58,7 +58,7 @@ public class PostController {
     @PreAuthorize("isAuthenticated()")
     @PostMapping("/posts")
     public ResponseEntity<PostResponseDTO> createPost(@RequestBody PostRequestDTO post){
-        PostResponseDTO postCreate = postServiceImpl.addPost(post);
+        PostResponseDTO postCreate = postService.addPost(post);
         return new ResponseEntity<>(postCreate, HttpStatus.CREATED);
     }
 
@@ -66,7 +66,7 @@ public class PostController {
     @PreAuthorize("isAuthenticated()")
     @PutMapping("/posts/{id}")
     public ResponseEntity<PostResponseDTO> updatePost(@PathVariable long id, @RequestBody PostRequestDTO post) throws UnauthorizedException {
-        PostResponseDTO postUpdate = postServiceImpl.updatePost(id, post);
+        PostResponseDTO postUpdate = postService.updatePost(id, post);
         return new ResponseEntity<>(postUpdate, HttpStatus.OK);
     }
 
@@ -74,7 +74,7 @@ public class PostController {
     @PreAuthorize("isAuthenticated()")
     @DeleteMapping("/posts/{id}")
     public ResponseEntity<String> deletePost(@PathVariable long id){
-        postServiceImpl.deletePost(id);
+        postService.deletePost(id);
         return ResponseEntity.status(200).body("Delete successful");
     }
 
@@ -82,7 +82,7 @@ public class PostController {
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/posts/{postId}/comments")
     public ResponseEntity<List<CommentResponseDTO>> getCommentsByPostId(@PathVariable long postId) {
-        List<CommentResponseDTO> commentPosts =  commentServiceImpl.getCommentByPost(postId);
+        List<CommentResponseDTO> commentPosts =  commentService.getCommentByPost(postId);
         return ResponseEntity.ok(commentPosts);
     }
 
@@ -92,7 +92,7 @@ public class PostController {
     public ResponseEntity<PageResponseDTO<PostListResponseDTO>> searchPost(@RequestParam(value = "pageNumber", required = false, defaultValue = "1") Integer pageNumber,
                                                                            @RequestParam(value = "pageSize", required = false, defaultValue = "3") Integer pageSize, SearchPostRequest request) {
         Pageable pageable = PageRequest.of(pageNumber - 1, pageSize);
-        PageResponseDTO<PostListResponseDTO> posts = postServiceImpl.searchPost(pageable, request);
+        PageResponseDTO<PostListResponseDTO> posts = postService.searchPost(pageable, request);
         return new ResponseEntity<>(posts, HttpStatus.OK);
     }
 
@@ -100,7 +100,7 @@ public class PostController {
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/posts/dashboard")
     public ResponseEntity<?> getPostDashboard(HttpServletResponse response) throws IOException {
-        postServiceImpl.createPostWorkbook(response);
+        postService.createPostWorkbook(response);
         return new ResponseEntity<>(HttpStatus.OK);
     }
 

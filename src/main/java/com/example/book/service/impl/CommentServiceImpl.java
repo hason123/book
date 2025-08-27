@@ -3,6 +3,7 @@ package com.example.book.service.impl;
 import com.example.book.config.MessageConfig;
 import com.example.book.constant.RoleType;
 import com.example.book.dto.RequestDTO.CommentRequestDTO;
+import com.example.book.dto.RequestDTO.Search.SearchCommentRequest;
 import com.example.book.dto.ResponseDTO.Comment.CommentResponseDTO;
 import com.example.book.dto.ResponseDTO.Comment.CommentShortResponseDTO;
 import com.example.book.dto.ResponseDTO.PageResponseDTO;
@@ -15,11 +16,16 @@ import com.example.book.repository.PostRepository;
 import com.example.book.repository.UserRepository;
 import com.example.book.service.CommentService;
 import com.example.book.service.UserService;
+import com.example.book.specification.CommentSpecification;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
+
+import java.time.LocalDate;
 import java.util.*;
 @Slf4j
 @Service
@@ -173,12 +179,39 @@ public class CommentServiceImpl implements CommentService {
         log.info("Comment with id: {} has been deleted", id);
     }
 
+    @Override
+    public PageResponseDTO<CommentShortResponseDTO> searchComment(Pageable pageable, SearchCommentRequest request){
+        log.info("Searching posts from database");
+        Specification<Comment> spec = ((root, query, criteriaBuilder) -> criteriaBuilder.conjunction());
+        String content = request.getContent();
+        String userName = request.getUserName();
+        LocalDate beforeDate = request.getBeforeDate();
+        LocalDate afterDate = request.getAfterDate();
+        if(StringUtils.hasText(content)){
+            spec = spec.and(CommentSpecification.likeContent(content));
+        }
+        if(StringUtils.hasText(userName)){
+            spec = spec.and(CommentSpecification.hasUser(userName));
+        }
+        if(beforeDate != null){
+            spec = spec.and(CommentSpecification.uploadBeforeDate(beforeDate));
+        }
+        if(afterDate != null){
+            spec = spec.and(CommentSpecification.uploadAfterDate(afterDate));
+        }
+        Page<Comment> comments = commentRepository.findAll(spec, pageable);
+        Page<CommentShortResponseDTO> commentPage = comments.map(this::convertCommentToShortDTO);
+        log.info("Retrieved all posts from database");
+        return new PageResponseDTO<>(commentPage.getNumber(), commentPage.getNumberOfElements(),
+                commentPage.getTotalPages(), commentPage.getContent());
+    }
+
     public CommentResponseDTO convertCommentToDTO(Comment comment){
         CommentResponseDTO commentResponse = new CommentResponseDTO();
         commentResponse.setCommentId(comment.getCommentId());
-        commentResponse.setCreatedAt(comment.getCreatedDate());
+        commentResponse.setCreatedAt(comment.getCreatedTime());
         commentResponse.setCommentDetail(comment.getCommentDetail());
-        commentResponse.setUpdatedAt(comment.getLastModifiedDate());
+        commentResponse.setUpdatedAt(comment.getUpdatedTime());
         commentResponse.setUserComment(comment.getUser().getUserName());
         if(comment.getParent() != null) {
             commentResponse.setParentId(comment.getParent().getCommentId());
@@ -191,9 +224,9 @@ public class CommentServiceImpl implements CommentService {
 
     public CommentShortResponseDTO convertCommentToShortDTO(Comment comment){
         CommentShortResponseDTO commentResponse = new CommentShortResponseDTO();
-        commentResponse.setCreatedAt(comment.getCreatedDate());
+        commentResponse.setCreatedAt(comment.getCreatedTime());
         commentResponse.setCommentDetail(comment.getCommentDetail());
-        commentResponse.setUpdatedAt(comment.getLastModifiedDate());
+        commentResponse.setUpdatedAt(comment.getUpdatedTime());
         commentResponse.setUserComment(comment.getUser().getUserName());
         commentResponse.setCommentLikes(comment.getLikesCount());
         commentResponse.setCommentId(comment.getCommentId());

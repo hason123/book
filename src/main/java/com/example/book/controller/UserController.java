@@ -7,7 +7,7 @@ import com.example.book.dto.ResponseDTO.PageResponseDTO;
 import com.example.book.dto.ResponseDTO.User.UserInfoResponseDTO;
 import com.example.book.dto.ResponseDTO.User.UserViewResponseDTO;
 import com.example.book.exception.UnauthorizedException;
-import com.example.book.service.impl.UserServiceImpl;
+import com.example.book.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.PageRequest;
@@ -21,12 +21,10 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/library")
 public class UserController {
 
-    private final UserServiceImpl userService;
-    private final UserServiceImpl userServiceImpl;
-
-    public UserController(UserServiceImpl userService, UserServiceImpl userServiceImpl) {
+    private final UserService userService;
+    
+    public UserController(UserService userService) {
         this.userService = userService;
-        this.userServiceImpl = userServiceImpl;
     }
 
     @Operation(summary = "Lấy danh sách người dùng có phân trang")
@@ -44,7 +42,7 @@ public class UserController {
     @Operation(summary = "Lấy thông tin người dùng")
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/users/{id}")
-    public ResponseEntity<?> getUserById(@PathVariable Long id)  {
+    public ResponseEntity<?> getUserById(@PathVariable Long id) throws UnauthorizedException {
         Object user = userService.getUserById(id);
         return ResponseEntity.ok(user);
     }
@@ -77,8 +75,8 @@ public class UserController {
     @Operation(summary = "Cập nhật vai trò người dùng")
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/users/update-role")
-    public ResponseEntity<?> updateRole(@Valid @RequestBody UserRoleRequestDTO userRole){
-        userServiceImpl.updateRole(userRole);
+    public ResponseEntity<?> updateRole(@Valid @RequestBody UserRoleRequestDTO userRole) throws UnauthorizedException {
+        userService.updateRole(userRole);
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
@@ -88,7 +86,7 @@ public class UserController {
     public ResponseEntity<PageResponseDTO<UserViewResponseDTO>> searchUsers(@RequestParam(value = "pageNumber", required = false, defaultValue = "1") Integer pageNumber,
                                                                             @RequestParam(value = "pageSize", required = false, defaultValue = "3") Integer pageSize, SearchUserRequest request){
         Pageable pageable = PageRequest.of(pageNumber - 1, pageSize);
-        PageResponseDTO<UserViewResponseDTO> results = userServiceImpl.searchUser(request,pageable);
+        PageResponseDTO<UserViewResponseDTO> results = userService.searchUser(request,pageable);
         return ResponseEntity.ok(results);
     }
 

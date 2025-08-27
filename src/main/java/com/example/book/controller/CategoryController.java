@@ -2,6 +2,7 @@ package com.example.book.controller;
 
 import com.example.book.dto.ResponseDTO.CategoryResponseDTO;
 import com.example.book.dto.ResponseDTO.PageResponseDTO;
+import com.example.book.service.CategoryService;
 import com.example.book.service.impl.CategoryServiceImpl;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.servlet.http.HttpServletResponse;
@@ -19,10 +20,10 @@ import java.io.IOException;
 @RequestMapping("/api/v1/library/")
 public class CategoryController {
 
-    private final CategoryServiceImpl categoryServiceImpl;
+    private final CategoryService categoryService;
 
-    public CategoryController( CategoryServiceImpl categoryServiceImpl) {
-        this.categoryServiceImpl = categoryServiceImpl;
+    public CategoryController( CategoryService categoryService) {
+        this.categoryService = categoryService;
     }
 
     @Operation(summary = "Lấy danh sách thể loại sách")
@@ -31,7 +32,7 @@ public class CategoryController {
     public ResponseEntity<PageResponseDTO<CategoryResponseDTO>> getCategories(@RequestParam(value = "pageNumber", required = false, defaultValue = "1") Integer pageNumber,
                                                                               @RequestParam(value = "pageSize", required = false, defaultValue = "3") Integer pageSize) {
         Pageable pageable = PageRequest.of(pageNumber - 1, pageSize);
-        PageResponseDTO<CategoryResponseDTO> categoryPage = categoryServiceImpl.getAllCategories(pageable);
+        PageResponseDTO<CategoryResponseDTO> categoryPage = categoryService.getAllCategories(pageable);
         return ResponseEntity.ok(categoryPage);
     }
 
@@ -39,7 +40,7 @@ public class CategoryController {
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/categories/{id}")
     public ResponseEntity<CategoryResponseDTO> getCategory(@PathVariable long id) {
-        CategoryResponseDTO category = categoryServiceImpl.getCategory(id);
+        CategoryResponseDTO category = categoryService.getCategory(id);
         return ResponseEntity.ok(category);
     }
 
@@ -47,7 +48,7 @@ public class CategoryController {
     @PreAuthorize("hasAnyRole('ADMIN', 'LIBRARIAN')")
     @PostMapping("/categories")
     public ResponseEntity<CategoryResponseDTO> createCategory(@RequestBody CategoryResponseDTO category) {
-        CategoryResponseDTO categoryAdded = categoryServiceImpl.addCategory(category);
+        CategoryResponseDTO categoryAdded = categoryService.addCategory(category);
         return ResponseEntity.status(HttpStatus.CREATED).body(categoryAdded);
     }
 
@@ -55,7 +56,7 @@ public class CategoryController {
     @PreAuthorize("hasAnyRole('ADMIN', 'LIBRARIAN')")
     @PutMapping("/categories/{id}")
     public ResponseEntity<CategoryResponseDTO> updateCategory(@PathVariable long id, @RequestBody CategoryResponseDTO category) {
-        CategoryResponseDTO categoryUpdated = categoryServiceImpl.updateCategory(id, category);
+        CategoryResponseDTO categoryUpdated = categoryService.updateCategory(id, category);
         if (categoryUpdated == null) {
             return ResponseEntity.notFound().build();
         }
@@ -66,7 +67,7 @@ public class CategoryController {
     @PreAuthorize("hasAnyRole('ADMIN', 'LIBRARIAN')")
     @DeleteMapping("/categories/{id}")
     public ResponseEntity<?> deleteCategory(@PathVariable long id) {
-        categoryServiceImpl.deleteCategory(id);
+        categoryService.deleteCategory(id);
         return ResponseEntity.status(200).body("Delete success!");
     }
 
@@ -74,7 +75,7 @@ public class CategoryController {
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/categories/dashboard")
     public ResponseEntity<Void> getCategoryDashboard(HttpServletResponse response) throws IOException {
-        categoryServiceImpl.createCategoryWorkbook(response);
+        categoryService.createCategoryWorkbook(response);
         return ResponseEntity.ok().build();
     }
 }

@@ -1,6 +1,7 @@
 package com.example.book.controller;
 
 import com.example.book.dto.RequestDTO.PermissionRequestDTO;
+import com.example.book.dto.RequestDTO.Search.SearchPermissionRequest;
 import com.example.book.dto.ResponseDTO.PageResponseDTO;
 import com.example.book.dto.ResponseDTO.PermissionResponseDTO;
 import com.example.book.service.PermissionService;
@@ -62,4 +63,18 @@ public class PermissionController {
         PageResponseDTO<PermissionResponseDTO> permissionPage = permissionService.getPagePermission(pageable);
         return ResponseEntity.ok(permissionPage);
     }
+
+    @Operation(summary = "Tìm kiếm quyền (permissions)")
+    @PreAuthorize("isAuthenticated()")
+    @GetMapping("/search")
+    public ResponseEntity<PageResponseDTO<PermissionResponseDTO>> searchPermission(
+            @RequestParam(value = "pageNumber", required = false, defaultValue = "1") Integer pageNumber,
+            @RequestParam(value = "pageSize", required = false, defaultValue = "5") Integer pageSize,
+            SearchPermissionRequest request
+    ) {
+        Pageable pageable = PageRequest.of(pageNumber - 1, pageSize);
+        PageResponseDTO<PermissionResponseDTO> permissions = permissionService.searchPermission(pageable, request);
+        return ResponseEntity.ok(permissions);
+    }
+
 }

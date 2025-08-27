@@ -38,5 +38,4 @@ public class Role extends BaseEntity {
     @OneToMany(mappedBy = "role")
     private List<User> users;
 
-
 }

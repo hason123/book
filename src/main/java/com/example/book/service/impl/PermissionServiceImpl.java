@@ -1,7 +1,9 @@
 package com.example.book.service.impl;
 
 import com.example.book.config.MessageConfig;
+import com.example.book.constant.RoleType;
 import com.example.book.dto.RequestDTO.PermissionRequestDTO;
+import com.example.book.dto.RequestDTO.Search.SearchPermissionRequest;
 import com.example.book.dto.ResponseDTO.PageResponseDTO;
 import com.example.book.dto.ResponseDTO.PermissionResponseDTO;
 import com.example.book.entity.Permission;
@@ -10,10 +12,14 @@ import com.example.book.exception.ResourceNotFoundException;
 import com.example.book.repository.PermissionRepository;
 import com.example.book.repository.RoleRepository;
 import com.example.book.service.PermissionService;
+import com.example.book.specification.PermissionSpecification;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
+
 import java.util.List;
 @Slf4j
 @Service
@@ -118,6 +124,38 @@ public class PermissionServiceImpl implements PermissionService {
             return new ResourceNotFoundException(messageConfig.getMessage(PERMISSION_NOT_FOUND, id));
         });
         return convertPermissionToDTO(permission);
+    }
+
+    @Override
+    public PageResponseDTO<PermissionResponseDTO> searchPermission(Pageable pageable, SearchPermissionRequest request){
+        log.info("Searching permissions from database");
+        Specification<Permission> spec = ((root, query, cb) -> cb.conjunction());
+
+        if (StringUtils.hasText(request.getName())) {
+            spec = spec.and(PermissionSpecification.likeName(request.getName()));
+        }
+        if (StringUtils.hasText(request.getApiPath())) {
+            spec = spec.and(PermissionSpecification.likeApiPath(request.getApiPath()));
+        }
+        if (StringUtils.hasText(request.getMethod())) {
+            spec = spec.and(PermissionSpecification.hasMethod(request.getMethod()));
+        }
+        if (StringUtils.hasText(request.getDescription())) {
+            spec = spec.and(PermissionSpecification.likeDescription(request.getDescription()));
+        }
+        if (StringUtils.hasText(request.getRoleName())) {
+            try {
+                RoleType roleType = RoleType.valueOf(request.getRoleName().toUpperCase());
+                spec = spec.and(PermissionSpecification.hasRole(roleType));
+            } catch (IllegalArgumentException ignored) {
+
+            }
+        }
+        Page<Permission> permissions = permissionRepository.findAll(spec, pageable);
+        Page<PermissionResponseDTO> permissionPage = permissions.map(this::convertPermissionToDTO);
+        log.info("Retrieved all permissions from database");
+        return new PageResponseDTO<>(permissionPage.getNumber(), permissionPage.getNumberOfElements(),
+                permissionPage.getTotalPages(), permissionPage.getContent());
     }
 
     public PermissionResponseDTO convertPermissionToDTO(Permission permission) {

@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Setter
 @Getter
@@ -15,8 +16,8 @@ import java.time.LocalDate;
 public class CommentShortResponseDTO {
     private Long commentId;
     private String commentDetail;
-    private LocalDate createdAt;
-    private LocalDate updatedAt;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
     private String userComment;
     private Integer commentLikes;
     private Integer commentDislikes;

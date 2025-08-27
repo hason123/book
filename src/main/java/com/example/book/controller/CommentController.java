@@ -1,11 +1,11 @@
 package com.example.book.controller;
 
 import com.example.book.dto.RequestDTO.CommentRequestDTO;
+import com.example.book.dto.RequestDTO.Search.SearchCommentRequest;
 import com.example.book.dto.ResponseDTO.Comment.CommentShortResponseDTO;
 import com.example.book.dto.ResponseDTO.PageResponseDTO;
-import com.example.book.entity.Comment;
-import com.example.book.service.impl.CommentReactionServiceImpl;
-import com.example.book.service.impl.CommentServiceImpl;
+import com.example.book.service.CommentReactionService;
+import com.example.book.service.CommentService;
 import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -17,12 +17,12 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/library")
 public class CommentController {
-    private final CommentServiceImpl commentServiceImpl;
-    private final CommentReactionServiceImpl commentReactionServiceImpl;
+    private final CommentService commentService;
+    private final CommentReactionService commentReactionService;
 
-    public CommentController(CommentServiceImpl commentServiceImpl, CommentReactionServiceImpl commentReactionServiceImpl) {
-        this.commentServiceImpl = commentServiceImpl;
-        this.commentReactionServiceImpl = commentReactionServiceImpl;
+    public CommentController(CommentService commentService, CommentReactionService commentReactionService) {
+        this.commentService = commentService;
+        this.commentReactionService = commentReactionService;
     }
 
     @Operation(summary = "Lấy danh sách phân trang bình luận")
@@ -31,7 +31,7 @@ public class CommentController {
     public ResponseEntity<PageResponseDTO<CommentShortResponseDTO>> getAllComments(@RequestParam(value = "pageNumber", required = false, defaultValue = "1") Integer pageNumber,
                                                                                    @RequestParam(value = "pageSize", required = false, defaultValue = "3") Integer pageSize) {
         Pageable pageable = PageRequest.of(pageNumber - 1, pageSize);
-        PageResponseDTO<CommentShortResponseDTO> comments = commentServiceImpl.getComments(pageable);
+        PageResponseDTO<CommentShortResponseDTO> comments = commentService.getComments(pageable);
         return new ResponseEntity<>(comments, HttpStatus.OK);
     }
 
@@ -39,7 +39,7 @@ public class CommentController {
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/comments/{id}")
     public ResponseEntity<CommentShortResponseDTO> getCommentById(@PathVariable long id) {
-        CommentShortResponseDTO comment = commentServiceImpl.getComment(id);
+        CommentShortResponseDTO comment = commentService.getComment(id);
         return new ResponseEntity<>(comment, HttpStatus.OK);
     }
 
@@ -47,7 +47,7 @@ public class CommentController {
     @PreAuthorize("isAuthenticated()")
     @PostMapping("/posts/{postId}/comments/create")
     public ResponseEntity<CommentShortResponseDTO> createComment(@PathVariable Long postId , @RequestBody CommentRequestDTO request) {
-        CommentShortResponseDTO commentCreated = commentServiceImpl.addComment(postId, request);
+        CommentShortResponseDTO commentCreated = commentService.addComment(postId, request);
         return new ResponseEntity<>(commentCreated, HttpStatus.CREATED);
     }
 
@@ -55,7 +55,7 @@ public class CommentController {
     @PreAuthorize("isAuthenticated()")
     @PutMapping("/posts/{postId}/comments/{commentId}")
     public ResponseEntity<CommentShortResponseDTO> updateComemnt(@PathVariable Long postId , @PathVariable Long commentId, @RequestBody CommentRequestDTO request){
-        CommentShortResponseDTO commentUpdated = commentServiceImpl.updateComment(postId, commentId, request);
+        CommentShortResponseDTO commentUpdated = commentService.updateComment(postId, commentId, request);
         return new ResponseEntity<>(commentUpdated, HttpStatus.OK);
     }
 
@@ -63,7 +63,7 @@ public class CommentController {
     @PreAuthorize("isAuthenticated()")
     @DeleteMapping("/comments/{id}")
     public ResponseEntity<?> deleteComment(@PathVariable long id){
-        commentServiceImpl.deleteComment(id);
+        commentService.deleteComment(id);
         return ResponseEntity.ok().body("Delete successful");
     }
 
@@ -71,7 +71,7 @@ public class CommentController {
     @PreAuthorize("isAuthenticated()")
     @PostMapping("/comments/{id}/like")
     public ResponseEntity<?> likeComment(@PathVariable long id){
-        commentReactionServiceImpl.likeComment(id);
+        commentReactionService.likeComment(id);
         return ResponseEntity.ok().build();
     }
 
@@ -79,8 +79,21 @@ public class CommentController {
     @PreAuthorize("isAuthenticated()")
     @PostMapping("/comments/{id}/dislike")
     public ResponseEntity<?> dislikeComment(@PathVariable long id){
-        commentReactionServiceImpl.dislikeComment(id);
+        commentReactionService.dislikeComment(id);
         return ResponseEntity.ok().build();
+    }
+
+    @Operation(summary = "Tìm kiếm bình luận (comments)")
+    @PreAuthorize("isAuthenticated()")
+    @GetMapping("/search")
+    public ResponseEntity<PageResponseDTO<CommentShortResponseDTO>> searchComments(
+            @RequestParam(value = "pageNumber", required = false, defaultValue = "1") Integer pageNumber,
+            @RequestParam(value = "pageSize", required = false, defaultValue = "5") Integer pageSize,
+            SearchCommentRequest request
+    ) {
+        Pageable pageable = PageRequest.of(pageNumber - 1, pageSize);
+        PageResponseDTO<CommentShortResponseDTO> comments = commentService.searchComment(pageable, request);
+        return ResponseEntity.ok(comments);
     }
 
 }

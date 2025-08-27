@@ -7,6 +7,9 @@ import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -27,6 +30,10 @@ public class Post extends BaseEntity {
     private String title;
     @Column(name = "content")
     private String content;
+    @Column(name = "created_time")
+    private LocalDateTime createdTime;
+    @Column(name = "updated_time")
+    private LocalDateTime updatedTime;
     @Column(name = "likes_count", nullable = false, columnDefinition = "mediumint default 0")
     private int likesCount;
     @Column(name = "dislikes_count" , nullable = false, columnDefinition = "mediumint default 0")
@@ -47,8 +54,15 @@ public class Post extends BaseEntity {
         this.dislikesCount = Math.max(dislikesCount, 0);
     }
 
+    @PrePersist
+    public void prePersist() {
+        this.createdTime = LocalDateTime.now();
+        this.updatedTime = LocalDateTime.now();
+    }
 
-
-
+    @PreUpdate
+    public void preUpdate() {
+        this.updatedTime = LocalDateTime.now();
+    }
 
 }

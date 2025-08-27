@@ -203,8 +203,8 @@ public class PostServiceImpl implements PostService {
         PostListResponseDTO postListDTO = new PostListResponseDTO();
         postListDTO.setId(post.getPostId());
         postListDTO.setTitle(post.getTitle());
-        postListDTO.setCreatedAt(post.getCreatedDate());
-        postListDTO.setUpdatedAt(post.getLastModifiedDate());
+        postListDTO.setCreatedAt(post.getCreatedTime());
+        postListDTO.setUpdatedAt(post.getUpdatedTime());
         postListDTO.setUserPost(post.getUser().getUserName());
         postListDTO.setCommentCount(post.getComments().size());
         postListDTO.setLikesCount(post.getLikesCount());
@@ -218,8 +218,8 @@ public class PostServiceImpl implements PostService {
         postDTO.setTitle(post.getTitle());
         postDTO.setContent(post.getContent());
         postDTO.setUserPost(post.getUser().getUserName());
-        postDTO.setCreatedAt(post.getCreatedDate());
-        postDTO.setUpdatedAt(post.getLastModifiedDate());
+        postDTO.setCreatedAt(post.getCreatedTime());
+        postDTO.setUpdatedAt(post.getUpdatedTime());
         postDTO.setCommentCount(post.getComments().size());
         postDTO.setLikesCount(post.getLikesCount());
         postDTO.setDislikesCount(post.getDislikesCount());

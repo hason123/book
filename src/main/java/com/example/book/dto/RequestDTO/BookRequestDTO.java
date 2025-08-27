@@ -23,6 +23,7 @@ public class BookRequestDTO {
     private Integer pageCount;
     private String printType;
     private String language;
+    @NotEmpty(message = "{error.book.quantity.null}")
     @Pattern(regexp = "^\\d+$", message = "{error.book.quantity.invalid}")
     private Integer quantity;
     private String bookDesc;

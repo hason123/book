@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,6 +27,10 @@ public class Comment extends BaseEntity {
     private int likesCount;
     @Column(name = "dislikes_count" , nullable = false, columnDefinition = "mediumint default 0")
     private int dislikesCount;
+    @Column(name = "created_time")
+    private LocalDateTime createdTime;
+    @Column(name = "updated_time")
+    private LocalDateTime updatedTime;
     @ManyToOne
     @JoinColumn(name = "user_comment_id")
     private User user;
@@ -44,6 +49,17 @@ public class Comment extends BaseEntity {
 
     public void setDislikesCount(int dislikesCount) {
         this.dislikesCount = Math.max(dislikesCount, 0);
+    }
+
+    @PrePersist
+    public void prePersist() {
+        this.createdTime = LocalDateTime.now();
+        this.updatedTime = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    public void preUpdate() {
+        this.updatedTime = LocalDateTime.now();
     }
 
 

@@ -1,6 +1,7 @@
 package com.example.book.service;
 
 import com.example.book.dto.RequestDTO.CommentRequestDTO;
+import com.example.book.dto.RequestDTO.Search.SearchCommentRequest;
 import com.example.book.dto.ResponseDTO.Comment.CommentResponseDTO;
 import com.example.book.dto.ResponseDTO.Comment.CommentShortResponseDTO;
 import com.example.book.dto.ResponseDTO.PageResponseDTO;
@@ -21,4 +22,5 @@ public interface CommentService {
 
     List<CommentResponseDTO> getCommentByPost(Long postId);
 
+    PageResponseDTO<CommentShortResponseDTO> searchComment(Pageable pageable, SearchCommentRequest request);
 }

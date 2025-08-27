@@ -4,6 +4,7 @@ import com.example.book.dto.RequestDTO.BorrowingRequestDTO;
 import com.example.book.dto.ResponseDTO.BorrowingResponseDTO;
 import com.example.book.dto.ResponseDTO.PageResponseDTO;
 import com.example.book.exception.ResourceNotFoundException;
+import com.example.book.service.BorrowingService;
 import com.example.book.service.impl.BorrowingServiceImpl;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.servlet.http.HttpServletRequest;
@@ -22,10 +23,10 @@ import java.io.IOException;
 @RestController
 @RequestMapping("/api/v1/library")
 public class BorrowingController {
-    private final BorrowingServiceImpl borrowingServiceImpl;
+    private final BorrowingService borrowingService;
 
-    public BorrowingController(BorrowingServiceImpl borrowingServiceImpl) {
-        this.borrowingServiceImpl = borrowingServiceImpl;
+    public BorrowingController(BorrowingService borrowingService) {
+        this.borrowingService = borrowingService;
     }
 
     @Operation(summary = "Lấy danh sách mượn sách")
@@ -35,7 +36,7 @@ public class BorrowingController {
                                          @RequestParam(value = "pageSize", required = false) Integer pageSize)
     {
         Pageable pageable = PageRequest.of(pageNumber - 1, pageSize); //da sort trong lop service
-        PageResponseDTO<BorrowingResponseDTO> borrowingPage = borrowingServiceImpl.getBorrowingPage(pageable);
+        PageResponseDTO<BorrowingResponseDTO> borrowingPage = borrowingService.getBorrowingPage(pageable);
         return ResponseEntity.ok(borrowingPage);
     }
 
@@ -43,7 +44,7 @@ public class BorrowingController {
     @PreAuthorize("hasAnyRole('ADMIN', 'LIBRARIAN')")
     @GetMapping("/borrows/{id}")
     public ResponseEntity<BorrowingResponseDTO> getBorrowingById(@PathVariable Long id) throws ResourceNotFoundException {
-        BorrowingResponseDTO borrowing = borrowingServiceImpl.getBorrowingById(id);
+        BorrowingResponseDTO borrowing = borrowingService.getBorrowingById(id);
         return ResponseEntity.status(HttpStatus.OK).body(borrowing);
     }
 
@@ -51,7 +52,7 @@ public class BorrowingController {
     @PreAuthorize("hasAnyRole('ADMIN', 'LIBRARIAN')")
     @PostMapping("/borrows")
     public ResponseEntity<BorrowingResponseDTO> addBorrowing(@RequestBody BorrowingRequestDTO borrowing) {
-        BorrowingResponseDTO borrowingAdded = borrowingServiceImpl.addBorrowing(borrowing);
+        BorrowingResponseDTO borrowingAdded = borrowingService.addBorrowing(borrowing);
         return new ResponseEntity<>(borrowingAdded, HttpStatus.CREATED);
     }
 
@@ -59,7 +60,7 @@ public class BorrowingController {
     @PreAuthorize("hasAnyRole('ADMIN', 'LIBRARIAN')")
     @PutMapping("/borrows/{id}")
     public ResponseEntity<BorrowingResponseDTO> updateBorrowing(@PathVariable Long id, @RequestBody BorrowingRequestDTO borrowing) {
-        BorrowingResponseDTO borrowingUpdated = borrowingServiceImpl.updateBorrowing(id, borrowing);
+        BorrowingResponseDTO borrowingUpdated = borrowingService.updateBorrowing(id, borrowing);
         return ResponseEntity.ok(borrowingUpdated);
     }
 
@@ -67,7 +68,7 @@ public class BorrowingController {
     @PreAuthorize("hasAnyRole('ADMIN', 'LIBRARIAN')")
     @DeleteMapping("/borrows/{id}")
     public ResponseEntity<?> deleteBorrowing(@PathVariable Long id) {
-        borrowingServiceImpl.deleteBookById(id);
+        borrowingService.deleteBookById(id);
         return ResponseEntity.status(200).body("Delete successful!");
     }
 
@@ -76,7 +77,7 @@ public class BorrowingController {
     @GetMapping("/borrows/dashboard")
     public ResponseEntity<?> getBorrowingDashboard(HttpServletResponse response) throws IOException {
         response.setHeader("Content-Type", "attachment; filename=borrowing.xlsx");
-        borrowingServiceImpl.createBorrowingWorkbook(response);
+        borrowingService.createBorrowingWorkbook(response);
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 }
