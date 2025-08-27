@@ -12,6 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/library")
@@ -49,9 +50,10 @@ public class PermissionController {
     @Operation(summary = "Xóa quyền hạn")
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/permissions/{id}")
-    public ResponseEntity<String> deletePermission(@PathVariable long id) {
+    public ResponseEntity<?> deletePermission(@PathVariable long id) {
         permissionService.deletePermission(id);
-        return ResponseEntity.status(HttpStatus.OK).body("Delete succesful!");
+        Map<String, String> response = Map.of("message", "Delete successful");
+        return ResponseEntity.ok(response);
     }
 
     @Operation(summary = "Lấy danh sách quyền hạn có phân trang")
@@ -66,7 +68,7 @@ public class PermissionController {
 
     @Operation(summary = "Tìm kiếm quyền (permissions)")
     @PreAuthorize("isAuthenticated()")
-    @GetMapping("/search")
+    @GetMapping("/permissions/search")
     public ResponseEntity<PageResponseDTO<PermissionResponseDTO>> searchPermission(
             @RequestParam(value = "pageNumber", required = false, defaultValue = "1") Integer pageNumber,
             @RequestParam(value = "pageSize", required = false, defaultValue = "5") Integer pageSize,

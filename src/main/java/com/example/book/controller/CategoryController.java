@@ -1,5 +1,6 @@
 package com.example.book.controller;
 
+import com.example.book.dto.RequestDTO.CategoryRequestDTO;
 import com.example.book.dto.ResponseDTO.CategoryResponseDTO;
 import com.example.book.dto.ResponseDTO.PageResponseDTO;
 import com.example.book.service.CategoryService;
@@ -13,8 +14,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import java.io.IOException;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/library/")
@@ -47,7 +48,7 @@ public class CategoryController {
     @Operation(summary = "Thêm mới thể loại sách")
     @PreAuthorize("hasAnyRole('ADMIN', 'LIBRARIAN')")
     @PostMapping("/categories")
-    public ResponseEntity<CategoryResponseDTO> createCategory(@RequestBody CategoryResponseDTO category) {
+    public ResponseEntity<CategoryResponseDTO> createCategory(@RequestBody CategoryRequestDTO category) {
         CategoryResponseDTO categoryAdded = categoryService.addCategory(category);
         return ResponseEntity.status(HttpStatus.CREATED).body(categoryAdded);
     }
@@ -55,11 +56,8 @@ public class CategoryController {
     @Operation(summary = "Cập nhật thể loại sách")
     @PreAuthorize("hasAnyRole('ADMIN', 'LIBRARIAN')")
     @PutMapping("/categories/{id}")
-    public ResponseEntity<CategoryResponseDTO> updateCategory(@PathVariable long id, @RequestBody CategoryResponseDTO category) {
+    public ResponseEntity<CategoryResponseDTO> updateCategory(@PathVariable long id, @RequestBody CategoryRequestDTO category) {
         CategoryResponseDTO categoryUpdated = categoryService.updateCategory(id, category);
-        if (categoryUpdated == null) {
-            return ResponseEntity.notFound().build();
-        }
         return ResponseEntity.ok(categoryUpdated);
     }
 
@@ -68,7 +66,8 @@ public class CategoryController {
     @DeleteMapping("/categories/{id}")
     public ResponseEntity<?> deleteCategory(@PathVariable long id) {
         categoryService.deleteCategory(id);
-        return ResponseEntity.status(200).body("Delete success!");
+        Map<String, String> response = Map.of("message", "Delete successful");
+        return ResponseEntity.ok(response);
     }
 
     @Operation(summary = "Thống kê số sách theo thể loại")

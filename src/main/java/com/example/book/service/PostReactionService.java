@@ -1,11 +1,12 @@
 package com.example.book.service;
 
+import com.example.book.dto.ResponseDTO.Post.PostListResponseDTO;
 import org.springframework.transaction.annotation.Transactional;
 
 public interface PostReactionService {
     @Transactional
-    void likePost(Long postId);
+    PostListResponseDTO likePost(Long postId);
 
     @Transactional
-    void disLikePost(Long postId);
+    PostListResponseDTO disLikePost(Long postId);
 }

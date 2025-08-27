@@ -14,7 +14,7 @@ import java.util.List;
 public class CategoryResponseDTO {
     private Long categoryId;
     private String categoryName;
-    private List<BookBasic> bookBasic = new ArrayList<>();
+    private List<BookBasic> books = new ArrayList<>();
     @Setter
     @Getter
     @AllArgsConstructor

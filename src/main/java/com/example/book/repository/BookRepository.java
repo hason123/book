@@ -19,6 +19,6 @@ public interface BookRepository extends JpaRepository<Book, Long> , JpaSpecifica
             "LOWER(b.bookName) LIKE LOWER(CONCAT('%', :searchText, '%'))")
     List<BookResponseDTO> findBooksBySearchText(@Param("searchText") String keyword);
 */
-    boolean existsByAuthorAndBookName(String author, String title);
+    boolean existsByBookName(String title);
 
 }

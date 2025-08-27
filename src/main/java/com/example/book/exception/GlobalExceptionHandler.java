@@ -15,6 +15,10 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Object>> handleAllException(Exception ex) {
+        if (ex instanceof org.springframework.security.core.AuthenticationException
+                || ex instanceof org.springframework.security.access.AccessDeniedException) {
+            throw (RuntimeException) ex;
+        }
         ApiResponse<Object> res = new ApiResponse<>();
         res.setCode(HttpStatus.INTERNAL_SERVER_ERROR.value());
         res.setData(ex.getMessage());
@@ -40,7 +44,7 @@ public class GlobalExceptionHandler {
         ApiResponse<Object> res = new ApiResponse<>();
         res.setCode(HttpStatus.BAD_REQUEST.value());
         res.setMessage(e.getMessage());
-        res.setData("DataIntegrityViolationException");
+        res.setData(null);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(res);
     }
 

@@ -14,6 +14,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/v1/library")
 public class BookController {
@@ -73,11 +75,11 @@ public class BookController {
     }
 
     @Operation(summary = "Xóa mềm cuốn sách")
-    @PreAuthorize("hasAnyRole('ADMIN', 'LIBRARIAN')")
     @DeleteMapping("/books/{id}")
     public ResponseEntity<?> deleteBook(@PathVariable("id") long id) {
         bookService.deleteBookById(id);
-        return ResponseEntity.status(200).body("Delete successful");
+        Map<String, String> response = Map.of("message", "Delete successful");
+        return ResponseEntity.ok(response);
     }
 
     @Operation(summary = "Đồng bộ sách từ API khác ")

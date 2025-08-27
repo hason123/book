@@ -16,6 +16,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/library")
@@ -52,7 +53,8 @@ public class UserController {
     @DeleteMapping("/users/{id}")
     public ResponseEntity<?> deleteUser(@PathVariable Long id) throws UnauthorizedException {
         userService.deleteUserById(id);
-        return ResponseEntity.ok("Delete successful");
+        Map<String, String> response = Map.of("message", "Delete successful");
+        return ResponseEntity.ok(response);
     }
 
     @Operation(summary = "Tạo mới người dùng")

@@ -2,6 +2,7 @@ package com.example.book.service.impl;
 
 import com.example.book.config.MessageConfig;
 import com.example.book.constant.ReactionType;
+import com.example.book.dto.ResponseDTO.Comment.CommentShortResponseDTO;
 import com.example.book.entity.Comment;
 import com.example.book.entity.CommentReaction;
 import com.example.book.exception.ResourceNotFoundException;
@@ -9,6 +10,7 @@ import com.example.book.repository.CommentReactionRepository;
 import com.example.book.repository.CommentRepository;
 import com.example.book.repository.UserRepository;
 import com.example.book.service.CommentReactionService;
+import com.example.book.service.CommentService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,18 +24,20 @@ public class CommentReactionServiceImpl implements CommentReactionService {
     private final MessageConfig messageConfig;
     private final String COMMENT_NOT_FOUND= "error.comment.notfound";
     private final String USER_NOT_FOUND= "error.user.notfound";
+    private final CommentService commentService;
 
-    public CommentReactionServiceImpl(CommentReactionRepository commentReactionRepository, UserServiceImpl userServiceImpl, UserRepository userRepository, CommentRepository commentRepository, MessageConfig messageConfig) {
+    public CommentReactionServiceImpl(CommentReactionRepository commentReactionRepository, UserServiceImpl userServiceImpl, UserRepository userRepository, CommentRepository commentRepository, MessageConfig messageConfig, CommentService commentService) {
         this.commentReactionRepository = commentReactionRepository;
         this.userServiceImpl = userServiceImpl;
         this.userRepository = userRepository;
         this.commentRepository = commentRepository;
         this.messageConfig = messageConfig;
+        this.commentService = commentService;
     }
 
     @Transactional
     @Override
-    public void likeComment(Long commentId) {
+    public CommentShortResponseDTO likeComment(Long commentId) {
         Long userId = userServiceImpl.getCurrentUser().getUserId();
         Comment comment = commentRepository.findById(commentId).orElseThrow(() -> {
             log.error(messageConfig.getMessage(COMMENT_NOT_FOUND), commentId);
@@ -66,11 +70,12 @@ public class CommentReactionServiceImpl implements CommentReactionService {
         }
         commentRepository.save(comment);
         log.info("Updated comment {} reaction counts: {} likes, {} dislikes", commentId, comment.getLikesCount(), comment.getDislikesCount());
+        return commentService.convertCommentToShortDTO(comment);
     }
 
     @Transactional
     @Override
-    public void dislikeComment(Long commentId) {
+    public CommentShortResponseDTO dislikeComment(Long commentId) {
         Long userId = userServiceImpl.getCurrentUser().getUserId();
         log.info("User {} attempts to dislike comment {}", userId, commentId);
         Comment comment = commentRepository.findById(commentId).orElseThrow(() -> {
@@ -104,6 +109,7 @@ public class CommentReactionServiceImpl implements CommentReactionService {
         }
         commentRepository.save(comment);
         log.info("Updated comment {} reaction counts: {} likes, {} dislikes", commentId, comment.getLikesCount(), comment.getDislikesCount());
+        return commentService.convertCommentToShortDTO(comment);
     }
 
 

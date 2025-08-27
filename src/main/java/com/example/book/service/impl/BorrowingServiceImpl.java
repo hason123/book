@@ -63,14 +63,17 @@ public class BorrowingServiceImpl implements BorrowingService {
     }
 
     @Override
-    public void deleteBookById(Long id) {
-        if(borrowingRepository.existsById(id)) {
-            borrowingRepository.deleteById(id);
-        }
-        else {
+    public void deleteBorrowingById(Long id) {
+        Borrowing borrowing = borrowingRepository.findById(id).orElseThrow(() ->
+        {
             log.error(messageConfig.getMessage(BORROWING_NOT_FOUND, id));
-            throw new ResourceNotFoundException(messageConfig.getMessage(BORROWING_NOT_FOUND, id));
+            return new ResourceNotFoundException(messageConfig.getMessage(BORROWING_NOT_FOUND, id));
+        });
+        if (borrowing.getReturnDate() != null) {
+            borrowing.getBook().setQuantity(borrowing.getBook().getQuantity() + 1);
+            bookRepository.save(borrowing.getBook());
         }
+        borrowingRepository.delete(borrowing);
     }
 
     @Override
@@ -193,9 +196,12 @@ public class BorrowingServiceImpl implements BorrowingService {
             else borrowing.setBook(oldBook);
         }
         else borrowing.setBook(borrowing.getBook());
+
         if (checkDuplicate(borrowing)) {
             throw new BusinessException(messageConfig.getMessage(BORROWING_WRONG_DATE));
         }
+
+
         // Only handle returned status if status changed
         if (borrowing.getStatus() == BorrowingType.RETURNED && prevStatus != BorrowingType.RETURNED) {
             Book returnedBook = borrowing.getBook();
@@ -235,10 +241,10 @@ public class BorrowingServiceImpl implements BorrowingService {
     private boolean checkDuplicate(Borrowing borrowing) {
         List<Borrowing> borrowingList = borrowingRepository.findByStatusBorrowingOrDue();
         for(Borrowing b : borrowingList){
-            if(borrowing.getBook().equals(b.getBook()) && borrowing.getUser().equals(b.getUser())){
-                return true;
+                if(borrowing.getBook().equals(b.getBook()) && borrowing.getUser().equals(b.getUser())) {
+                    return true;
+                }
             }
-        }
         return false;
     }
 

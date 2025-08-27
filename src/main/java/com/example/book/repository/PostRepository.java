@@ -11,4 +11,6 @@ public interface PostRepository extends JpaRepository<Post, Long>, JpaSpecificat
     List<Post> findTop5ByOrderByLikesCountDesc();
 
     List<Post> findAllByUser_UserId(Long userId);
+
+    boolean existsByTitle(String title);
 }

@@ -1,5 +1,6 @@
 package com.example.book.dto.ResponseDTO.Comment;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -16,10 +17,14 @@ import java.time.LocalDateTime;
 public class CommentShortResponseDTO {
     private Long commentId;
     private String commentDetail;
+    @JsonFormat(pattern="yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createdAt;
+    @JsonFormat(pattern="yyyy-MM-dd HH:mm:ss")
     private LocalDateTime updatedAt;
+    @JsonFormat(pattern="yyyy-MM-dd HH:mm:ss")
     private String userComment;
     private Integer commentLikes;
+    private Long postId;
     private Integer commentDislikes;
-    private String postId;
+
 }

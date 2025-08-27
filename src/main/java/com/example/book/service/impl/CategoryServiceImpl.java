@@ -1,9 +1,9 @@
 package com.example.book.service.impl;
 
 import com.example.book.config.MessageConfig;
+import com.example.book.dto.RequestDTO.CategoryRequestDTO;
 import com.example.book.dto.ResponseDTO.CategoryResponseDTO;
 import com.example.book.dto.ResponseDTO.PageResponseDTO;
-import com.example.book.entity.Book;
 import com.example.book.entity.Category;
 import com.example.book.exception.ResourceNotFoundException;
 import com.example.book.repository.BookRepository;
@@ -16,6 +16,7 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -32,6 +33,7 @@ public class CategoryServiceImpl implements CategoryService {
     private final MessageConfig messageConfig;
     private final String CATEGORY_NOT_FOUND= "error.category.notfound";
     //private final String BOOK_NOT_FOUND= "error.book.notfound";
+    private final String CATEGORY_NAME_UNIQUE= "error.category.name.unique";
 
     public CategoryServiceImpl(CategoryRepository categoryRepository, BookRepository bookRepository, MessageConfig messageConfig) {
         this.categoryRepository = categoryRepository;
@@ -52,15 +54,18 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
-    public CategoryResponseDTO addCategory(CategoryResponseDTO request) {
+    public CategoryResponseDTO addCategory(CategoryRequestDTO request) {
         Category category = new Category();
-        category.setCategoryName(request.getCategoryName());
+        if(categoryRepository.existsByCategoryName(request.getCategoryName())){
+            throw new DataIntegrityViolationException(messageConfig.getMessage(CATEGORY_NAME_UNIQUE));
+        }
+        else category.setCategoryName(request.getCategoryName());
         categoryRepository.save(category);
         return convertEntityToDTO(category);
     }
 
     @Override
-    public CategoryResponseDTO updateCategory(Long id, CategoryResponseDTO request) {
+    public CategoryResponseDTO updateCategory(Long id, CategoryRequestDTO request) {
         log.info("Updating category with id {}", id);
         Category updatedCategory = categoryRepository.findById(id).orElse(null);
         if(updatedCategory == null){
@@ -68,7 +73,10 @@ public class CategoryServiceImpl implements CategoryService {
             throw new ResourceNotFoundException(messageConfig.getMessage(CATEGORY_NOT_FOUND,id));
         }
         if(request.getCategoryName() != null){
-            updatedCategory.setCategoryName(request.getCategoryName());
+            if(categoryRepository.existsByCategoryName(request.getCategoryName())){
+                updatedCategory.setCategoryName(updatedCategory.getCategoryName());
+            }
+            else updatedCategory.setCategoryName(request.getCategoryName());
         }
         else updatedCategory.setCategoryName(updatedCategory.getCategoryName());
         categoryRepository.save(updatedCategory);
@@ -142,7 +150,7 @@ public class CategoryServiceImpl implements CategoryService {
                     .stream()
                     .map(book -> new CategoryResponseDTO.BookBasic(book.getBookId(), book.getBookName()))
                     .collect(Collectors.toList());
-        categoryDTO.setBookBasic(bookBasics);
+        categoryDTO.setBooks(bookBasics);
         return categoryDTO;
     }
 

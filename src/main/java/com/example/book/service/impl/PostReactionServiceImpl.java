@@ -2,6 +2,7 @@ package com.example.book.service.impl;
 
 import com.example.book.config.MessageConfig;
 import com.example.book.constant.ReactionType;
+import com.example.book.dto.ResponseDTO.Post.PostListResponseDTO;
 import com.example.book.entity.Post;
 import com.example.book.entity.PostReaction;
 import com.example.book.entity.User;
@@ -10,6 +11,7 @@ import com.example.book.repository.PostReactionRepository;
 import com.example.book.repository.PostRepository;
 import com.example.book.repository.UserRepository;
 import com.example.book.service.PostReactionService;
+import com.example.book.service.PostService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,20 +23,22 @@ public class PostReactionServiceImpl implements PostReactionService {
     private final UserRepository userRepository;
     private final PostRepository postRepository;
     private final MessageConfig messageConfig;
+    private final PostService postService;
     private final String POST_NOT_FOUND = "error.post.notfound";
     private final String USER_NOT_FOUND = "error.user.notfound";
 
-    public PostReactionServiceImpl(PostReactionRepository postReactionRepository, UserServiceImpl userServiceImpl, UserRepository userRepository, PostRepository postRepository, MessageConfig messageConfig) {
+    public PostReactionServiceImpl(PostReactionRepository postReactionRepository, UserServiceImpl userServiceImpl, UserRepository userRepository, PostRepository postRepository, MessageConfig messageConfig, PostService postService) {
         this.postReactionRepository = postReactionRepository;
         this.userServiceImpl = userServiceImpl;
         this.userRepository = userRepository;
         this.postRepository = postRepository;
         this.messageConfig = messageConfig;
+        this.postService = postService;
     }
 
     @Transactional
     @Override
-    public void likePost(Long postId) {
+    public PostListResponseDTO likePost(Long postId) {
         Long userId = userServiceImpl.getCurrentUser().getUserId();
         log.info("User {} attempts to like post {}", userId, postId);
         Post post = postRepository.findById(postId)
@@ -71,11 +75,12 @@ public class PostReactionServiceImpl implements PostReactionService {
         }
         postRepository.save(post);
         log.info("Updated post {} reaction counts: {} likes, {} dislikes", postId, post.getLikesCount(), post.getDislikesCount());
+        return postService.convertPostListToDTO(post);
     }
 
     @Transactional
     @Override
-    public void disLikePost(Long postId) {
+    public PostListResponseDTO disLikePost(Long postId) {
         Long userId = userServiceImpl.getCurrentUser().getUserId();
         log.info("User {} attempts to dislike post {}", userId, postId);
         Post post = postRepository.findById(postId)
@@ -112,6 +117,7 @@ public class PostReactionServiceImpl implements PostReactionService {
         }
         postRepository.save(post);
         log.info("Updated post {} reaction counts: {} likes, {} dislikes", postId, post.getLikesCount(), post.getDislikesCount());
+        return postService.convertPostListToDTO(post);
     }
 
 

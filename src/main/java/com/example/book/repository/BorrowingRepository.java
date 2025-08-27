@@ -22,7 +22,7 @@ public interface BorrowingRepository  extends JpaRepository<Borrowing, Long> {
     @Query("SELECT b.book FROM Borrowing b WHERE b.status = com.example.book.constant.BorrowingType.BORROWING GROUP BY b.book ORDER BY COUNT(b) DESC")
     List<Book> findCurrentBorrowingBooks();
 
-    @Query("SELECT b FROM Borrowing b WHERE b.status = com.example.book.constant.BorrowingType.BORROWING OR b.status = com.example.book.constant.BorrowingType.DUE")
+    @Query("SELECT b FROM Borrowing b WHERE b.returnDate IS NULL")
     List<Borrowing> findByStatusBorrowingOrDue();
 
     List<Borrowing> findByStatus(BorrowingType borrowingType);

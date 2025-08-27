@@ -14,6 +14,7 @@ import com.example.book.repository.RoleRepository;
 import com.example.book.service.PermissionService;
 import com.example.book.specification.PermissionSpecification;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -30,6 +31,8 @@ public class PermissionServiceImpl implements PermissionService {
     private final MessageConfig messageConfig;
     private final static String ROLE_NOT_FOUND = "error.role.notfound";
     private final static String PERMISSION_NOT_FOUND = "error.permission.notfound";
+    private final static String PERMISSION_NAME_UNIQUE = "error.permission.name.unique";
+
 
     public PermissionServiceImpl(PermissionRepository permissionRepository, RoleRepository roleRepository, MessageConfig messageConfig) {
         this.permissionRepository = permissionRepository;
@@ -41,7 +44,10 @@ public class PermissionServiceImpl implements PermissionService {
     public PermissionResponseDTO createPermission(PermissionRequestDTO request) {
         log.info("create a new permission");
         Permission permission = new Permission();
-        permission.setName(request.getName());
+        if(permissionRepository.existsByName(request.getName())) {
+            throw new DataIntegrityViolationException(PERMISSION_NAME_UNIQUE);
+        }
+        else permission.setName(request.getName());
         permission.setApiPath(request.getApiPath());
         permission.setMethod(request.getMethod());
         permission.setDescription(request.getDescription());
@@ -65,6 +71,9 @@ public class PermissionServiceImpl implements PermissionService {
             return new ResourceNotFoundException(messageConfig.getMessage(PERMISSION_NOT_FOUND, id));
         });
         if (request.getName() != null) {
+            if(permissionRepository.existsByName(request.getName())) {
+               permission.setName(permission.getName());
+            }
             permission.setName(request.getName());
         } else permission.setName(permission.getName());
         if (request.getDescription() != null) {

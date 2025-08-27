@@ -2,6 +2,7 @@ package com.example.book.dto.RequestDTO;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -23,7 +24,7 @@ public class BookRequestDTO {
     private Integer pageCount;
     private String printType;
     private String language;
-    @NotEmpty(message = "{error.book.quantity.null}")
+    @NotNull(message = "{error.book.quantity.null}")
     @Pattern(regexp = "^\\d+$", message = "{error.book.quantity.invalid}")
     private Integer quantity;
     private String bookDesc;

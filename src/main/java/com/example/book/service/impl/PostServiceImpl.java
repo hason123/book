@@ -34,6 +34,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import java.io.IOException;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 @Slf4j
 @Service
@@ -47,6 +48,7 @@ public class PostServiceImpl implements PostService {
     private final MessageConfig messageConfig;
     private final String POST_NOT_FOUND = "error.post.notfound";
     private final String ACCESS_DENIED = "error.auth.accessDenied";
+
 
     public PostServiceImpl(PostRepository postRepository, CommentRepository commentRepository, UserRepository userRepository, @Lazy UserService userService, @Lazy CommentService commentService, MessageConfig messageConfig) {
         this.postRepository = postRepository;
@@ -87,7 +89,8 @@ public class PostServiceImpl implements PostService {
        Page<Post> posts = postRepository.findAll(pageable);
        Page<PostListResponseDTO> postList = posts.map(this::convertPostListToDTO);
        log.info("Retrieved all posts from database");
-       return new PageResponseDTO<>(postList.getNumber(), postList.getNumberOfElements(), postList.getTotalPages(), postList.getContent());
+       return new PageResponseDTO<>(postList.getNumber() + 1, postList.getTotalPages(),
+                postList.getNumberOfElements(), postList.getContent());
     }
 
     @Override
@@ -117,8 +120,8 @@ public class PostServiceImpl implements PostService {
         Page<Post> posts = postRepository.findAll(spec, pageable);
         Page<PostListResponseDTO> postList = posts.map(this::convertPostListToDTO);
         log.info("Retrieved all posts from database");
-        return new PageResponseDTO<>(postList.getNumber(), postList.getNumberOfElements(),
-                postList.getTotalPages(), postList.getContent());
+        return new PageResponseDTO<>(postList.getNumber() + 1, postList.getTotalPages(),
+                postList.getNumberOfElements(), postList.getContent());
     }
 
     @Override
@@ -199,6 +202,7 @@ public class PostServiceImpl implements PostService {
         log.info("Created post workbook");
     }
 
+    @Override
     public PostListResponseDTO convertPostListToDTO(Post post) {
         PostListResponseDTO postListDTO = new PostListResponseDTO();
         postListDTO.setId(post.getPostId());
@@ -211,7 +215,7 @@ public class PostServiceImpl implements PostService {
         postListDTO.setDislikesCount(post.getDislikesCount());
         return postListDTO;
     }
-
+    @Override
     public PostResponseDTO convertPostToDTO(Post post) {
         PostResponseDTO postDTO = new PostResponseDTO();
         postDTO.setId(post.getPostId());
@@ -220,7 +224,10 @@ public class PostServiceImpl implements PostService {
         postDTO.setUserPost(post.getUser().getUserName());
         postDTO.setCreatedAt(post.getCreatedTime());
         postDTO.setUpdatedAt(post.getUpdatedTime());
-        postDTO.setCommentCount(post.getComments().size());
+        if(post.getComments() == null){
+            postDTO.setComments(new ArrayList<>());
+        }
+        else postDTO.setCommentCount(post.getComments().size());
         postDTO.setLikesCount(post.getLikesCount());
         postDTO.setDislikesCount(post.getDislikesCount());
         if(commentService.getCommentByPost(post.getPostId()) != null) {

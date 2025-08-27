@@ -11,6 +11,7 @@ import com.example.book.entity.Comment;
 import com.example.book.entity.Post;
 import com.example.book.entity.User;
 import com.example.book.exception.ResourceNotFoundException;
+import com.example.book.exception.UnauthorizedException;
 import com.example.book.repository.CommentRepository;
 import com.example.book.repository.PostRepository;
 import com.example.book.repository.UserRepository;
@@ -38,6 +39,7 @@ public class CommentServiceImpl implements CommentService {
     private final UserService userService;
     private final String POST_NOT_FOUND = "error.post.notfound";
     private final String COMMENT_NOT_FOUND = "error.comment.notfound";
+    private final String ACCESS_DENIED = "error.auth.accessDenied";
 
     public CommentServiceImpl(CommentRepository commentRepository, UserRepository userRepository, PostRepository postRepository, MessageConfig messageConfig, @Lazy UserService userService) {
         this.commentRepository = commentRepository;
@@ -50,35 +52,41 @@ public class CommentServiceImpl implements CommentService {
     @Override
     public CommentShortResponseDTO addComment(Long postId, CommentRequestDTO request) {
         log.info("Add comment in post with id: {}", postId);
-        if(!postRepository.existsById(postId)){
-            log.error("Post with id: {} not found", postId);
-            throw new ResourceNotFoundException(messageConfig.getMessage(POST_NOT_FOUND, postId));
-        }
+        Post post = postRepository.findById(postId).orElseThrow(() -> new ResourceNotFoundException(POST_NOT_FOUND));
         Comment comment = new Comment();
         comment.setCommentDetail(request.getContent());
+        comment.setUser(userService.getCurrentUser());
+        comment.setPost(post);
+        if (request.getParentCommentId() != null) {
+            Comment parentComment = commentRepository.findById(request.getParentCommentId())
+                    .orElseThrow(() -> new ResourceNotFoundException(messageConfig.getMessage(COMMENT_NOT_FOUND, request.getParentCommentId())));
+            comment.setParent(parentComment);
+        } else comment.setParent(null);
         commentRepository.save(comment);
         return convertCommentToShortDTO(comment);
     }
 
     @Override
-    public CommentShortResponseDTO updateComment(Long postId, Long commentId, CommentRequestDTO request) {
+    public CommentShortResponseDTO updateComment(Long postId, Long commentId, CommentRequestDTO request) throws UnauthorizedException {
         log.info("Update comment in post with id: {}", postId);
         if(!postRepository.existsById(postId)){
             log.error("Post with id: {} not found", postId);
             throw new ResourceNotFoundException(messageConfig.getMessage(POST_NOT_FOUND, postId));
         }
-        Optional<Comment> optionalComment = commentRepository.findById(commentId);
-        if (optionalComment.isPresent()) {
-            log.info("Updating comment in post with id: {}", postId);
-            Comment updatedComment = optionalComment.get();
+        Comment updatedComment = commentRepository.findById(commentId).orElseThrow(() ->
+                new ResourceNotFoundException(messageConfig.getMessage(COMMENT_NOT_FOUND, commentId)));
+        if(userService.getCurrentUser().equals(updatedComment.getUser())) {
             if(request.getContent() != null){
                 updatedComment.setCommentDetail(request.getContent());
             } else updatedComment.setCommentDetail(updatedComment.getCommentDetail());
+            updatedComment.setParent(updatedComment.getParent());
+            updatedComment.setPost(updatedComment.getPost());
             commentRepository.save(updatedComment);
             return convertCommentToShortDTO(updatedComment);
-        } else {
-            log.error("Comment with id: {} not found", commentId);
-            throw new ResourceNotFoundException(messageConfig.getMessage(COMMENT_NOT_FOUND, commentId));
+        }
+        else {
+            log.error(messageConfig.getMessage(ACCESS_DENIED));
+            throw new UnauthorizedException(messageConfig.getMessage(ACCESS_DENIED));
         }
     }
 
@@ -135,7 +143,7 @@ public class CommentServiceImpl implements CommentService {
                 commentRoots.add(commentNode);
             }
         }
-        Comparator<CommentResponseDTO> comparator = Comparator.comparing(CommentResponseDTO::getUpdatedAt);
+        Comparator<CommentResponseDTO> comparator = Comparator.comparing(CommentResponseDTO::getCreatedAt);
         commentRoots.sort(comparator.reversed());
         commentRoots.forEach(root -> sortRepliesAscending(root.getReplies()));;
         log.info("Successfully build comment trees!");
@@ -144,7 +152,7 @@ public class CommentServiceImpl implements CommentService {
 
     private void sortRepliesAscending(List<CommentResponseDTO> comments) {
         if (comments == null || comments.isEmpty()) return;
-        comments.sort(Comparator.comparing(CommentResponseDTO::getUpdatedAt));
+        comments.sort(Comparator.comparing(CommentResponseDTO::getCreatedAt));
         for (CommentResponseDTO c : comments) {
             sortRepliesAscending(c.getReplies());
         }
@@ -206,6 +214,7 @@ public class CommentServiceImpl implements CommentService {
                 commentPage.getTotalPages(), commentPage.getContent());
     }
 
+    @Override
     public CommentResponseDTO convertCommentToDTO(Comment comment){
         CommentResponseDTO commentResponse = new CommentResponseDTO();
         commentResponse.setCommentId(comment.getCommentId());
@@ -219,9 +228,11 @@ public class CommentServiceImpl implements CommentService {
         commentResponse.setReplies(new ArrayList<>());
         commentResponse.setLikes(comment.getLikesCount());
         commentResponse.setDislikes(comment.getDislikesCount());
+      //  commentResponse.setPostId(comment.getPost().getPostId());
         return commentResponse;
     }
 
+    @Override
     public CommentShortResponseDTO convertCommentToShortDTO(Comment comment){
         CommentShortResponseDTO commentResponse = new CommentShortResponseDTO();
         commentResponse.setCreatedAt(comment.getCreatedTime());
@@ -231,6 +242,7 @@ public class CommentServiceImpl implements CommentService {
         commentResponse.setCommentLikes(comment.getLikesCount());
         commentResponse.setCommentId(comment.getCommentId());
         commentResponse.setCommentDislikes(comment.getDislikesCount());
+        commentResponse.setPostId(comment.getPost().getPostId());
         return commentResponse;
     }
 

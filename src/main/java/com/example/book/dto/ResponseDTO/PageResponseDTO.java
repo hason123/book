@@ -17,5 +17,4 @@ public class PageResponseDTO<T> {
     private long totalElements;
     private List<T> pageList;
 
-
 }

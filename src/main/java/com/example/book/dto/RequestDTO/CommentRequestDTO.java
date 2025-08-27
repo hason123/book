@@ -13,4 +13,5 @@ import lombok.Setter;
 public class CommentRequestDTO {
     @NotBlank(message = "error.comment.content.null")
     private String content;
+    private Long parentCommentId;
 }

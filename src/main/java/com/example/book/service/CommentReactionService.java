@@ -1,11 +1,12 @@
 package com.example.book.service;
 
+import com.example.book.dto.ResponseDTO.Comment.CommentShortResponseDTO;
 import org.springframework.transaction.annotation.Transactional;
 
 public interface CommentReactionService {
     @Transactional
-    void likeComment(Long commentId);
+    CommentShortResponseDTO likeComment(Long commentId);
 
     @Transactional
-    void dislikeComment(Long commentId);
+    CommentShortResponseDTO dislikeComment(Long commentId);
 }

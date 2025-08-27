@@ -9,11 +9,11 @@ import java.io.IOException;
 
 public interface BorrowingService {
 
+    void deleteBorrowingById(Long id);
+
     BorrowingResponseDTO addBorrowing(BorrowingRequestDTO request);
 
     BorrowingResponseDTO getBorrowingById(Long id);
-
-    void deleteBookById(Long id);
 
     BorrowingResponseDTO updateBorrowing(Long id, BorrowingRequestDTO request);
 

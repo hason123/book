@@ -33,7 +33,7 @@ public class Book extends BaseEntity {
     private String language;
     @Column(name = "quantity")
     private Integer quantity;
-    @Column(name = "book_desc")
+    @Column(name = "book_desc", columnDefinition = "MEDIUMTEXT")
     private String bookDesc;
     @ManyToMany
     @JoinTable(

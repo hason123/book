@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/library")
@@ -73,9 +74,10 @@ public class PostController {
     @Operation(summary = "Xóa bài viết")
     @PreAuthorize("isAuthenticated()")
     @DeleteMapping("/posts/{id}")
-    public ResponseEntity<String> deletePost(@PathVariable long id){
+    public ResponseEntity<?> deletePost(@PathVariable long id){
         postService.deletePost(id);
-        return ResponseEntity.status(200).body("Delete successful");
+        Map<String, String> response = Map.of("message", "Delete successful");
+        return ResponseEntity.ok(response);
     }
 
     @Operation(summary = "Lấy danh sách bình luận của một bài viết cụ thể")
@@ -108,16 +110,16 @@ public class PostController {
     @PreAuthorize("isAuthenticated()")
     @PutMapping("/posts/{id}/like")
     public ResponseEntity<?> likePost(@PathVariable Long id){
-        postReactionService.likePost(id);
-        return new ResponseEntity<>(HttpStatus.OK);
+        PostListResponseDTO likedPost = postReactionService.likePost(id);
+        return ResponseEntity.ok(likedPost);
     }
 
     @Operation(summary = "Không thích bài viết")
     @PreAuthorize("isAuthenticated()")
     @PutMapping("/posts/{id}/dislike")
     public ResponseEntity<?> dislikePost(@PathVariable Long id){
-        postReactionService.disLikePost(id);
-        return new ResponseEntity<>(HttpStatus.OK);
+        PostListResponseDTO dislikedPost = postReactionService.disLikePost(id);
+        return ResponseEntity.ok(dislikedPost);
     }
 
 

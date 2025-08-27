@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/library")
@@ -41,9 +42,10 @@ public class RoleController {
     @Operation(summary = "Xóa vai trò")
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/roles/{id}")
-    public ResponseEntity<String> deleteRole(@PathVariable long id) {
+    public ResponseEntity<?> deleteRole(@PathVariable long id) {
         roleService.deleteRole(id);
-        return ResponseEntity.status(HttpStatus.OK).body("Delete succesful!");
+        Map<String, String> response = Map.of("message", "Delete successful");
+        return ResponseEntity.ok(response);
     }
 
     @Operation(summary = "Lấy danh sách vai trò")

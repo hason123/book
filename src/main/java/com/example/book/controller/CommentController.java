@@ -4,6 +4,7 @@ import com.example.book.dto.RequestDTO.CommentRequestDTO;
 import com.example.book.dto.RequestDTO.Search.SearchCommentRequest;
 import com.example.book.dto.ResponseDTO.Comment.CommentShortResponseDTO;
 import com.example.book.dto.ResponseDTO.PageResponseDTO;
+import com.example.book.exception.UnauthorizedException;
 import com.example.book.service.CommentReactionService;
 import com.example.book.service.CommentService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -13,6 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/library")
@@ -45,7 +47,7 @@ public class CommentController {
 
     @Operation(summary = "Thêm mới bình luận")
     @PreAuthorize("isAuthenticated()")
-    @PostMapping("/posts/{postId}/comments/create")
+    @PostMapping("/posts/{postId}/comments/")
     public ResponseEntity<CommentShortResponseDTO> createComment(@PathVariable Long postId , @RequestBody CommentRequestDTO request) {
         CommentShortResponseDTO commentCreated = commentService.addComment(postId, request);
         return new ResponseEntity<>(commentCreated, HttpStatus.CREATED);
@@ -54,7 +56,7 @@ public class CommentController {
     @Operation(summary = "Cập nhật bình luận")
     @PreAuthorize("isAuthenticated()")
     @PutMapping("/posts/{postId}/comments/{commentId}")
-    public ResponseEntity<CommentShortResponseDTO> updateComemnt(@PathVariable Long postId , @PathVariable Long commentId, @RequestBody CommentRequestDTO request){
+    public ResponseEntity<CommentShortResponseDTO> updateComemnt(@PathVariable Long postId , @PathVariable Long commentId, @RequestBody CommentRequestDTO request) throws UnauthorizedException {
         CommentShortResponseDTO commentUpdated = commentService.updateComment(postId, commentId, request);
         return new ResponseEntity<>(commentUpdated, HttpStatus.OK);
     }
@@ -63,29 +65,29 @@ public class CommentController {
     @PreAuthorize("isAuthenticated()")
     @DeleteMapping("/comments/{id}")
     public ResponseEntity<?> deleteComment(@PathVariable long id){
-        commentService.deleteComment(id);
-        return ResponseEntity.ok().body("Delete successful");
+        Map<String, String> response = Map.of("message", "Delete successful");
+        return ResponseEntity.ok(response);
     }
 
     @Operation(summary = "Thích bình luận")
     @PreAuthorize("isAuthenticated()")
     @PostMapping("/comments/{id}/like")
     public ResponseEntity<?> likeComment(@PathVariable long id){
-        commentReactionService.likeComment(id);
-        return ResponseEntity.ok().build();
+        CommentShortResponseDTO likedComment =  commentReactionService.likeComment(id);
+        return ResponseEntity.ok(likedComment);
     }
 
     @Operation(summary = "Không thích bình luận")
     @PreAuthorize("isAuthenticated()")
     @PostMapping("/comments/{id}/dislike")
     public ResponseEntity<?> dislikeComment(@PathVariable long id){
-        commentReactionService.dislikeComment(id);
-        return ResponseEntity.ok().build();
+        CommentShortResponseDTO dislikedComment = commentReactionService.dislikeComment(id);
+        return ResponseEntity.ok(dislikedComment);
     }
 
     @Operation(summary = "Tìm kiếm bình luận (comments)")
     @PreAuthorize("isAuthenticated()")
-    @GetMapping("/search")
+    @GetMapping("/comments/search")
     public ResponseEntity<PageResponseDTO<CommentShortResponseDTO>> searchComments(
             @RequestParam(value = "pageNumber", required = false, defaultValue = "1") Integer pageNumber,
             @RequestParam(value = "pageSize", required = false, defaultValue = "5") Integer pageSize,

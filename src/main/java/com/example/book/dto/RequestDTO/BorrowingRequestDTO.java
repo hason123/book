@@ -2,6 +2,7 @@ package com.example.book.dto.RequestDTO;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PastOrPresent;
 import lombok.*;
 import java.time.LocalDate;
@@ -11,15 +12,15 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @AllArgsConstructor
 public class BorrowingRequestDTO {
-    @NotEmpty(message = "{error.borrowing.date.null}")
+    @NotNull(message = "{error.borrowing.date.null}")
     @JsonFormat(pattern = "yyyy-MM-dd")
     @PastOrPresent(message = "{error.borrowing.date.invalid}")
     private LocalDate borrowingDate;
     @JsonFormat(pattern = "yyyy-MM-dd")
     @PastOrPresent(message = "{error.borrowing.date.invalid}")
     private LocalDate returnDate;
-    @NotEmpty(message = "{error.borrowing.userId.invalid}")
+    @NotNull(message = "{error.borrowing.userId.null}")
     private Long userId;
-    @NotEmpty(message = "{error.borrowing.bookId.invalid}")
+    @NotNull(message = "{error.borrowing.bookId.null}")
     private Long bookId;
 }

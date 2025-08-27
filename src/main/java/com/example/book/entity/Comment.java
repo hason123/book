@@ -14,7 +14,7 @@ import java.util.List;
 @NoArgsConstructor
 @Entity
 @Table(name = "comment")
-@SQLDelete(sql = "UPDATE post SET is_deleted = true WHERE comment_id = ?")
+@SQLDelete(sql = "UPDATE comment SET is_deleted = true WHERE comment_id = ?")
 @SQLRestriction(value = "is_deleted = false")
 public class Comment extends BaseEntity {
     @Id

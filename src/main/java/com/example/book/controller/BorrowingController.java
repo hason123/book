@@ -9,6 +9,7 @@ import com.example.book.service.impl.BorrowingServiceImpl;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -17,8 +18,8 @@ import org.springframework.security.access.method.P;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.annotation.RestController;
-
 import java.io.IOException;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/library")
@@ -51,15 +52,15 @@ public class BorrowingController {
     @Operation(summary = "Thêm lượt mượn sách")
     @PreAuthorize("hasAnyRole('ADMIN', 'LIBRARIAN')")
     @PostMapping("/borrows")
-    public ResponseEntity<BorrowingResponseDTO> addBorrowing(@RequestBody BorrowingRequestDTO borrowing) {
+    public ResponseEntity<BorrowingResponseDTO> addBorrowing(@Valid @RequestBody BorrowingRequestDTO borrowing) {
         BorrowingResponseDTO borrowingAdded = borrowingService.addBorrowing(borrowing);
-        return new ResponseEntity<>(borrowingAdded, HttpStatus.CREATED);
+        return ResponseEntity.status(HttpStatus.CREATED).body(borrowingAdded);
     }
 
     @Operation(summary = "Cập nhật lượt mượn sách")
     @PreAuthorize("hasAnyRole('ADMIN', 'LIBRARIAN')")
     @PutMapping("/borrows/{id}")
-    public ResponseEntity<BorrowingResponseDTO> updateBorrowing(@PathVariable Long id, @RequestBody BorrowingRequestDTO borrowing) {
+    public ResponseEntity<BorrowingResponseDTO> updateBorrowing(@PathVariable Long id, @Valid @RequestBody BorrowingRequestDTO borrowing) {
         BorrowingResponseDTO borrowingUpdated = borrowingService.updateBorrowing(id, borrowing);
         return ResponseEntity.ok(borrowingUpdated);
     }
@@ -68,8 +69,9 @@ public class BorrowingController {
     @PreAuthorize("hasAnyRole('ADMIN', 'LIBRARIAN')")
     @DeleteMapping("/borrows/{id}")
     public ResponseEntity<?> deleteBorrowing(@PathVariable Long id) {
-        borrowingService.deleteBookById(id);
-        return ResponseEntity.status(200).body("Delete successful!");
+        borrowingService.deleteBorrowingById(id);
+        Map<String, String> response = Map.of("message", "Delete successful");
+        return ResponseEntity.ok(response);
     }
 
     @Operation(summary = "Lấy Top 5 những quyển sách được mượn nhiều nhất")

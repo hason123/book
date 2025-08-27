@@ -13,6 +13,7 @@ import com.example.book.repository.CategoryRepository;
 import com.example.book.service.BookService;
 import com.example.book.specification.BookSpecification;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -31,6 +32,7 @@ public class BookServiceImpl implements BookService {
     private final MessageConfig messageConfig;
     private final String CATEGORY_NOT_FOUND= "error.category.notfound";
     private final String BOOK_NOT_FOUND= "error.book.notfound";
+    private final String BOOK_NAME_UNIQUE= "error.book.name.unique";
 
     public BookServiceImpl(BookRepository bookRepository, CategoryRepository categoryRepository, MessageConfig messageConfig) {
         this.bookRepository = bookRepository;
@@ -44,7 +46,10 @@ public class BookServiceImpl implements BookService {
         Book book = new Book();
         book.setAuthor(request.getAuthor());
         book.setBookDesc(request.getBookDesc());
-        book.setBookName(request.getBookName());
+        if(bookRepository.existsByBookName(request.getBookName())){
+            throw new DataIntegrityViolationException(messageConfig.getMessage(BOOK_NAME_UNIQUE));
+        }
+        else book.setBookName(request.getBookName());
         book.setPageCount(request.getPageCount());
         book.setPublisher(request.getPublisher());
         book.setQuantity(request.getQuantity());
@@ -108,6 +113,9 @@ public class BookServiceImpl implements BookService {
             updatedBook.setBookDesc(request.getBookDesc());
         }
         if (request.getBookName() != null) {
+            if(bookRepository.existsByBookName(request.getBookName())){
+                updatedBook.setBookName(updatedBook.getBookName());
+            }
             updatedBook.setBookName(request.getBookName());
         }
         else  updatedBook.setBookName(updatedBook.getBookName());
@@ -207,8 +215,8 @@ public class BookServiceImpl implements BookService {
         Page<BookResponseDTO> bookResponseDTO = bookPage.map(this::convertBookToDTO);
         PageResponseDTO<BookResponseDTO> pageDTO = new PageResponseDTO<>(
                 bookResponseDTO.getNumber() + 1,
-                bookResponseDTO.getNumberOfElements(),
                 bookResponseDTO.getTotalPages(),
+                bookResponseDTO.getNumberOfElements(),
                 bookResponseDTO.getContent()
                 );
         log.info("Returning books with {} books found", pageDTO.getTotalElements());

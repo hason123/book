@@ -1,11 +1,11 @@
 package com.example.book.dto.ResponseDTO.Post;
 
 import com.example.book.dto.ResponseDTO.Comment.CommentResponseDTO;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -22,7 +22,9 @@ public class PostResponseDTO {
     private int dislikesCount;
     private int commentCount;
     private List<CommentResponseDTO> comments;
+    @JsonFormat(pattern="yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createdAt;
+    @JsonFormat(pattern="yyyy-MM-dd HH:mm:ss")
     private LocalDateTime updatedAt;
 
 }
