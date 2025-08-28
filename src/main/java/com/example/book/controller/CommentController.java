@@ -28,7 +28,6 @@ public class CommentController {
     }
 
     @Operation(summary = "Lấy danh sách phân trang bình luận")
-    @PreAuthorize("isAuthenticated()")
     @GetMapping("/comments")
     public ResponseEntity<PageResponseDTO<CommentShortResponseDTO>> getAllComments(@RequestParam(value = "pageNumber", required = false, defaultValue = "1") Integer pageNumber,
                                                                                    @RequestParam(value = "pageSize", required = false, defaultValue = "3") Integer pageSize) {
@@ -38,7 +37,6 @@ public class CommentController {
     }
 
     @Operation(summary = "Lấy thông tin bình luận")
-    @PreAuthorize("isAuthenticated()")
     @GetMapping("/comments/{id}")
     public ResponseEntity<CommentShortResponseDTO> getCommentById(@PathVariable long id) {
         CommentShortResponseDTO comment = commentService.getComment(id);
@@ -46,7 +44,6 @@ public class CommentController {
     }
 
     @Operation(summary = "Thêm mới bình luận")
-    @PreAuthorize("isAuthenticated()")
     @PostMapping("/posts/{postId}/comments/")
     public ResponseEntity<CommentShortResponseDTO> createComment(@PathVariable Long postId , @RequestBody CommentRequestDTO request) {
         CommentShortResponseDTO commentCreated = commentService.addComment(postId, request);
@@ -54,15 +51,13 @@ public class CommentController {
     }
 
     @Operation(summary = "Cập nhật bình luận")
-    @PreAuthorize("isAuthenticated()")
-    @PutMapping("/posts/{postId}/comments/{commentId}")
-    public ResponseEntity<CommentShortResponseDTO> updateComemnt(@PathVariable Long postId , @PathVariable Long commentId, @RequestBody CommentRequestDTO request) throws UnauthorizedException {
-        CommentShortResponseDTO commentUpdated = commentService.updateComment(postId, commentId, request);
+    @PutMapping("/posts/{postId}/comments/{id}")
+    public ResponseEntity<CommentShortResponseDTO> updateComemnt(@PathVariable Long postId , @PathVariable Long id, @RequestBody CommentRequestDTO request) throws UnauthorizedException {
+        CommentShortResponseDTO commentUpdated = commentService.updateComment(postId, id, request);
         return new ResponseEntity<>(commentUpdated, HttpStatus.OK);
     }
 
     @Operation(summary = "Xóa bình luận")
-    @PreAuthorize("isAuthenticated()")
     @DeleteMapping("/comments/{id}")
     public ResponseEntity<?> deleteComment(@PathVariable long id){
         Map<String, String> response = Map.of("message", "Delete successful");
@@ -70,7 +65,6 @@ public class CommentController {
     }
 
     @Operation(summary = "Thích bình luận")
-    @PreAuthorize("isAuthenticated()")
     @PostMapping("/comments/{id}/like")
     public ResponseEntity<?> likeComment(@PathVariable long id){
         CommentShortResponseDTO likedComment =  commentReactionService.likeComment(id);
@@ -78,7 +72,6 @@ public class CommentController {
     }
 
     @Operation(summary = "Không thích bình luận")
-    @PreAuthorize("isAuthenticated()")
     @PostMapping("/comments/{id}/dislike")
     public ResponseEntity<?> dislikeComment(@PathVariable long id){
         CommentShortResponseDTO dislikedComment = commentReactionService.dislikeComment(id);
@@ -86,7 +79,6 @@ public class CommentController {
     }
 
     @Operation(summary = "Tìm kiếm bình luận (comments)")
-    @PreAuthorize("isAuthenticated()")
     @GetMapping("/comments/search")
     public ResponseEntity<PageResponseDTO<CommentShortResponseDTO>> searchComments(
             @RequestParam(value = "pageNumber", required = false, defaultValue = "1") Integer pageNumber,

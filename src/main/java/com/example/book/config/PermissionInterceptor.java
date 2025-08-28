@@ -7,12 +7,11 @@ import com.example.book.exception.UnauthorizedException;
 import com.example.book.service.impl.UserServiceImpl;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.HandlerMapping;
 import java.util.List;
-/*
+
 @Transactional
 public class PermissionInterceptor implements HandlerInterceptor {
 
@@ -45,10 +44,7 @@ public class PermissionInterceptor implements HandlerInterceptor {
                     throw new UnauthorizedException(messageConfig.getMessage(ACCESS_DENIED));
                 }
             }
-
-
         return true;
     }
 }
 
- */

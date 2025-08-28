@@ -7,13 +7,16 @@ import com.example.book.dto.ResponseDTO.PageResponseDTO;
 import com.example.book.service.impl.BookServiceImpl;
 import com.example.book.service.impl.BookSyncService;
 import io.swagger.v3.oas.annotations.Operation;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.Map;
 
 @RestController
@@ -28,7 +31,6 @@ public class BookController {
     }
 
     @Operation(summary = "Lấy danh sách phân trang sách")
-    @PreAuthorize("isAuthenticated()")
     @GetMapping("/books")
     public ResponseEntity<PageResponseDTO<BookResponseDTO>> getAllBooks(@RequestParam(value = "pageNumber", required = false, defaultValue = "1") Integer pageNumber,
                                                                         @RequestParam(value = "pageSize", required = false, defaultValue = "3") Integer pageSize)
@@ -39,7 +41,6 @@ public class BookController {
     }
 
     @Operation(summary = "Lấy thông tin một cuốn sách")
-    @PreAuthorize("isAuthenticated()")
     @GetMapping("/books/{id}")
     public ResponseEntity<BookResponseDTO> getBookById(@PathVariable("id") long id) {
         BookResponseDTO bookResponse = bookService.getBookById(id);
@@ -47,7 +48,6 @@ public class BookController {
     }
 
     @Operation(summary = "Tìm kiếm sách")
-    @PreAuthorize("isAuthenticated()")
     @GetMapping("/books/search")
     public ResponseEntity<PageResponseDTO<BookResponseDTO>> searchBook(
             SearchBookRequest searchBookRequest,
@@ -59,7 +59,6 @@ public class BookController {
     }
 
     @Operation(summary = "Thêm mới cuốn sách")
-    @PreAuthorize("hasAnyRole('ADMIN', 'LIBRARIAN')")
     @PostMapping("/books")
     public ResponseEntity<BookResponseDTO> createBook(@RequestBody BookRequestDTO book) {
         BookResponseDTO bookAdded = bookService.addBook(book);
@@ -67,7 +66,6 @@ public class BookController {
     }
 
     @Operation(summary = "Cập nhật thông tin cuốn sách")
-    @PreAuthorize("hasAnyRole('ADMIN', 'LIBRARIAN')")
     @PutMapping("/books/{id}")
     public ResponseEntity<BookResponseDTO> updateBook(@PathVariable("id") long id, @RequestBody BookRequestDTO book) {
         BookResponseDTO bookUpdated = bookService.updateBook(id, book);
@@ -83,11 +81,28 @@ public class BookController {
     }
 
     @Operation(summary = "Đồng bộ sách từ API khác ")
-    @PreAuthorize("hasAnyRole('ADMIN', 'LIBRARIAN')")
     @PostMapping("/books/sync")
-    public ResponseEntity<Void> syncBook() {
+    public ResponseEntity<?> syncBook() {
         bookSyncService.syncBooksFromGoogle();
-        return ResponseEntity.status(200).build();
+        Map<String, String> message = Map.of("message", "Sync successful!");
+        return ResponseEntity.ok(message);
+    }
+
+    @Operation(summary = "Xuất sách từ file Excel")
+    @GetMapping("/books/export")
+    public ResponseEntity<?> exportBook(final HttpServletResponse response) throws IOException{
+        response.setHeader("Content-Disposition", "attachment; filename=books.xlsx");
+        bookService.exportBookWorkbook(response);
+        Map<String, String> message = Map.of("message", "Export successful!");
+        return ResponseEntity.ok(message);
+
+    }
+
+    @Operation(summary = "Nhập sách từ file Excel")
+    @PostMapping("/books/import")
+    public ResponseEntity<String> importBook(@RequestPart final MultipartFile file) throws IOException {
+        bookService.importExcel(file);
+        return ResponseEntity.ok("Import successfully!");
     }
 
 

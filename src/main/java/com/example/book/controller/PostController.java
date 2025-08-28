@@ -37,8 +37,7 @@ public class PostController {
         this.postReactionService = postReactionService;
     }
 
-    @Operation(summary = "")
-    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "Lấy danh sách bài viết có phân trang")
     @GetMapping("/posts")
     public ResponseEntity<PageResponseDTO<PostListResponseDTO>> getAllPosts(@RequestParam(value = "pageNumber", required = false, defaultValue = "1") Integer pageNumber,
                                                                             @RequestParam(value = "pageSize", required = false, defaultValue = "3") Integer pageSize) {
@@ -48,7 +47,6 @@ public class PostController {
     }
 
     @Operation(summary = "Lấy thông tin bài viết")
-    @PreAuthorize("isAuthenticated()")
     @GetMapping("/posts/{id}")
     public ResponseEntity<PostResponseDTO> getPostById(@PathVariable long id) {
         PostResponseDTO post = postService.getPost(id);
@@ -56,7 +54,6 @@ public class PostController {
     }
 
     @Operation(summary = "Thêm mới bài viết")
-    @PreAuthorize("isAuthenticated()")
     @PostMapping("/posts")
     public ResponseEntity<PostResponseDTO> createPost(@RequestBody PostRequestDTO post){
         PostResponseDTO postCreate = postService.addPost(post);
@@ -64,7 +61,6 @@ public class PostController {
     }
 
     @Operation(summary = "Cập nhật bài viết")
-    @PreAuthorize("isAuthenticated()")
     @PutMapping("/posts/{id}")
     public ResponseEntity<PostResponseDTO> updatePost(@PathVariable long id, @RequestBody PostRequestDTO post) throws UnauthorizedException {
         PostResponseDTO postUpdate = postService.updatePost(id, post);
@@ -72,7 +68,6 @@ public class PostController {
     }
 
     @Operation(summary = "Xóa bài viết")
-    @PreAuthorize("isAuthenticated()")
     @DeleteMapping("/posts/{id}")
     public ResponseEntity<?> deletePost(@PathVariable long id){
         postService.deletePost(id);
@@ -81,7 +76,6 @@ public class PostController {
     }
 
     @Operation(summary = "Lấy danh sách bình luận của một bài viết cụ thể")
-    @PreAuthorize("isAuthenticated()")
     @GetMapping("/posts/{postId}/comments")
     public ResponseEntity<List<CommentResponseDTO>> getCommentsByPostId(@PathVariable long postId) {
         List<CommentResponseDTO> commentPosts =  commentService.getCommentByPost(postId);
@@ -89,7 +83,6 @@ public class PostController {
     }
 
     @Operation(summary = "Tìm kiếm bài viết")
-    @PreAuthorize("isAuthenticated()")
     @GetMapping("/posts/search")
     public ResponseEntity<PageResponseDTO<PostListResponseDTO>> searchPost(@RequestParam(value = "pageNumber", required = false, defaultValue = "1") Integer pageNumber,
                                                                            @RequestParam(value = "pageSize", required = false, defaultValue = "3") Integer pageSize, SearchPostRequest request) {
@@ -99,7 +92,6 @@ public class PostController {
     }
 
     @Operation(summary = "Thống kê Top 5 bài viết được yêu thích nhất")
-    @PreAuthorize("isAuthenticated()")
     @GetMapping("/posts/dashboard")
     public ResponseEntity<?> getPostDashboard(HttpServletResponse response) throws IOException {
         postService.createPostWorkbook(response);
@@ -107,7 +99,6 @@ public class PostController {
     }
 
     @Operation(summary = "Thích bài viết")
-    @PreAuthorize("isAuthenticated()")
     @PutMapping("/posts/{id}/like")
     public ResponseEntity<?> likePost(@PathVariable Long id){
         PostListResponseDTO likedPost = postReactionService.likePost(id);
@@ -115,7 +106,6 @@ public class PostController {
     }
 
     @Operation(summary = "Không thích bài viết")
-    @PreAuthorize("isAuthenticated()")
     @PutMapping("/posts/{id}/dislike")
     public ResponseEntity<?> dislikePost(@PathVariable Long id){
         PostListResponseDTO dislikedPost = postReactionService.disLikePost(id);

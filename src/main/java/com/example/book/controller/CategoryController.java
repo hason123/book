@@ -28,7 +28,6 @@ public class CategoryController {
     }
 
     @Operation(summary = "Lấy danh sách thể loại sách")
-    @PreAuthorize("isAuthenticated()")
     @GetMapping("/categories")
     public ResponseEntity<PageResponseDTO<CategoryResponseDTO>> getCategories(@RequestParam(value = "pageNumber", required = false, defaultValue = "1") Integer pageNumber,
                                                                               @RequestParam(value = "pageSize", required = false, defaultValue = "3") Integer pageSize) {
@@ -38,7 +37,6 @@ public class CategoryController {
     }
 
     @Operation(summary = "Lấy thông tin thể loại sách")
-    @PreAuthorize("isAuthenticated()")
     @GetMapping("/categories/{id}")
     public ResponseEntity<CategoryResponseDTO> getCategory(@PathVariable long id) {
         CategoryResponseDTO category = categoryService.getCategory(id);
@@ -46,7 +44,6 @@ public class CategoryController {
     }
 
     @Operation(summary = "Thêm mới thể loại sách")
-    @PreAuthorize("hasAnyRole('ADMIN', 'LIBRARIAN')")
     @PostMapping("/categories")
     public ResponseEntity<CategoryResponseDTO> createCategory(@RequestBody CategoryRequestDTO category) {
         CategoryResponseDTO categoryAdded = categoryService.addCategory(category);
@@ -54,7 +51,6 @@ public class CategoryController {
     }
 
     @Operation(summary = "Cập nhật thể loại sách")
-    @PreAuthorize("hasAnyRole('ADMIN', 'LIBRARIAN')")
     @PutMapping("/categories/{id}")
     public ResponseEntity<CategoryResponseDTO> updateCategory(@PathVariable long id, @RequestBody CategoryRequestDTO category) {
         CategoryResponseDTO categoryUpdated = categoryService.updateCategory(id, category);
@@ -62,7 +58,6 @@ public class CategoryController {
     }
 
     @Operation(summary = "Xóa thể loại sách")
-    @PreAuthorize("hasAnyRole('ADMIN', 'LIBRARIAN')")
     @DeleteMapping("/categories/{id}")
     public ResponseEntity<?> deleteCategory(@PathVariable long id) {
         categoryService.deleteCategory(id);
@@ -71,7 +66,6 @@ public class CategoryController {
     }
 
     @Operation(summary = "Thống kê số sách theo thể loại")
-    @PreAuthorize("isAuthenticated()")
     @GetMapping("/categories/dashboard")
     public ResponseEntity<Void> getCategoryDashboard(HttpServletResponse response) throws IOException {
         categoryService.createCategoryWorkbook(response);

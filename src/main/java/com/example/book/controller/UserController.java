@@ -29,7 +29,6 @@ public class UserController {
     }
 
     @Operation(summary = "Lấy danh sách người dùng có phân trang")
-    @PreAuthorize("isAuthenticated()")
     @GetMapping("/users")
     public ResponseEntity<PageResponseDTO<UserViewResponseDTO>> getAllUsers(
             @RequestParam(value = "pageNumber", defaultValue = "1", required = false) Integer pageNumber,
@@ -41,7 +40,6 @@ public class UserController {
     }
 
     @Operation(summary = "Lấy thông tin người dùng")
-    @PreAuthorize("isAuthenticated()")
     @GetMapping("/users/{id}")
     public ResponseEntity<?> getUserById(@PathVariable Long id) throws UnauthorizedException {
         Object user = userService.getUserById(id);
@@ -49,7 +47,6 @@ public class UserController {
     }
     //DeleteUser
     @Operation(summary = "Xóa người dùng")
-    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/users/{id}")
     public ResponseEntity<?> deleteUser(@PathVariable Long id) throws UnauthorizedException {
         userService.deleteUserById(id);
@@ -58,7 +55,6 @@ public class UserController {
     }
 
     @Operation(summary = "Tạo mới người dùng")
-    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/users")
     public ResponseEntity<UserInfoResponseDTO> createUser(@Valid @RequestBody UserRequestDTO user) {
         UserInfoResponseDTO userAdded = userService.createUser(user);
@@ -66,7 +62,6 @@ public class UserController {
     }
 
     @Operation(summary = "Cập nhật người dùng")
-    @PreAuthorize("isAuthenticated()")
     @PutMapping("/users/{id}")
     public ResponseEntity<UserInfoResponseDTO> updateUser( @PathVariable Long id,
                                                    @Valid @RequestBody UserRequestDTO user) throws UnauthorizedException {
@@ -75,7 +70,6 @@ public class UserController {
     }
 
     @Operation(summary = "Cập nhật vai trò người dùng")
-    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/users/update-role")
     public ResponseEntity<?> updateRole(@Valid @RequestBody UserRoleRequestDTO userRole) throws UnauthorizedException {
         userService.updateRole(userRole);
@@ -83,7 +77,6 @@ public class UserController {
     }
 
     @Operation(summary = "Tìm kiếm người dùng")
-    @PreAuthorize("isAuthenticated()")
     @GetMapping("/users/search")
     public ResponseEntity<PageResponseDTO<UserViewResponseDTO>> searchUsers(@RequestParam(value = "pageNumber", required = false, defaultValue = "1") Integer pageNumber,
                                                                             @RequestParam(value = "pageSize", required = false, defaultValue = "3") Integer pageSize, SearchUserRequest request){

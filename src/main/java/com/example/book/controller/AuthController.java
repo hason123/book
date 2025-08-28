@@ -48,7 +48,6 @@ public class AuthController {
     }
 
     @Operation(summary = "Nguời dùng đăng nhập")
-    @PreAuthorize("isAnonymous()")
     @PostMapping("/auth/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequestDTO loginRequest) {
         log.info("User is attempting to login");
@@ -89,7 +88,6 @@ public class AuthController {
     }
 
     @Operation(summary = "Refresh Token")
-    @PreAuthorize("isAuthenticated()")
     @PutMapping("/auth/refresh")
     public ResponseEntity<LoginResponseDTO> refreshToken(
             @CookieValue(name = "refresh_token", defaultValue = "none") String refreshToken) throws UnauthorizedException
@@ -132,7 +130,6 @@ public class AuthController {
     }
 
     @Operation(summary = "Nguời dùng đăng xuất")
-    @PreAuthorize("isAuthenticated()")
     @PutMapping("/auth/logout")
     public ResponseEntity<?> logout(){
         Optional<String> currentUser = SecurityUtil.getCurrentUserLogin();
@@ -151,7 +148,6 @@ public class AuthController {
     }
 
     @Operation(summary = "Người dùng đăng ký")
-    @PreAuthorize("isAnonymous()")
     @PostMapping("/auth/register")
     public ResponseEntity<UserInfoResponseDTO> register(@Valid @RequestBody UserRequestDTO user) {
         log.info("User registration attempt!");

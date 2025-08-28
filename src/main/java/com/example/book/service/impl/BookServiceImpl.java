@@ -12,13 +12,23 @@ import com.example.book.repository.BookRepository;
 import com.example.book.repository.CategoryRepository;
 import com.example.book.service.BookService;
 import com.example.book.specification.BookSpecification;
+import jakarta.servlet.ServletOutputStream;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -222,6 +232,95 @@ public class BookServiceImpl implements BookService {
         log.info("Returning books with {} books found", pageDTO.getTotalElements());
         return pageDTO;
     }
+
+    @Override
+    public void exportBookWorkbook(HttpServletResponse response) throws IOException {
+        log.info("Creating book workbook");
+        List<Book> books = bookRepository.findAll();
+        Workbook workbook = new XSSFWorkbook();
+        Sheet sheet = workbook.createSheet("Book Report");
+        Row header = sheet.createRow(0);
+        header.createCell(0).setCellValue("ID");
+        header.createCell(1).setCellValue("Tên sách");
+        header.createCell(2).setCellValue("Tác giả");
+        header.createCell(3).setCellValue("Nhà xuất bản");
+        header.createCell(4).setCellValue("Số trang");
+        header.createCell(5).setCellValue("Loại in");
+        header.createCell(6).setCellValue("Ngôn ngữ");
+        header.createCell(7).setCellValue("Thể loại");
+        header.createCell(8).setCellValue("Số lượng sách");
+        int rowNum = 1;
+        for (Book book : books) {
+            Row excelRow = sheet.createRow(rowNum++);
+            excelRow.createCell(0).setCellValue(book.getBookId());
+            excelRow.createCell(1).setCellValue(book.getBookName());
+            excelRow.createCell(2).setCellValue(book.getAuthor());
+            excelRow.createCell(3).setCellValue(book.getPublisher());
+            excelRow.createCell(4).setCellValue(book.getPageCount());
+            excelRow.createCell(5).setCellValue(book.getPrintType());
+            excelRow.createCell(6).setCellValue(book.getLanguage());
+            List<Category> categories = book.getCategories();
+            String categoryNames = categories.stream()
+                    .map(Category::getCategoryName)
+                    .collect(Collectors.joining(", "));
+            excelRow.createCell(7).setCellValue(categoryNames);
+            excelRow.createCell(8).setCellValue(book.getQuantity());
+        }
+        response.setHeader("Content-Type", "attachment; filename=borrowing.xlsx");
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        ServletOutputStream outputStream = response.getOutputStream();
+        workbook.write(outputStream);
+        workbook.close();
+        outputStream.close();
+        log.info("Successfully created category workbook");
+    }
+
+    @Override
+    public void importExcel(final MultipartFile file) throws IOException {
+        Workbook workbook = new XSSFWorkbook(file.getInputStream());
+        final Sheet sheet = workbook.getSheetAt(0);
+        final List<Book> validBooks = new ArrayList<>();
+        for (final Row row : sheet) {
+            if (row.getRowNum() == 0) continue; // skip header
+            String bookName = row.getCell(0).getStringCellValue();
+            String author = row.getCell(1).getStringCellValue();
+            String publisher = row.getCell(2).getStringCellValue();
+            Integer pageCount = (int) row.getCell(3).getNumericCellValue();
+            String printType = row.getCell(4).getStringCellValue();
+            String language = row.getCell(5).getStringCellValue();
+            Integer quantity = (int) row.getCell(6).getNumericCellValue();
+            String bookDesc = row.getCell(7).getStringCellValue();
+            String categoryIdsStr = row.getCell(8).getStringCellValue(); // hoặc getNumericCellValue nếu chắc chắn là số
+            String[] categoryIdArr = categoryIdsStr.split(",");
+            // Validate category
+            List<Category> categories = new ArrayList<>();
+            for (String catIdStr : categoryIdArr) {
+                long catId;
+                try {
+                    catId = Long.parseLong(catIdStr.trim());
+                } catch (NumberFormatException e) {
+                    continue;
+                }
+                Category category = categoryRepository.findById(catId).orElse(null);
+                if (category == null || bookRepository.existsByBookName(bookName)) continue;
+                categories.add(category);
+                Book book = new Book();
+                book.setBookName(bookName);
+                book.setAuthor(author);
+                book.setPublisher(publisher);
+                book.setPageCount(pageCount);
+                book.setPrintType(printType);
+                book.setLanguage(language);
+                book.setQuantity(quantity);
+                book.setBookDesc(bookDesc);
+                book.setCategories(categories);
+                validBooks.add(book);
+            }
+        }
+        bookRepository.saveAll(validBooks);
+    }
+
+
 
     public BookResponseDTO convertBookToDTO(Book book) {
         BookResponseDTO bookDTO = new BookResponseDTO();

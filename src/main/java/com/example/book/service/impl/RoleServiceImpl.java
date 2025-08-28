@@ -1,11 +1,13 @@
 package com.example.book.service.impl;
 
 import com.example.book.config.MessageConfig;
+import com.example.book.constant.RoleType;
 import com.example.book.dto.RequestDTO.RoleRequestDTO;
 import com.example.book.dto.ResponseDTO.PageResponseDTO;
 import com.example.book.dto.ResponseDTO.RoleResponseDTO;
 import com.example.book.entity.Permission;
 import com.example.book.entity.Role;
+import com.example.book.exception.BusinessException;
 import com.example.book.exception.ResourceNotFoundException;
 import com.example.book.repository.PermissionRepository;
 import com.example.book.repository.RoleRepository;
@@ -57,11 +59,12 @@ public class RoleServiceImpl implements RoleService {
         Role role = roleRepository.findById(roleId)
                 .orElseThrow(() -> {
                     log.error(messageConfig.getMessage(ROLE_NOT_FOUND), roleId);
-                    return new ResourceNotFoundException(messageConfig.getMessage(ROLE_NOT_FOUND, roleId));
+                    return new BusinessException(messageConfig.getMessage(ROLE_NOT_FOUND, roleId));
                 });
         role.getPermissions().forEach(permission -> {
             permission.getRoles().remove(role);
         });
+        role.getUsers().forEach(user -> {user.setRole(roleRepository.findByRoleName(RoleType.USER));});
         roleRepository.deleteById(roleId);
         log.info("Role with id {} has been deleted", roleId);
     }

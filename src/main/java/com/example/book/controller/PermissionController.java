@@ -24,7 +24,6 @@ public class PermissionController {
     }
 
     @Operation(summary = "Thêm mới quyền hạn")
-    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/permissions/{id}")
     public ResponseEntity<PermissionResponseDTO> createPermission(@RequestBody PermissionRequestDTO request) {
         PermissionResponseDTO permissionCreated = permissionService.createPermission(request);
@@ -32,7 +31,6 @@ public class PermissionController {
     }
 
     @Operation(summary = "Cập nhật quyền hạn")
-    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/permissions/{id}")
     public ResponseEntity<PermissionResponseDTO> updatePermission(@PathVariable long id, @RequestBody PermissionRequestDTO request) {
         PermissionResponseDTO permissionUpdated = permissionService.updatePermission(id, request);
@@ -40,7 +38,6 @@ public class PermissionController {
     }
 
     @Operation(summary = "Lấy thông tin quyền hạn")
-    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/permissions/{id}")
     public ResponseEntity<PermissionResponseDTO> getPermission(@PathVariable long id) {
         PermissionResponseDTO permission = permissionService.getPermissionById(id);
@@ -48,7 +45,6 @@ public class PermissionController {
     }
 
     @Operation(summary = "Xóa quyền hạn")
-    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/permissions/{id}")
     public ResponseEntity<?> deletePermission(@PathVariable long id) {
         permissionService.deletePermission(id);
@@ -57,7 +53,6 @@ public class PermissionController {
     }
 
     @Operation(summary = "Lấy danh sách quyền hạn có phân trang")
-    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/permissions")
     public ResponseEntity<PageResponseDTO<PermissionResponseDTO>> getPagePermission(@RequestParam(value = "pageNumber", required = false, defaultValue = "1") Integer pageNumber,
                                                                         @RequestParam(value = "pageSize", required = false, defaultValue = "1") Integer pageSize) {
@@ -67,7 +62,6 @@ public class PermissionController {
     }
 
     @Operation(summary = "Tìm kiếm quyền (permissions)")
-    @PreAuthorize("isAuthenticated()")
     @GetMapping("/permissions/search")
     public ResponseEntity<PageResponseDTO<PermissionResponseDTO>> searchPermission(
             @RequestParam(value = "pageNumber", required = false, defaultValue = "1") Integer pageNumber,

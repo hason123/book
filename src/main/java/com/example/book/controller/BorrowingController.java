@@ -31,7 +31,6 @@ public class BorrowingController {
     }
 
     @Operation(summary = "Lấy danh sách mượn sách")
-    @PreAuthorize("hasAnyRole('ADMIN', 'LIBRARIAN')")
     @GetMapping("/borrows")
     public ResponseEntity<?> getBorrowingPage(@RequestParam(value = "pageNumber", required = false) Integer pageNumber,
                                          @RequestParam(value = "pageSize", required = false) Integer pageSize)
@@ -42,7 +41,6 @@ public class BorrowingController {
     }
 
     @Operation(summary = "Lấy thông tin lượt mượn sách")
-    @PreAuthorize("hasAnyRole('ADMIN', 'LIBRARIAN')")
     @GetMapping("/borrows/{id}")
     public ResponseEntity<BorrowingResponseDTO> getBorrowingById(@PathVariable Long id) throws ResourceNotFoundException {
         BorrowingResponseDTO borrowing = borrowingService.getBorrowingById(id);
@@ -50,7 +48,6 @@ public class BorrowingController {
     }
 
     @Operation(summary = "Thêm lượt mượn sách")
-    @PreAuthorize("hasAnyRole('ADMIN', 'LIBRARIAN')")
     @PostMapping("/borrows")
     public ResponseEntity<BorrowingResponseDTO> addBorrowing(@Valid @RequestBody BorrowingRequestDTO borrowing) {
         BorrowingResponseDTO borrowingAdded = borrowingService.addBorrowing(borrowing);
@@ -58,7 +55,6 @@ public class BorrowingController {
     }
 
     @Operation(summary = "Cập nhật lượt mượn sách")
-    @PreAuthorize("hasAnyRole('ADMIN', 'LIBRARIAN')")
     @PutMapping("/borrows/{id}")
     public ResponseEntity<BorrowingResponseDTO> updateBorrowing(@PathVariable Long id, @Valid @RequestBody BorrowingRequestDTO borrowing) {
         BorrowingResponseDTO borrowingUpdated = borrowingService.updateBorrowing(id, borrowing);
@@ -66,7 +62,6 @@ public class BorrowingController {
     }
 
     @Operation(summary = "Xóa lượt mượn sách")
-    @PreAuthorize("hasAnyRole('ADMIN', 'LIBRARIAN')")
     @DeleteMapping("/borrows/{id}")
     public ResponseEntity<?> deleteBorrowing(@PathVariable Long id) {
         borrowingService.deleteBorrowingById(id);
@@ -75,7 +70,6 @@ public class BorrowingController {
     }
 
     @Operation(summary = "Lấy Top 5 những quyển sách được mượn nhiều nhất")
-    @PreAuthorize("isAuthenticated()")
     @GetMapping("/borrows/dashboard")
     public ResponseEntity<?> getBorrowingDashboard(HttpServletResponse response) throws IOException {
         response.setHeader("Content-Type", "attachment; filename=borrowing.xlsx");

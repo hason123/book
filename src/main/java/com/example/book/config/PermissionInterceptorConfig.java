@@ -5,19 +5,20 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-/*
+
 @Configuration
 public class PermissionInterceptorConfig implements WebMvcConfigurer {
 
-    private final PermissionInterceptor permissionInterceptor;
+    private final UserServiceImpl userService;
+    private final MessageConfig messageConfig;
 
-    // Constructor injection: Spring will inject the bean
-    public PermissionInterceptorConfig(PermissionInterceptor permissionInterceptor) {
-        this.permissionInterceptor = permissionInterceptor;
+    public PermissionInterceptorConfig(UserServiceImpl userService, MessageConfig messageConfig) {
+        this.userService = userService;
+        this.messageConfig = messageConfig;
     }
 
     @Bean
-    public PermissionInterceptor getPermissionInterceptor(UserServiceImpl userService, MessageConfig messageConfig) {
+    public PermissionInterceptor permissionInterceptor() {
         return new PermissionInterceptor(userService, messageConfig);
     }
 
@@ -28,10 +29,10 @@ public class PermissionInterceptorConfig implements WebMvcConfigurer {
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(permissionInterceptor)
+        registry.addInterceptor(permissionInterceptor())
                 .excludePathPatterns(whiteList);
     }
 }
 
- */
+
 

@@ -24,7 +24,6 @@ public class RoleController {
     }
 
     @Operation(summary = "Cập nhật vai trò")
-    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/roles/{id}")
     public ResponseEntity<RoleResponseDTO> updateRole(@PathVariable long id, @RequestBody RoleRequestDTO request) {
         RoleResponseDTO roleUpdated = roleService.updateRole(request, id);
@@ -32,7 +31,6 @@ public class RoleController {
     }
 
     @Operation(summary = "Xem thông tin vai trò")
-    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/roles/{id}")
     public ResponseEntity<RoleResponseDTO> getRole(@PathVariable long id) {
         RoleResponseDTO role = roleService.getRole(id);
@@ -40,7 +38,6 @@ public class RoleController {
     }
 
     @Operation(summary = "Xóa vai trò")
-    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/roles/{id}")
     public ResponseEntity<?> deleteRole(@PathVariable long id) {
         roleService.deleteRole(id);
@@ -49,7 +46,6 @@ public class RoleController {
     }
 
     @Operation(summary = "Lấy danh sách vai trò")
-    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/roles")
     public ResponseEntity<PageResponseDTO<RoleResponseDTO>> getPageRole(@RequestParam(value = "pageNumber", required = false, defaultValue = "1") Integer pageNumber,
     @RequestParam(value = "pageSize", required = false, defaultValue = "1") Integer pageSize) {
