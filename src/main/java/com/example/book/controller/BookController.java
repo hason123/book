@@ -100,9 +100,10 @@ public class BookController {
 
     @Operation(summary = "Nhập sách từ file Excel")
     @PostMapping("/books/import")
-    public ResponseEntity<String> importBook(@RequestPart final MultipartFile file) throws IOException {
+    public ResponseEntity<?> importBook(@RequestPart final MultipartFile file) throws IOException {
         bookService.importExcel(file);
-        return ResponseEntity.ok("Import successfully!");
+        Map<String, String> message = Map.of("message", "Import successful!");
+        return ResponseEntity.ok(message);
     }
 
 
