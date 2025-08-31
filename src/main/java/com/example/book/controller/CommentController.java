@@ -33,28 +33,28 @@ public class CommentController {
                                                                                    @RequestParam(value = "pageSize", required = false, defaultValue = "3") Integer pageSize) {
         Pageable pageable = PageRequest.of(pageNumber - 1, pageSize);
         PageResponseDTO<CommentShortResponseDTO> comments = commentService.getComments(pageable);
-        return new ResponseEntity<>(comments, HttpStatus.OK);
+        return ResponseEntity.ok(comments);
     }
 
     @Operation(summary = "Lấy thông tin bình luận")
     @GetMapping("/comments/{id}")
     public ResponseEntity<CommentShortResponseDTO> getCommentById(@PathVariable long id) {
         CommentShortResponseDTO comment = commentService.getComment(id);
-        return new ResponseEntity<>(comment, HttpStatus.OK);
+        return ResponseEntity.ok(comment);
     }
 
     @Operation(summary = "Thêm mới bình luận")
     @PostMapping("/posts/{postId}/comments/")
     public ResponseEntity<CommentShortResponseDTO> createComment(@PathVariable Long postId , @RequestBody CommentRequestDTO request) {
         CommentShortResponseDTO commentCreated = commentService.addComment(postId, request);
-        return new ResponseEntity<>(commentCreated, HttpStatus.CREATED);
+        return ResponseEntity.ok(commentCreated);
     }
 
     @Operation(summary = "Cập nhật bình luận")
     @PutMapping("/posts/{postId}/comments/{id}")
     public ResponseEntity<CommentShortResponseDTO> updateComemnt(@PathVariable Long postId , @PathVariable Long id, @RequestBody CommentRequestDTO request) throws UnauthorizedException {
         CommentShortResponseDTO commentUpdated = commentService.updateComment(postId, id, request);
-        return new ResponseEntity<>(commentUpdated, HttpStatus.OK);
+        return ResponseEntity.ok(commentUpdated);
     }
 
     @Operation(summary = "Xóa bình luận")
