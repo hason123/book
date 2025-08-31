@@ -4,6 +4,7 @@ import com.example.book.config.MessageConfig;
 import com.example.book.constant.RoleType;
 import com.example.book.dto.RequestDTO.PostRequestDTO;
 import com.example.book.dto.RequestDTO.Search.SearchPostRequest;
+import com.example.book.dto.ResponseDTO.Comment.CommentResponseDTO;
 import com.example.book.dto.ResponseDTO.PageResponseDTO;
 import com.example.book.dto.ResponseDTO.Post.PostListResponseDTO;
 import com.example.book.dto.ResponseDTO.Post.PostResponseDTO;
@@ -34,8 +35,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import java.io.IOException;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+
 @Slf4j
 @Service
 public class PostServiceImpl implements PostService {
@@ -202,6 +203,46 @@ public class PostServiceImpl implements PostService {
         log.info("Created post workbook");
     }
 
+
+    public List<CommentResponseDTO> getCommentByPost(Long postId) {
+        log.info("Getting comments by post with id: {}", postId);
+        if (!postRepository.existsById(postId)) {
+            log.error("Post with id: {} not found", postId);
+            throw new ResourceNotFoundException(messageConfig.getMessage(POST_NOT_FOUND, postId));
+        }
+        List<Comment> comments = commentRepository.findAllByPost_PostId(postId);
+        Map<Long, CommentResponseDTO> nodeMap = new HashMap<>();
+        for (Comment c : comments) {
+            CommentResponseDTO comment = commentService.convertCommentToDTO(c);
+            nodeMap.put(c.getCommentId(), comment);
+        }
+        List<CommentResponseDTO> commentRoots = new ArrayList<>();
+        for(CommentResponseDTO commentNode : nodeMap.values()) {
+            if(commentNode.getParentId() != null) {
+                CommentResponseDTO comment = nodeMap.get(commentNode.getParentId());
+                if (comment != null) {
+                    comment.getReplies().add(commentNode);
+                }
+            }
+            else{
+                commentRoots.add(commentNode);
+            }
+        }
+        Comparator<CommentResponseDTO> comparator = Comparator.comparing(CommentResponseDTO::getCreatedAt);
+        commentRoots.sort(comparator.reversed());
+        commentRoots.forEach(root -> sortRepliesAscending(root.getReplies()));;
+        log.info("Successfully build comment trees!");
+        return commentRoots;
+    }
+
+    private void sortRepliesAscending(List<CommentResponseDTO> comments) {
+        if (comments == null || comments.isEmpty()) return;
+        comments.sort(Comparator.comparing(CommentResponseDTO::getCreatedAt));
+        for (CommentResponseDTO c : comments) {
+            sortRepliesAscending(c.getReplies());
+        }
+    }
+
     @Override
     public PostListResponseDTO convertPostListToDTO(Post post) {
         PostListResponseDTO postListDTO = new PostListResponseDTO();
@@ -230,8 +271,8 @@ public class PostServiceImpl implements PostService {
         else postDTO.setCommentCount(post.getComments().size());
         postDTO.setLikesCount(post.getLikesCount());
         postDTO.setDislikesCount(post.getDislikesCount());
-        if(commentService.getCommentByPost(post.getPostId()) != null) {
-            postDTO.setComments(commentService.getCommentByPost(post.getPostId()));
+        if(getCommentByPost(post.getPostId()) != null) {
+            postDTO.setComments(getCommentByPost(post.getPostId()));
         }
         return postDTO;
     }

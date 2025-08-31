@@ -75,13 +75,6 @@ public class PostController {
         return ResponseEntity.ok(response);
     }
 
-    @Operation(summary = "Lấy danh sách bình luận của một bài viết cụ thể")
-    @GetMapping("/posts/{postId}/comments")
-    public ResponseEntity<List<CommentResponseDTO>> getCommentsByPostId(@PathVariable long postId) {
-        List<CommentResponseDTO> commentPosts =  commentService.getCommentByPost(postId);
-        return ResponseEntity.ok(commentPosts);
-    }
-
     @Operation(summary = "Tìm kiếm bài viết")
     @GetMapping("/posts/search")
     public ResponseEntity<PageResponseDTO<PostListResponseDTO>> searchPost(@RequestParam(value = "pageNumber", required = false, defaultValue = "1") Integer pageNumber,

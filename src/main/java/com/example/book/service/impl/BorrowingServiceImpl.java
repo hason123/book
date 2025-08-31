@@ -113,14 +113,12 @@ public class BorrowingServiceImpl implements BorrowingService {
         else {
             if(LocalDate.now().isAfter(request.getBorrowingDate().plusMonths(1))) {
                 borrowing.setStatus(BorrowingType.DUE);
-                bookAdded.setQuantity(bookAdded.getQuantity() - 1);
-                bookRepository.save(bookAdded);
             }
             else{
                 borrowing.setStatus(BorrowingType.BORROWING);
-                bookAdded.setQuantity(bookAdded.getQuantity() - 1);
-                bookRepository.save(bookAdded);
             }
+            bookAdded.setQuantity(bookAdded.getQuantity() - 1);
+            bookRepository.save(bookAdded);
         }
         if (checkDuplicate(borrowing)) {
             log.error(messageConfig.getMessage(BORROWING_WRONG_DATE));
@@ -200,7 +198,6 @@ public class BorrowingServiceImpl implements BorrowingService {
         if (checkDuplicate(borrowing)) {
             throw new BusinessException(messageConfig.getMessage(BORROWING_WRONG_DATE));
         }
-
 
         // Only handle returned status if status changed
         if (borrowing.getStatus() == BorrowingType.RETURNED && prevStatus != BorrowingType.RETURNED) {

@@ -119,46 +119,6 @@ public class CommentServiceImpl implements CommentService {
     }
 
     @Override
-    public List<CommentResponseDTO> getCommentByPost(Long postId) {
-        log.info("Getting comments by post with id: {}", postId);
-        if (!postRepository.existsById(postId)) {
-            log.error("Post with id: {} not found", postId);
-            throw new ResourceNotFoundException(messageConfig.getMessage(POST_NOT_FOUND, postId));
-        }
-        List<Comment> comments = commentRepository.findAllByPost_PostId(postId);
-        Map<Long, CommentResponseDTO> nodeMap = new HashMap<>();
-        for (Comment c : comments) {
-             CommentResponseDTO comment = convertCommentToDTO(c);
-             nodeMap.put(c.getCommentId(), comment);
-        }
-        List<CommentResponseDTO> commentRoots = new ArrayList<>();
-        for(CommentResponseDTO commentNode : nodeMap.values()) {
-            if(commentNode.getParentId() != null) {
-                CommentResponseDTO comment = nodeMap.get(commentNode.getParentId());
-                if (comment != null) {
-                    comment.getReplies().add(commentNode);
-                }
-            }
-            else{
-                commentRoots.add(commentNode);
-            }
-        }
-        Comparator<CommentResponseDTO> comparator = Comparator.comparing(CommentResponseDTO::getCreatedAt);
-        commentRoots.sort(comparator.reversed());
-        commentRoots.forEach(root -> sortRepliesAscending(root.getReplies()));;
-        log.info("Successfully build comment trees!");
-        return commentRoots;
-    }
-
-    private void sortRepliesAscending(List<CommentResponseDTO> comments) {
-        if (comments == null || comments.isEmpty()) return;
-        comments.sort(Comparator.comparing(CommentResponseDTO::getCreatedAt));
-        for (CommentResponseDTO c : comments) {
-            sortRepliesAscending(c.getReplies());
-        }
-    }
-
-    @Override
     public void deleteComment(Long id){
         log.info("Deleting comment with id: {}", id);
         Comment commentDeleted = commentRepository.findById(id).orElseThrow(() ->

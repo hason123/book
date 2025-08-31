@@ -22,7 +22,7 @@ public interface CommentService {
 
     void deleteComment(Long id);
 
-    List<CommentResponseDTO> getCommentByPost(Long postId);
+    //List<CommentResponseDTO> getCommentByPost(Long postId);
 
     PageResponseDTO<CommentShortResponseDTO> searchComment(Pageable pageable, SearchCommentRequest request);
 
