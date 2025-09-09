@@ -67,7 +67,7 @@ public class BookServiceImpl implements BookService {
                                 log.error("Category with id: {} not found", categoryID);
                                 return new ResourceNotFoundException(messageConfig.getMessage(MessageError.CATEGORY_NOT_FOUND,categoryID));
                             }))
-                    .toList();
+                    .collect(Collectors.toList()); ;
             book.setCategories(categories);
         }
         bookRepository.save(book);
@@ -141,7 +141,7 @@ public class BookServiceImpl implements BookService {
                                 log.error(messageConfig.getMessage(MessageError.CATEGORY_NOT_FOUND,categoryID));
                                 return new ResourceNotFoundException(messageConfig.getMessage(MessageError.CATEGORY_NOT_FOUND,categoryID));
                             }))
-                    .toList();
+                    .collect(Collectors.toList()); ;
             updatedBook.setCategories(categories);
         }
         else updatedBook.setCategories(updatedBook.getCategories());
