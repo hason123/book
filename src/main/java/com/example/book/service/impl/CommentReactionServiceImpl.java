@@ -1,6 +1,7 @@
 package com.example.book.service.impl;
 
 import com.example.book.config.MessageConfig;
+import com.example.book.constant.MessageError;
 import com.example.book.constant.ReactionType;
 import com.example.book.dto.ResponseDTO.Comment.CommentShortResponseDTO;
 import com.example.book.entity.Comment;
@@ -22,8 +23,6 @@ public class CommentReactionServiceImpl implements CommentReactionService {
     private final UserRepository userRepository;
     private final CommentRepository commentRepository;
     private final MessageConfig messageConfig;
-    private final String COMMENT_NOT_FOUND= "error.comment.notfound";
-    private final String USER_NOT_FOUND= "error.user.notfound";
     private final CommentService commentService;
 
     public CommentReactionServiceImpl(CommentReactionRepository commentReactionRepository, UserServiceImpl userServiceImpl, UserRepository userRepository, CommentRepository commentRepository, MessageConfig messageConfig, CommentService commentService) {
@@ -40,8 +39,8 @@ public class CommentReactionServiceImpl implements CommentReactionService {
     public CommentShortResponseDTO likeComment(Long commentId) {
         Long userId = userServiceImpl.getCurrentUser().getUserId();
         Comment comment = commentRepository.findById(commentId).orElseThrow(() -> {
-            log.error(messageConfig.getMessage(COMMENT_NOT_FOUND), commentId);
-            return new ResourceNotFoundException(messageConfig.getMessage(COMMENT_NOT_FOUND, commentId));
+            log.error(messageConfig.getMessage(MessageError.COMMENT_NOT_FOUND), commentId);
+            return new ResourceNotFoundException(messageConfig.getMessage(MessageError.COMMENT_NOT_FOUND, commentId));
         });
         CommentReaction reaction = commentReactionRepository.findByUser_UserIdAndComment_CommentId(userId, commentId);
         if (reaction != null) {
@@ -62,8 +61,8 @@ public class CommentReactionServiceImpl implements CommentReactionService {
             newReaction.setComment(comment);
             newReaction.setReactionType(ReactionType.LIKE);
             newReaction.setUser(userRepository.findById(userId).orElseThrow(() -> {
-                log.error(messageConfig.getMessage(USER_NOT_FOUND), userId);
-                return new ResourceNotFoundException(messageConfig.getMessage(USER_NOT_FOUND, userId));
+                log.error(messageConfig.getMessage(MessageError.USER_NOT_FOUND), userId);
+                return new ResourceNotFoundException(messageConfig.getMessage(MessageError.USER_NOT_FOUND, userId));
             }));
             commentReactionRepository.save(newReaction);
             comment.setLikesCount(comment.getLikesCount() + 1);
@@ -79,8 +78,8 @@ public class CommentReactionServiceImpl implements CommentReactionService {
         Long userId = userServiceImpl.getCurrentUser().getUserId();
         log.info("User {} attempts to dislike comment {}", userId, commentId);
         Comment comment = commentRepository.findById(commentId).orElseThrow(() -> {
-            log.error(messageConfig.getMessage(COMMENT_NOT_FOUND), commentId);
-            return new ResourceNotFoundException(messageConfig.getMessage(COMMENT_NOT_FOUND, commentId));
+            log.error(messageConfig.getMessage(MessageError.COMMENT_NOT_FOUND), commentId);
+            return new ResourceNotFoundException(messageConfig.getMessage(MessageError.COMMENT_NOT_FOUND, commentId));
         });
         CommentReaction reaction = commentReactionRepository.findByUser_UserIdAndComment_CommentId(userId, commentId);
         if (reaction != null) {
@@ -101,8 +100,8 @@ public class CommentReactionServiceImpl implements CommentReactionService {
             newReaction.setComment(comment);
             newReaction.setReactionType(ReactionType.DISLIKE);
             newReaction.setUser(userRepository.findById(userId).orElseThrow(() -> {
-                log.error(messageConfig.getMessage(USER_NOT_FOUND), userId);
-                return new ResourceNotFoundException(messageConfig.getMessage(USER_NOT_FOUND, userId));
+                log.error(messageConfig.getMessage(MessageError.USER_NOT_FOUND), userId);
+                return new ResourceNotFoundException(messageConfig.getMessage(MessageError.USER_NOT_FOUND, userId));
             }));
             commentReactionRepository.save(newReaction);
             comment.setDislikesCount(comment.getDislikesCount() + 1);

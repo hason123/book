@@ -1,5 +1,6 @@
 package com.example.book.config;
 
+import com.example.book.constant.RoleType;
 import com.example.book.entity.Permission;
 import com.example.book.entity.Role;
 import com.example.book.entity.User;
@@ -14,7 +15,6 @@ import java.util.List;
 
 @Transactional
 public class PermissionInterceptor implements HandlerInterceptor {
-
     private final UserServiceImpl userService;
     private final MessageConfig messageConfig;
     private final static String ACCESS_DENIED = "error.auth.accessDenied";
@@ -32,15 +32,14 @@ public class PermissionInterceptor implements HandlerInterceptor {
         User user = userService.getCurrentUser();
             if(user != null) {
                 Role role = user.getRole();
-                if(role != null) {
-                    List<Permission> permissions = user.getRole().getPermissions();
-                    boolean hasPermission = permissions.stream().anyMatch(
-                            p -> p.getApiPath().equals(path) && p.getMethod().equals(method)
-                    );
-                    if(!hasPermission) {
-                        throw new UnauthorizedException(messageConfig.getMessage(ACCESS_DENIED));
-                    }
-                } else {
+                if(role.getRoleName().equals(RoleType.ADMIN)){
+                    return true;
+                }
+                List<Permission> permissions = user.getRole().getPermissions();
+                boolean hasPermission = permissions.stream().anyMatch(
+                        p -> p.getApiPath().equals(path) && p.getMethod().equals(method)
+                );
+                if(!hasPermission) {
                     throw new UnauthorizedException(messageConfig.getMessage(ACCESS_DENIED));
                 }
             }

@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -36,7 +37,8 @@ public class SecurityConfig {
         http.setSharedObject(RestAccessDeniedHandler.class, restAccessDeniedHandler);
         http.setSharedObject(RestAuthenticationEntryPoint.class, restAuthenticationEntryPoint);
         http
-                .csrf(csrf -> csrf.disable()) // dùng lambda thay vì csrf().disable()
+                .csrf(AbstractHttpConfigurer::disable)
+                //.csrf(csrf -> csrf.disable())// dùng lambda thay vì csrf().disable()
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/", "/api/v1/library/auth/login", "/api/v1/library/auth/register",
                                 "/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
@@ -48,7 +50,8 @@ public class SecurityConfig {
                                 .jwtAuthenticationConverter(jwtAuthenticationConverter()) // Register it here
                         )
                 )
-                .formLogin(f -> f.disable())
+                //.formLogin(f -> f.disable())
+                .formLogin(AbstractHttpConfigurer::disable)
                 .exceptionHandling(e -> e.authenticationEntryPoint(restAuthenticationEntryPoint).accessDeniedHandler(restAccessDeniedHandler))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 

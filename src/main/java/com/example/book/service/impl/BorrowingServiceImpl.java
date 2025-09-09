@@ -2,6 +2,7 @@ package com.example.book.service.impl;
 
 import com.example.book.config.MessageConfig;
 import com.example.book.constant.BorrowingType;
+import com.example.book.constant.MessageError;
 import com.example.book.dto.RequestDTO.BorrowingRequestDTO;
 import com.example.book.dto.ResponseDTO.BorrowingResponseDTO;
 import com.example.book.dto.ResponseDTO.PageResponseDTO;
@@ -36,13 +37,6 @@ public class BorrowingServiceImpl implements BorrowingService {
     private final BookRepository bookRepository;
     private final UserRepository userRepository;
     private final MessageConfig messageConfig;
-    private final String BORROWING_NOT_FOUND = "error.borrowing.notfound";
-    private final String USER_NOT_FOUND = "error.user.notfound";
-    private final String BOOK_NOT_FOUND = "error.book.notfound";
-    private final String BOOK_OUT_OF_STOCK = "error.borrowing.outOfStock";
-    private final String BORROWING_WRONG_DATE = "error.borrowing.wrongDate";
-    private final String BORROWING_TITLE_EXCEL = "borrowing.title.excel";
-    private final String BORROWING_RETURNDATE_INVALID ="error.borrowing.returnDate.invalid";
 
     public BorrowingServiceImpl(BorrowingRepository borrowingRepository, BookRepository bookRepository, UserRepository userRepository, MessageConfig messageConfig) {
         this.borrowingRepository = borrowingRepository;
@@ -56,8 +50,8 @@ public class BorrowingServiceImpl implements BorrowingService {
         log.info("Getting borrowing by id {}", id);
         Borrowing borrowing = borrowingRepository.findById(id).orElseThrow(() ->
         {
-            log.error(messageConfig.getMessage(BORROWING_NOT_FOUND, id));
-            return new ResourceNotFoundException(messageConfig.getMessage(BORROWING_NOT_FOUND, id));
+            log.error(messageConfig.getMessage(MessageError.BORROWING_NOT_FOUND, id));
+            return new ResourceNotFoundException(messageConfig.getMessage(MessageError.BORROWING_NOT_FOUND, id));
         });
         return convertBorrowingToDTO(borrowing);
     }
@@ -66,8 +60,8 @@ public class BorrowingServiceImpl implements BorrowingService {
     public void deleteBorrowingById(Long id) {
         Borrowing borrowing = borrowingRepository.findById(id).orElseThrow(() ->
         {
-            log.error(messageConfig.getMessage(BORROWING_NOT_FOUND, id));
-            return new ResourceNotFoundException(messageConfig.getMessage(BORROWING_NOT_FOUND, id));
+            log.error(messageConfig.getMessage(MessageError.BORROWING_NOT_FOUND, id));
+            return new ResourceNotFoundException(messageConfig.getMessage(MessageError.BORROWING_NOT_FOUND, id));
         });
         if (borrowing.getReturnDate() != null) {
             borrowing.getBook().setQuantity(borrowing.getBook().getQuantity() + 1);
@@ -82,17 +76,17 @@ public class BorrowingServiceImpl implements BorrowingService {
         log.info("Create new borrowing");
         User userAdded = userRepository.findById(request.getUserId()).orElseThrow(() ->
         {
-            log.error(messageConfig.getMessage(USER_NOT_FOUND,  request.getUserId()));
-            return new ResourceNotFoundException(messageConfig.getMessage(USER_NOT_FOUND , request.getUserId()));
+            log.error(messageConfig.getMessage(MessageError.USER_NOT_FOUND,  request.getUserId()));
+            return new ResourceNotFoundException(messageConfig.getMessage(MessageError.USER_NOT_FOUND , request.getUserId()));
         });
         Book bookAdded = bookRepository.findById(request.getBookId()).orElseThrow(() ->
         {
-            log.error(messageConfig.getMessage(BOOK_NOT_FOUND,  request.getBookId()));
-            return new ResourceNotFoundException(messageConfig.getMessage(BOOK_NOT_FOUND, request.getBookId()));
+            log.error(messageConfig.getMessage(MessageError.BOOK_NOT_FOUND,  request.getBookId()));
+            return new ResourceNotFoundException(messageConfig.getMessage(MessageError.BOOK_NOT_FOUND, request.getBookId()));
         });
         if(bookAdded.getQuantity() <= 0){
-            log.error(messageConfig.getMessage(BOOK_OUT_OF_STOCK));
-            throw new BusinessException (messageConfig.getMessage(BOOK_OUT_OF_STOCK, request.getBookId()));
+            log.error(messageConfig.getMessage(MessageError.BOOK_OUT_OF_STOCK));
+            throw new BusinessException (messageConfig.getMessage(MessageError.BOOK_OUT_OF_STOCK, request.getBookId()));
         }
         Borrowing borrowing = new Borrowing();
         log.info("Save user borrowing");
@@ -102,7 +96,7 @@ public class BorrowingServiceImpl implements BorrowingService {
         borrowing.setBorrowDate(request.getBorrowingDate());
         if(request.getReturnDate()!=null){
             if(request.getReturnDate().isBefore(request.getBorrowingDate())) {
-                throw new BusinessException(messageConfig.getMessage(BORROWING_RETURNDATE_INVALID));
+                throw new BusinessException(messageConfig.getMessage(MessageError.BORROWING_RETURNDATE_INVALID));
             }
             borrowing.setReturnDate(request.getReturnDate());
             if(request.getReturnDate().isAfter(request.getBorrowingDate().plusMonths(1))) {
@@ -121,8 +115,8 @@ public class BorrowingServiceImpl implements BorrowingService {
             bookRepository.save(bookAdded);
         }
         if (checkDuplicate(borrowing)) {
-            log.error(messageConfig.getMessage(BORROWING_WRONG_DATE));
-            throw new BusinessException(messageConfig.getMessage(BORROWING_WRONG_DATE));
+            log.error(messageConfig.getMessage(MessageError.BORROWING_WRONG_DATE));
+            throw new BusinessException(messageConfig.getMessage(MessageError.BORROWING_WRONG_DATE));
         }
         borrowingRepository.save(borrowing);
         return convertBorrowingToDTO(borrowing);
@@ -133,11 +127,11 @@ public class BorrowingServiceImpl implements BorrowingService {
     public BorrowingResponseDTO updateBorrowing(Long id, BorrowingRequestDTO request) {
         log.info("Update borrowing with id {}", id);
         Borrowing borrowing = borrowingRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException(messageConfig.getMessage(BORROWING_NOT_FOUND, id)));
+                .orElseThrow(() -> new ResourceNotFoundException(messageConfig.getMessage(MessageError.BORROWING_NOT_FOUND, id)));
         BorrowingType prevStatus = borrowing.getStatus();
         if (request.getUserId() != null) {
             User user = userRepository.findById(request.getUserId())
-                    .orElseThrow(() -> new ResourceNotFoundException(messageConfig.getMessage(USER_NOT_FOUND, request.getUserId())));
+                    .orElseThrow(() -> new ResourceNotFoundException(messageConfig.getMessage(MessageError.USER_NOT_FOUND, request.getUserId())));
             borrowing.setUser(user);
         }
         else borrowing.setUser(borrowing.getUser());
@@ -150,11 +144,11 @@ public class BorrowingServiceImpl implements BorrowingService {
         if (request.getReturnDate() != null) {
             if (request.getBorrowingDate() != null) {
                 if (request.getReturnDate().isBefore(request.getBorrowingDate())) {
-                    throw new BusinessException(messageConfig.getMessage(BORROWING_WRONG_DATE));
+                    throw new BusinessException(messageConfig.getMessage(MessageError.BORROWING_WRONG_DATE));
                 }
             } else {
                 if (request.getReturnDate().isBefore(borrowing.getBorrowDate())) {
-                    throw new BusinessException(messageConfig.getMessage(BORROWING_WRONG_DATE));
+                    throw new BusinessException(messageConfig.getMessage(MessageError.BORROWING_WRONG_DATE));
                 }
             }
             borrowing.setReturnDate(request.getReturnDate());
@@ -177,11 +171,11 @@ public class BorrowingServiceImpl implements BorrowingService {
         if (request.getBookId() != null) {
             Book oldBook = borrowing.getBook();
             Book newBook = bookRepository.findById(request.getBookId())
-                    .orElseThrow(() -> new ResourceNotFoundException(messageConfig.getMessage(BOOK_NOT_FOUND, request.getBookId())));
+                    .orElseThrow(() -> new ResourceNotFoundException(messageConfig.getMessage(MessageError.BOOK_NOT_FOUND, request.getBookId())));
             if (!oldBook.equals(newBook)) {
                 if (newBook.getQuantity() <= 0) {
-                    log.error(messageConfig.getMessage(BOOK_OUT_OF_STOCK));
-                    throw new BusinessException(messageConfig.getMessage(BOOK_OUT_OF_STOCK, request.getBookId()));
+                    log.error(messageConfig.getMessage(MessageError.BOOK_OUT_OF_STOCK));
+                    throw new BusinessException(messageConfig.getMessage(MessageError.BOOK_OUT_OF_STOCK, request.getBookId()));
                 }
                 if(borrowing.getStatus() != BorrowingType.RETURNED) {
                     oldBook.setQuantity(oldBook.getQuantity() + 1);
@@ -196,7 +190,7 @@ public class BorrowingServiceImpl implements BorrowingService {
         else borrowing.setBook(borrowing.getBook());
 
         if (checkDuplicate(borrowing)) {
-            throw new BusinessException(messageConfig.getMessage(BORROWING_WRONG_DATE));
+            throw new BusinessException(messageConfig.getMessage(MessageError.BORROWING_WRONG_DATE));
         }
 
         // Only handle returned status if status changed
@@ -214,13 +208,12 @@ public class BorrowingServiceImpl implements BorrowingService {
     public PageResponseDTO<BorrowingResponseDTO> getBorrowingPage(Pageable pageable) {
         Page<Borrowing> borrowingPage = borrowingRepository.findAllCustomSort(pageable);
         Page<BorrowingResponseDTO> borrowingResponseDTO = borrowingPage.map(this::convertBorrowingToDTO);
-        PageResponseDTO<BorrowingResponseDTO> pageDTO = new PageResponseDTO<>(
+        return new PageResponseDTO<>(
                 borrowingResponseDTO.getNumber() + 1,
                 borrowingResponseDTO.getNumberOfElements(),
                 borrowingResponseDTO.getTotalPages(),
                 borrowingResponseDTO.getContent()
         );
-        return pageDTO;
     }
 
     @Scheduled(cron = "0 0 0 * * *")
@@ -249,7 +242,7 @@ public class BorrowingServiceImpl implements BorrowingService {
     public void createBorrowingWorkbook(HttpServletResponse response) throws IOException {
         List<Book> books = borrowingRepository.findCurrentBorrowingBooks();
         Workbook workbook = new XSSFWorkbook();
-        Sheet sheet = workbook.createSheet(messageConfig.getMessage(BORROWING_TITLE_EXCEL));
+        Sheet sheet = workbook.createSheet(messageConfig.getMessage(MessageError.BORROWING_TITLE_EXCEL));
         Row header = sheet.createRow(0); //excel is zero-based
         header.createCell(0).setCellValue("STT");
         header.createCell(1).setCellValue("Tên sách");

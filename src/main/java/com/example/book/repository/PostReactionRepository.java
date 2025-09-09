@@ -7,7 +7,6 @@ import java.util.List;
 
 @Repository
 public interface PostReactionRepository extends JpaRepository<PostReaction, Long> {
-
     PostReaction findByUser_UserIdAndPost_PostId(Long userId, Long postId);
 
     List<PostReaction> findByUser_UserId(Long userId);

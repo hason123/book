@@ -3,8 +3,6 @@ package com.example.book.repository;
 import com.example.book.constant.BorrowingType;
 import com.example.book.entity.Book;
 import com.example.book.entity.Borrowing;
-import com.example.book.entity.Post;
-import com.example.book.entity.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

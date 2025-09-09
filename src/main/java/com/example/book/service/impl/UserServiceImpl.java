@@ -1,6 +1,7 @@
 package com.example.book.service.impl;
 
 import com.example.book.config.MessageConfig;
+import com.example.book.constant.MessageError;
 import com.example.book.constant.ReactionType;
 import com.example.book.constant.RoleType;
 import com.example.book.dto.RequestDTO.Search.SearchUserRequest;
@@ -29,7 +30,6 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import java.util.List;
-
 @Slf4j
 @Service
 public class UserServiceImpl implements UserService {
@@ -43,10 +43,6 @@ public class UserServiceImpl implements UserService {
     private final CommentService commentService;
     private final PostReactionRepository postReactionRepository;
     private final CommentReactionRepository commentReactionRepository;
-    private final String USER_NOT_FOUND= "error.user.notfound";
-    private final String ACCESS_DENIED= "error.auth.accessDenied";
-    private final String USER_NAME_UNIQUE= "error.user.name.unique";
-    private final String ROLE_NOT_FOUND= "error.role.notfound";
 
     public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder, RoleRepository roleRepository, MessageConfig messageConfig, PostService postService, PostRepository postRepository, CommentRepository commentRepository, CommentService commentService, PostReactionRepository postReactionRepository, CommentReactionRepository commentReactionRepository) {
         this.userRepository = userRepository;
@@ -65,7 +61,7 @@ public class UserServiceImpl implements UserService {
     public Object getUserById(Long id){
         User user = userRepository.findById(id).orElse(null);
         if (user == null) {
-            throw new ResourceNotFoundException(messageConfig.getMessage(USER_NOT_FOUND, id));
+            throw new ResourceNotFoundException(messageConfig.getMessage(MessageError.USER_NOT_FOUND, id));
         }
         if( isCurrentUser(id) || getCurrentUser().getRole().getRoleName().equals(RoleType.ADMIN)) {
             return convertUserDetailToDTO(user);
@@ -77,26 +73,25 @@ public class UserServiceImpl implements UserService {
     public PageResponseDTO<UserViewResponseDTO> getAllUsers(Pageable pageable){
         Page<User> userPage = userRepository.findAll(pageable);
         Page<UserViewResponseDTO> userResponsePage = userPage.map(this::convertUserViewToDTO);
-        PageResponseDTO<UserViewResponseDTO> pageDTO = new PageResponseDTO<>(
+        return new PageResponseDTO<>(
                 userResponsePage.getNumber() + 1,
                 userResponsePage.getNumberOfElements(),
                 userResponsePage.getTotalPages(),
                 userResponsePage.getContent()
         );
-        return pageDTO;
     }
 
     @Override
     public void deleteUserById(Long id) throws UnauthorizedException {
         User user = userRepository.findById(id).orElse(null);
         if (user == null) {
-            throw new ResourceNotFoundException(messageConfig.getMessage(USER_NOT_FOUND, id));
+            throw new ResourceNotFoundException(messageConfig.getMessage(MessageError.USER_NOT_FOUND, id));
         }
         if(isCurrentUser(id) || getCurrentUser().getRole().getRoleName().equals(RoleType.ADMIN)) {
             List<Post> deletedPosts = postRepository.findAllByUser_UserId(id);
-            deletedPosts.forEach(post -> {postService.deletePost(post.getPostId());});
+            deletedPosts.forEach(post -> postService.deletePost(post.getPostId()));
             List<Comment> deletedComments = commentRepository.findAllByUser_UserId(id);
-            deletedComments.forEach(comment -> {commentService.deleteComment(comment.getCommentId());});
+            deletedComments.forEach(comment -> commentService.deleteComment(comment.getCommentId()));
             List<CommentReaction> deletedCommentReacts = commentReactionRepository.findByUser_UserId(id);
             for (CommentReaction cr : deletedCommentReacts) {
                 Comment comment = cr.getComment();
@@ -121,20 +116,20 @@ public class UserServiceImpl implements UserService {
             postReactionRepository.deleteAll(deletedPostReactions);
             userRepository.deleteById(id);
         }
-        else throw new UnauthorizedException(messageConfig.getMessage(ACCESS_DENIED));
+        else throw new UnauthorizedException(messageConfig.getMessage(MessageError.ACCESS_DENIED));
     }
 
     @Override
     public UserInfoResponseDTO createUser(UserRequestDTO request){
         User user = new User();
         if(userRepository.existsByUserName(request.getUserName())){
-            throw new DataIntegrityViolationException(messageConfig.getMessage(USER_NAME_UNIQUE));
+            throw new DataIntegrityViolationException(messageConfig.getMessage(MessageError.USER_NAME_UNIQUE));
         }
         user.setUserName(request.getUserName());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         Role role = roleRepository.findByRoleName(RoleType.USER);
         if(role == null){
-            throw new ResourceNotFoundException(messageConfig.getMessage(ROLE_NOT_FOUND));
+            throw new ResourceNotFoundException(messageConfig.getMessage(MessageError.ROLE_NOT_FOUND));
         }
         user.setRole(roleRepository.findByRoleName(RoleType.USER));
         user.setBirthday(request.getBirthday());
@@ -150,10 +145,10 @@ public class UserServiceImpl implements UserService {
     public UserInfoResponseDTO updateUser(Long id, UserRequestDTO request) throws UnauthorizedException{
         User updatedUser = userRepository.findById(id).orElse(null);
         if(!isCurrentUser(id) ){
-            throw new UnauthorizedException(messageConfig.getMessage(ACCESS_DENIED));
+            throw new UnauthorizedException(messageConfig.getMessage(MessageError.ACCESS_DENIED));
         }
         if(updatedUser == null){
-            throw new ResourceNotFoundException(messageConfig.getMessage(USER_NOT_FOUND, id));
+            throw new ResourceNotFoundException(messageConfig.getMessage(MessageError.USER_NOT_FOUND, id));
         }
         if (request.getUserName() != null) {
             updatedUser.setUserName(request.getUserName());
@@ -191,7 +186,7 @@ public class UserServiceImpl implements UserService {
                     .map(userName -> {
                         User user = userRepository.findByUserName(userName);
                         if (user == null) {
-                            throw new ResourceNotFoundException(messageConfig.getMessage(USER_NOT_FOUND, userName));
+                            throw new ResourceNotFoundException(messageConfig.getMessage(MessageError.USER_NOT_FOUND, userName));
                         }
                         return user;
                     })
@@ -200,7 +195,7 @@ public class UserServiceImpl implements UserService {
                         userRepository.save(user);
                     });
         }
-       else throw new ResourceNotFoundException(messageConfig.getMessage(ROLE_NOT_FOUND));
+       else throw new ResourceNotFoundException(messageConfig.getMessage(MessageError.ROLE_NOT_FOUND));
     }
 
     @Override
@@ -249,14 +244,17 @@ public class UserServiceImpl implements UserService {
         return null;
     }
 
+    @Override
     public User handleGetUserByUserName(String userName) {
         return userRepository.findByUserName(userName);
     }
 
+    @Override
     public User handleGetUserByUserNameAndRefreshToken(String userName, String refreshToken) {
         return userRepository.findByUserNameAndRefreshToken(userName, refreshToken);
     }
 
+    @Override
     public void updateUserToken(String refreshToken, String userName) {
         User currentUser = handleGetUserByUserName(userName);
         if(currentUser != null) {
@@ -289,8 +287,7 @@ public class UserServiceImpl implements UserService {
             user.getComments().forEach(comment -> response.getCommentIDs().add(comment.getCommentId()));
         }
         if (user.getBorrowing() != null) {
-            user.getBorrowing().forEach(borrowing -> {
-                response.getBorrowingIDs().add(borrowing.getId());});
+            user.getBorrowing().forEach(borrowing -> response.getBorrowingIDs().add(borrowing.getId()));
         }
         return response;
     }

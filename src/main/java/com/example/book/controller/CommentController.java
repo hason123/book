@@ -10,9 +10,7 @@ import com.example.book.service.CommentService;
 import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 
@@ -60,6 +58,7 @@ public class CommentController {
     @Operation(summary = "Xóa bình luận")
     @DeleteMapping("/comments/{id}")
     public ResponseEntity<?> deleteComment(@PathVariable long id){
+        commentService.deleteComment(id);
         Map<String, String> response = Map.of("message", "Delete successful");
         return ResponseEntity.ok(response);
     }

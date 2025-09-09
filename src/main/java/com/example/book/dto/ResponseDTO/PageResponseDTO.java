@@ -1,6 +1,5 @@
 package com.example.book.dto.ResponseDTO;
 
-
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

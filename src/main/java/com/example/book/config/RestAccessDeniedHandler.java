@@ -9,7 +9,6 @@ import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.stereotype.Component;
 import java.io.IOException;
 
-
 @Component
 public class RestAccessDeniedHandler implements AccessDeniedHandler {
     private final MessageConfig messageConfig;
@@ -20,7 +19,7 @@ public class RestAccessDeniedHandler implements AccessDeniedHandler {
     }
 
     @Override
-    public void handle(HttpServletRequest request, HttpServletResponse response, org.springframework.security.access.AccessDeniedException accessDeniedException) throws IOException, ServletException {
+    public void handle(HttpServletRequest request, HttpServletResponse response, org.springframework.security.access.AccessDeniedException accessDeniedException) throws IOException{
         ApiResponse<?> errorResponse = new ApiResponse<>(
                 403, messageConfig.getMessage(ACCESS_DENIED), null
         );

@@ -1,6 +1,7 @@
 package com.example.book.service.impl;
 
 import com.example.book.config.MessageConfig;
+import com.example.book.constant.MessageError;
 import com.example.book.constant.RoleType;
 import com.example.book.dto.RequestDTO.PostRequestDTO;
 import com.example.book.dto.RequestDTO.Search.SearchPostRequest;
@@ -20,6 +21,7 @@ import com.example.book.service.CommentService;
 import com.example.book.service.PostService;
 import com.example.book.service.UserService;
 import com.example.book.specification.PostSpecification;
+import com.example.book.utils.SpecificationUtil;
 import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -36,20 +38,15 @@ import org.springframework.util.StringUtils;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.*;
-
 @Slf4j
 @Service
 public class PostServiceImpl implements PostService {
-
     private final PostRepository postRepository;
     private final CommentRepository commentRepository;
     private final UserRepository userRepository;
     private final UserService userService;
     private final CommentService commentService;
     private final MessageConfig messageConfig;
-    private final String POST_NOT_FOUND = "error.post.notfound";
-    private final String ACCESS_DENIED = "error.auth.accessDenied";
-
 
     public PostServiceImpl(PostRepository postRepository, CommentRepository commentRepository, UserRepository userRepository, @Lazy UserService userService, @Lazy CommentService commentService, MessageConfig messageConfig) {
         this.postRepository = postRepository;
@@ -77,8 +74,8 @@ public class PostServiceImpl implements PostService {
         log.info("Getting post by id: {}", id);
         Post post = postRepository.findById(id).orElseThrow(() ->
         {
-            log.error(messageConfig.getMessage(POST_NOT_FOUND));
-            return new ResourceNotFoundException(messageConfig.getMessage(POST_NOT_FOUND, id));
+            log.error(messageConfig.getMessage(MessageError.POST_NOT_FOUND));
+            return new ResourceNotFoundException(messageConfig.getMessage(MessageError.POST_NOT_FOUND, id));
         });
         log.info("Retrieved post by id: {}", id);
         return convertPostToDTO(post);
@@ -112,11 +109,11 @@ public class PostServiceImpl implements PostService {
         if(StringUtils.hasText(userName)){
             spec = spec.and(PostSpecification.hasUser(userName));
         }
-        if(beforeDate != null){
-            spec = spec.and(PostSpecification.uploadBeforeDate(beforeDate));
+        if (beforeDate != null) {
+            spec = spec.and(SpecificationUtil.uploadBeforeDate(beforeDate));
         }
-        if(afterDate != null){
-            spec = spec.and(PostSpecification.uploadAfterDate(afterDate));
+        if (afterDate != null) {
+            spec = spec.and(SpecificationUtil.uploadAfterDate(afterDate));
         }
         Page<Post> posts = postRepository.findAll(spec, pageable);
         Page<PostListResponseDTO> postList = posts.map(this::convertPostListToDTO);
@@ -130,8 +127,8 @@ public class PostServiceImpl implements PostService {
         log.info("Updating post with {} from database", id);
         Post updatedPost = postRepository.findById(id).orElseThrow(() ->
         {
-            log.error(messageConfig.getMessage(POST_NOT_FOUND));
-            return new ResourceNotFoundException(messageConfig.getMessage(POST_NOT_FOUND, id));
+            log.error(messageConfig.getMessage(MessageError.POST_NOT_FOUND));
+            return new ResourceNotFoundException(messageConfig.getMessage(MessageError.POST_NOT_FOUND, id));
         });
         if(userService.getCurrentUser().equals(updatedPost.getUser())) {
             if(post.getTitle() != null){
@@ -145,8 +142,8 @@ public class PostServiceImpl implements PostService {
             return convertPostToDTO(updatedPost);
         }
         else {
-            log.error(messageConfig.getMessage(POST_NOT_FOUND));
-            throw new UnauthorizedException(messageConfig.getMessage(ACCESS_DENIED));
+            log.error(messageConfig.getMessage(MessageError.POST_NOT_FOUND));
+            throw new UnauthorizedException(messageConfig.getMessage(MessageError.ACCESS_DENIED));
         }
     }
 
@@ -154,7 +151,7 @@ public class PostServiceImpl implements PostService {
     public void deletePost(Long id) {
         log.info("Deleting post with {} from database", id);
         if(postRepository.existsById(id)) {
-            Post postDeleted = postRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException(messageConfig.getMessage(POST_NOT_FOUND, id)));
+            Post postDeleted = postRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException(messageConfig.getMessage(MessageError.POST_NOT_FOUND, id)));
             User currentUser = userService.getCurrentUser();
             User user = postDeleted.getUser();
             if (currentUser.getRole().getRoleName().equals(RoleType.ADMIN) ||
@@ -167,8 +164,8 @@ public class PostServiceImpl implements PostService {
             }
         }
         else {
-            log.error(messageConfig.getMessage(POST_NOT_FOUND));
-            throw new ResourceNotFoundException(messageConfig.getMessage(POST_NOT_FOUND, id));
+            log.error(messageConfig.getMessage(MessageError.POST_NOT_FOUND));
+            throw new ResourceNotFoundException(messageConfig.getMessage(MessageError.POST_NOT_FOUND, id));
         }
     }
 
@@ -208,7 +205,7 @@ public class PostServiceImpl implements PostService {
         log.info("Getting comments by post with id: {}", postId);
         if (!postRepository.existsById(postId)) {
             log.error("Post with id: {} not found", postId);
-            throw new ResourceNotFoundException(messageConfig.getMessage(POST_NOT_FOUND, postId));
+            throw new ResourceNotFoundException(messageConfig.getMessage(MessageError.POST_NOT_FOUND, postId));
         }
         List<Comment> comments = commentRepository.findAllByPost_PostId(postId);
         Map<Long, CommentResponseDTO> nodeMap = new HashMap<>();
@@ -230,7 +227,7 @@ public class PostServiceImpl implements PostService {
         }
         Comparator<CommentResponseDTO> comparator = Comparator.comparing(CommentResponseDTO::getCreatedAt);
         commentRoots.sort(comparator.reversed());
-        commentRoots.forEach(root -> sortRepliesAscending(root.getReplies()));;
+        commentRoots.forEach(root -> sortRepliesAscending(root.getReplies()));
         log.info("Successfully build comment trees!");
         return commentRoots;
     }

@@ -1,6 +1,7 @@
 package com.example.book.service.impl;
 
 import com.example.book.config.MessageConfig;
+import com.example.book.constant.MessageError;
 import com.example.book.constant.RoleType;
 import com.example.book.dto.RequestDTO.RoleRequestDTO;
 import com.example.book.dto.ResponseDTO.PageResponseDTO;
@@ -20,12 +21,9 @@ import java.util.List;
 @Slf4j
 @Service
 public class RoleServiceImpl implements RoleService {
-
     private final RoleRepository roleRepository;
     private final PermissionRepository permissionRepository;
     private final MessageConfig messageConfig;
-    private final static String ROLE_NOT_FOUND = "error.role.notfound";
-    private final static String PERMISSION_NOT_FOUND = "error.permission.notfound";
 
     public RoleServiceImpl(RoleRepository roleRepository, PermissionRepository permissionRepository, MessageConfig messageConfig) {
         this.roleRepository = roleRepository;
@@ -37,14 +35,14 @@ public class RoleServiceImpl implements RoleService {
     public RoleResponseDTO updateRole(RoleRequestDTO request, Long roleId) {
         log.info("Update role with id {}", roleId);
         Role role = roleRepository.findById(roleId).orElseThrow(() -> {
-            log.error(messageConfig.getMessage(ROLE_NOT_FOUND), roleId);
-            return new ResourceNotFoundException(messageConfig.getMessage(ROLE_NOT_FOUND, roleId));
+            log.error(messageConfig.getMessage(MessageError.ROLE_NOT_FOUND), roleId);
+            return new ResourceNotFoundException(messageConfig.getMessage(MessageError.ROLE_NOT_FOUND, roleId));
         });
         role.setRoleDesc(request.getDescription());
         if(request.getPermissionIds() != null) {
             List<Permission> permissions = request.getPermissionIds().stream().map(id -> permissionRepository.findById(id).orElseThrow(()
-                    ->{ log.error(messageConfig.getMessage(PERMISSION_NOT_FOUND), id);
-                return new ResourceNotFoundException(messageConfig.getMessage(PERMISSION_NOT_FOUND, id));
+                    ->{ log.error(messageConfig.getMessage(MessageError.PERMISSION_NOT_FOUND), id);
+                return new ResourceNotFoundException(messageConfig.getMessage(MessageError.PERMISSION_NOT_FOUND, id));
             })).toList();
             log.info("Adding or removing permissions of a role");
             role.setPermissions(permissions);
@@ -58,13 +56,11 @@ public class RoleServiceImpl implements RoleService {
     public void deleteRole(Long roleId) {
         Role role = roleRepository.findById(roleId)
                 .orElseThrow(() -> {
-                    log.error(messageConfig.getMessage(ROLE_NOT_FOUND), roleId);
-                    return new BusinessException(messageConfig.getMessage(ROLE_NOT_FOUND, roleId));
+                    log.error(messageConfig.getMessage(MessageError.ROLE_NOT_FOUND), roleId);
+                    return new BusinessException(messageConfig.getMessage(MessageError.ROLE_NOT_FOUND, roleId));
                 });
-        role.getPermissions().forEach(permission -> {
-            permission.getRoles().remove(role);
-        });
-        role.getUsers().forEach(user -> {user.setRole(roleRepository.findByRoleName(RoleType.USER));});
+        role.getPermissions().forEach(permission -> permission.getRoles().remove(role));
+        role.getUsers().forEach(user -> user.setRole(roleRepository.findByRoleName(RoleType.USER)));
         roleRepository.deleteById(roleId);
         log.info("Role with id {} has been deleted", roleId);
     }
@@ -85,8 +81,8 @@ public class RoleServiceImpl implements RoleService {
     public RoleResponseDTO getRole(Long roleId) {
         log.info("Get role with id {}", roleId);
         Role role  = roleRepository.findById(roleId).orElseThrow(() -> {
-            log.error(messageConfig.getMessage(ROLE_NOT_FOUND), roleId);
-            return new ResourceNotFoundException(messageConfig.getMessage(ROLE_NOT_FOUND, roleId));
+            log.error(messageConfig.getMessage(MessageError.ROLE_NOT_FOUND), roleId);
+            return new ResourceNotFoundException(messageConfig.getMessage(MessageError.ROLE_NOT_FOUND, roleId));
         });
         return convertRoleToDTO(role);
     }

@@ -1,6 +1,7 @@
 package com.example.book.service.impl;
 
 import com.example.book.config.MessageConfig;
+import com.example.book.constant.MessageError;
 import com.example.book.constant.ReactionType;
 import com.example.book.dto.ResponseDTO.Post.PostListResponseDTO;
 import com.example.book.entity.Post;
@@ -24,8 +25,6 @@ public class PostReactionServiceImpl implements PostReactionService {
     private final PostRepository postRepository;
     private final MessageConfig messageConfig;
     private final PostService postService;
-    private final String POST_NOT_FOUND = "error.post.notfound";
-    private final String USER_NOT_FOUND = "error.user.notfound";
 
     public PostReactionServiceImpl(PostReactionRepository postReactionRepository, UserServiceImpl userServiceImpl, UserRepository userRepository, PostRepository postRepository, MessageConfig messageConfig, PostService postService) {
         this.postReactionRepository = postReactionRepository;
@@ -44,7 +43,7 @@ public class PostReactionServiceImpl implements PostReactionService {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> {
                     log.error("Post {} not found for like action", postId);
-                    return new ResourceNotFoundException(messageConfig.getMessage(POST_NOT_FOUND, postId));
+                    return new ResourceNotFoundException(messageConfig.getMessage(MessageError.POST_NOT_FOUND, postId));
                 });
         PostReaction reaction = postReactionRepository.findByUser_UserIdAndPost_PostId(userId, postId);
         if (reaction != null) {
@@ -64,7 +63,7 @@ public class PostReactionServiceImpl implements PostReactionService {
             User user = userRepository.findById(userId)
                     .orElseThrow(() -> {
                         log.error("User {} not found when reacting to post {}", userId, postId);
-                        return new ResourceNotFoundException(messageConfig.getMessage(USER_NOT_FOUND, userId));
+                        return new ResourceNotFoundException(messageConfig.getMessage(MessageError.USER_NOT_FOUND, userId));
                     });
             reaction = new PostReaction();
             reaction.setPost(post);
@@ -86,7 +85,7 @@ public class PostReactionServiceImpl implements PostReactionService {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> {
                     log.error("Post {} not found for dislike action", postId);
-                    return new ResourceNotFoundException(messageConfig.getMessage(POST_NOT_FOUND, postId));
+                    return new ResourceNotFoundException(messageConfig.getMessage(MessageError.POST_NOT_FOUND, postId));
                 });
         PostReaction reaction = postReactionRepository.findByUser_UserIdAndPost_PostId(userId, postId);
         if (reaction != null) {
@@ -106,7 +105,7 @@ public class PostReactionServiceImpl implements PostReactionService {
             User user = userRepository.findById(userId)
                     .orElseThrow(() -> {
                         log.error("User {} not found when reacting to post {}", userId, postId);
-                        return new ResourceNotFoundException(messageConfig.getMessage(USER_NOT_FOUND, userId));
+                        return new ResourceNotFoundException(messageConfig.getMessage(MessageError.USER_NOT_FOUND, userId));
                     });
             reaction = new PostReaction();
             reaction.setPost(post);

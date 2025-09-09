@@ -1,6 +1,5 @@
 package com.example.book.dto.ResponseDTO.User;
 
-
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -9,7 +8,7 @@ import lombok.Setter;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-//Nguoi dung phu thong
+
 @Getter
 @Setter
 @NoArgsConstructor

@@ -1,11 +1,7 @@
 package com.example.book.dto.ResponseDTO;
 
-
-
-import com.example.book.entity.Category;
 import lombok.*;
 import java.util.List;
-
 
 @Getter
 @Setter
@@ -31,11 +27,4 @@ public class BookResponseDTO {
         private Long categoryId;
         private String categoryName;
     }
-
-
-
-
-
-
-
 }

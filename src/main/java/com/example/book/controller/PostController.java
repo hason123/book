@@ -2,13 +2,11 @@ package com.example.book.controller;
 
 import com.example.book.dto.RequestDTO.PostRequestDTO;
 import com.example.book.dto.RequestDTO.Search.SearchPostRequest;
-import com.example.book.dto.ResponseDTO.Comment.CommentResponseDTO;
 import com.example.book.dto.ResponseDTO.PageResponseDTO;
 import com.example.book.dto.ResponseDTO.Post.PostListResponseDTO;
 import com.example.book.dto.ResponseDTO.Post.PostResponseDTO;
 import com.example.book.exception.UnauthorizedException;
-import com.example.book.service.CommentService;
-import com.example.book.service.PostReactionService;;
+import com.example.book.service.PostReactionService;
 import com.example.book.service.PostService;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.servlet.http.HttpServletResponse;
@@ -16,24 +14,20 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 
 @RestController
 @RequestMapping("/api/v1/library")
 public class PostController {
     private final PostService postService;
-    private final CommentService commentService;
     private final PostReactionService postReactionService;
 
-    public PostController(PostService postService, CommentService commentService, PostReactionService postReactionService) {
+    public PostController(PostService postService, PostReactionService postReactionService) {
         this.postService = postService;
-        this.commentService = commentService;
         this.postReactionService = postReactionService;
     }
 

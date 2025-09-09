@@ -1,6 +1,7 @@
 package com.example.book.service.impl;
 
 import com.example.book.config.MessageConfig;
+import com.example.book.constant.MessageError;
 import com.example.book.dto.RequestDTO.CategoryRequestDTO;
 import com.example.book.dto.ResponseDTO.CategoryResponseDTO;
 import com.example.book.dto.ResponseDTO.PageResponseDTO;
@@ -31,9 +32,6 @@ public class CategoryServiceImpl implements CategoryService {
     private final CategoryRepository categoryRepository;
     private final BookRepository bookRepository;
     private final MessageConfig messageConfig;
-    private final String CATEGORY_NOT_FOUND= "error.category.notfound";
-    //private final String BOOK_NOT_FOUND= "error.book.notfound";
-    private final String CATEGORY_NAME_UNIQUE= "error.category.name.unique";
 
     public CategoryServiceImpl(CategoryRepository categoryRepository, BookRepository bookRepository, MessageConfig messageConfig) {
         this.categoryRepository = categoryRepository;
@@ -47,7 +45,7 @@ public class CategoryServiceImpl implements CategoryService {
         Category category = categoryRepository.findById(id).orElse(null);
         if(category == null){
             log.error("Category with id {} not found", id);
-            throw new ResourceNotFoundException(messageConfig.getMessage(CATEGORY_NOT_FOUND,id));
+            throw new ResourceNotFoundException(messageConfig.getMessage(MessageError.CATEGORY_NOT_FOUND,id));
         }
         log.info("Returning category {}", category);
         return convertEntityToDTO(category);
@@ -57,7 +55,7 @@ public class CategoryServiceImpl implements CategoryService {
     public CategoryResponseDTO addCategory(CategoryRequestDTO request) {
         Category category = new Category();
         if(categoryRepository.existsByCategoryName(request.getCategoryName())){
-            throw new DataIntegrityViolationException(messageConfig.getMessage(CATEGORY_NAME_UNIQUE));
+            throw new DataIntegrityViolationException(messageConfig.getMessage(MessageError.CATEGORY_NAME_UNIQUE));
         }
         else category.setCategoryName(request.getCategoryName());
         categoryRepository.save(category);
@@ -70,7 +68,7 @@ public class CategoryServiceImpl implements CategoryService {
         Category updatedCategory = categoryRepository.findById(id).orElse(null);
         if(updatedCategory == null){
             log.error("Category with id {} not found", id);
-            throw new ResourceNotFoundException(messageConfig.getMessage(CATEGORY_NOT_FOUND,id));
+            throw new ResourceNotFoundException(messageConfig.getMessage(MessageError.CATEGORY_NOT_FOUND,id));
         }
         if(request.getCategoryName() != null){
             if(categoryRepository.existsByCategoryName(request.getCategoryName())){
@@ -87,7 +85,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     public void deleteCategory(Long id) {
         Category category = categoryRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException(messageConfig.getMessage(CATEGORY_NOT_FOUND, id)));
+                .orElseThrow(() -> new ResourceNotFoundException(messageConfig.getMessage(MessageError.CATEGORY_NOT_FOUND, id)));
         category.getBooks().forEach(book ->
         {
             book.getCategories().remove(category);
@@ -100,7 +98,8 @@ public class CategoryServiceImpl implements CategoryService {
     public PageResponseDTO<CategoryResponseDTO> getAllCategories(Pageable pageable) {
         log.info("Getting category's page");
         Page<Category> categories = categoryRepository.findAll(pageable);
-        Page<CategoryResponseDTO> categoryDTO = categories.map(category -> convertEntityToDTO(category));
+        Page<CategoryResponseDTO> categoryDTO = categories.map(this::convertEntityToDTO);
+        //Page<CategoryResponseDTO> categoryDTO = categories.map(category -> convertEntityToDTO(category));
         PageResponseDTO<CategoryResponseDTO> categoryPage = new PageResponseDTO<>(
                 categoryDTO.getNumber() + 1,
                 categoryDTO.getNumberOfElements(),

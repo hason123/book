@@ -30,4 +30,8 @@ public interface UserService {
     User getCurrentUser();
 
     User handleGetUserByUserName(String userName);
+
+    User handleGetUserByUserNameAndRefreshToken(String userName, String refreshToken);
+
+    void updateUserToken(String refreshToken, String userName);
 }

@@ -1,6 +1,7 @@
 package com.example.book.service.impl;
 
 import com.example.book.config.MessageConfig;
+import com.example.book.constant.MessageError;
 import com.example.book.constant.RoleType;
 import com.example.book.dto.RequestDTO.CommentRequestDTO;
 import com.example.book.dto.RequestDTO.Search.SearchCommentRequest;
@@ -18,6 +19,7 @@ import com.example.book.repository.UserRepository;
 import com.example.book.service.CommentService;
 import com.example.book.service.UserService;
 import com.example.book.specification.CommentSpecification;
+import com.example.book.utils.SpecificationUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.data.domain.Page;
@@ -25,7 +27,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
-
 import java.time.LocalDate;
 import java.util.*;
 @Slf4j
@@ -37,9 +38,6 @@ public class CommentServiceImpl implements CommentService {
     private final PostRepository postRepository;
     private final MessageConfig messageConfig;
     private final UserService userService;
-    private final String POST_NOT_FOUND = "error.post.notfound";
-    private final String COMMENT_NOT_FOUND = "error.comment.notfound";
-    private final String ACCESS_DENIED = "error.auth.accessDenied";
 
     public CommentServiceImpl(CommentRepository commentRepository, UserRepository userRepository, PostRepository postRepository, MessageConfig messageConfig, @Lazy UserService userService) {
         this.commentRepository = commentRepository;
@@ -52,14 +50,14 @@ public class CommentServiceImpl implements CommentService {
     @Override
     public CommentShortResponseDTO addComment(Long postId, CommentRequestDTO request) {
         log.info("Add comment in post with id: {}", postId);
-        Post post = postRepository.findById(postId).orElseThrow(() -> new ResourceNotFoundException(POST_NOT_FOUND));
+        Post post = postRepository.findById(postId).orElseThrow(() -> new ResourceNotFoundException(MessageError.POST_NOT_FOUND));
         Comment comment = new Comment();
         comment.setCommentDetail(request.getContent());
         comment.setUser(userService.getCurrentUser());
         comment.setPost(post);
         if (request.getParentCommentId() != null) {
             Comment parentComment = commentRepository.findById(request.getParentCommentId())
-                    .orElseThrow(() -> new ResourceNotFoundException(messageConfig.getMessage(COMMENT_NOT_FOUND, request.getParentCommentId())));
+                    .orElseThrow(() -> new ResourceNotFoundException(messageConfig.getMessage(MessageError.COMMENT_NOT_FOUND, request.getParentCommentId())));
             comment.setParent(parentComment);
         } else comment.setParent(null);
         commentRepository.save(comment);
@@ -71,10 +69,10 @@ public class CommentServiceImpl implements CommentService {
         log.info("Update comment in post with id: {}", postId);
         if(!postRepository.existsById(postId)){
             log.error("Post with id: {} not found", postId);
-            throw new ResourceNotFoundException(messageConfig.getMessage(POST_NOT_FOUND, postId));
+            throw new ResourceNotFoundException(messageConfig.getMessage(MessageError.POST_NOT_FOUND, postId));
         }
         Comment updatedComment = commentRepository.findById(commentId).orElseThrow(() ->
-                new ResourceNotFoundException(messageConfig.getMessage(COMMENT_NOT_FOUND, commentId)));
+                new ResourceNotFoundException(messageConfig.getMessage(MessageError.COMMENT_NOT_FOUND, commentId)));
         if(userService.getCurrentUser().equals(updatedComment.getUser())) {
             if(request.getContent() != null){
                 updatedComment.setCommentDetail(request.getContent());
@@ -85,8 +83,8 @@ public class CommentServiceImpl implements CommentService {
             return convertCommentToShortDTO(updatedComment);
         }
         else {
-            log.error(messageConfig.getMessage(ACCESS_DENIED));
-            throw new UnauthorizedException(messageConfig.getMessage(ACCESS_DENIED));
+            log.error(messageConfig.getMessage(MessageError.ACCESS_DENIED));
+            throw new UnauthorizedException(messageConfig.getMessage(MessageError.ACCESS_DENIED));
         }
     }
 
@@ -94,7 +92,7 @@ public class CommentServiceImpl implements CommentService {
     public PageResponseDTO<CommentShortResponseDTO> getComments(Pageable pageable) {
         log.info("Getting total comments!");
         Page<Comment> comments = commentRepository.findAll(pageable);
-        Page<CommentShortResponseDTO> commentPage = comments.map(c -> convertCommentToShortDTO(c));
+        Page<CommentShortResponseDTO> commentPage = comments.map(this::convertCommentToShortDTO);
         log.info("Total comments: {}", commentPage.getTotalElements());
         return new PageResponseDTO<>(
                 commentPage.getNumber() + 1,
@@ -114,7 +112,7 @@ public class CommentServiceImpl implements CommentService {
         }
         else{
             log.info("Comment with id: {} not found", id);
-            throw new ResourceNotFoundException(messageConfig.getMessage(COMMENT_NOT_FOUND, id));
+            throw new ResourceNotFoundException(messageConfig.getMessage(MessageError.COMMENT_NOT_FOUND, id));
         }
     }
 
@@ -124,7 +122,7 @@ public class CommentServiceImpl implements CommentService {
         Comment commentDeleted = commentRepository.findById(id).orElseThrow(() ->
         {
             log.error("Comment with id: {} not found", id);
-            return new ResourceNotFoundException(messageConfig.getMessage(COMMENT_NOT_FOUND, id));
+            return new ResourceNotFoundException(messageConfig.getMessage(MessageError.COMMENT_NOT_FOUND, id));
         });
         Post post = commentDeleted.getPost();
         User user = commentDeleted.getUser();
@@ -161,11 +159,11 @@ public class CommentServiceImpl implements CommentService {
         if(StringUtils.hasText(userName)){
             spec = spec.and(CommentSpecification.hasUser(userName));
         }
-        if(beforeDate != null){
-            spec = spec.and(CommentSpecification.uploadBeforeDate(beforeDate));
+        if (beforeDate != null) {
+            spec = spec.and(SpecificationUtil.uploadBeforeDate(beforeDate));
         }
-        if(afterDate != null){
-            spec = spec.and(CommentSpecification.uploadAfterDate(afterDate));
+        if (afterDate != null) {
+            spec = spec.and(SpecificationUtil.uploadAfterDate(afterDate));
         }
         Page<Comment> comments = commentRepository.findAll(spec, pageable);
         Page<CommentShortResponseDTO> commentPage = comments.map(this::convertCommentToShortDTO);

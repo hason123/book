@@ -1,11 +1,7 @@
 package com.example.book.dto.ResponseDTO.Comment;
 
-
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.*;
-import org.springframework.validation.beanvalidation.SpringValidatorAdapter;
-
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 

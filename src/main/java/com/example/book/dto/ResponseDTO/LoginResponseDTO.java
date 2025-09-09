@@ -1,5 +1,6 @@
 package com.example.book.dto.ResponseDTO;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 
 @Getter
@@ -8,6 +9,8 @@ import lombok.*;
 @AllArgsConstructor
 public class LoginResponseDTO {
     private String accessToken;
+    @JsonIgnore
+    private String refreshToken;
     private UserLogin user;
     @Getter
     @Setter
