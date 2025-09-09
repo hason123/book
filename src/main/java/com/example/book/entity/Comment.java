@@ -42,6 +42,8 @@ public class Comment extends BaseEntity {
     private Comment parent;
     @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL)
     private List<Comment> children = new ArrayList<>();
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "comment")
+    private List<CommentReaction> commentReactions;
 
     public void setLikesCount(int likesCount) {
         this.likesCount = Math.max(likesCount, 0);

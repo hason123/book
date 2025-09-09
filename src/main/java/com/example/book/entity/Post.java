@@ -1,18 +1,11 @@
 package com.example.book.entity;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
-
-import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
-
 @Setter
 @Getter
 @AllArgsConstructor
@@ -41,9 +34,9 @@ public class Post extends BaseEntity {
     @ManyToOne
     @JoinColumn(name = "user_post_id")
     private User user;
-    @OneToMany(mappedBy = "post")
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "post")
     private List<Comment> comments;
-    @OneToMany(mappedBy = "post")
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "post")
     private List<PostReaction> postReactions;
 
     public void setLikesCount(int likesCount) {

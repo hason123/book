@@ -4,7 +4,6 @@ package com.example.book.entity;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.Size;
 import lombok.*;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
@@ -53,5 +52,6 @@ public class User extends BaseEntity {
     private List<Borrowing> borrowing;
     @OneToMany(mappedBy = "user")
     private List<PostReaction> postReactions;
-
+    @OneToMany(mappedBy = "user")
+    private List<CommentReaction> commentReactions;
 }
